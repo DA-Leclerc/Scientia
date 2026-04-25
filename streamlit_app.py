@@ -300,7 +300,7 @@ def page_etudier():
     # ── Étape 1 : pas de questions chargées → générer ou recharger ───────────
 
     if not st.session_state.questions:
-        with st.expander("📖 Texte source", expanded=True):
+        with st.expander("📖 Texte source", expanded=False):
             st.markdown(concept["texte"])
 
         cartes_existantes = get_cartes_concept(cle)
