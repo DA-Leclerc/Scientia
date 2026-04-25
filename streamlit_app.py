@@ -52,6 +52,7 @@ if not os.environ.get("ANTHROPIC_API_KEY"):
 from curriculum import (
     CURRICULUM,
     NOMS_MODULES,
+    ORDRE_AFFICHAGE_MODULES,
     get_concepts_par_module,
 )
 from db import (
@@ -234,7 +235,7 @@ def page_modules():
     st.caption("Choisis un module, puis un concept à étudier.")
 
     modules_avec_concepts = []
-    for m in sorted(NOMS_MODULES.keys()):
+    for m in ORDRE_AFFICHAGE_MODULES:
         concepts = get_concepts_par_module(m)
         if concepts:
             modules_avec_concepts.append((m, concepts))
@@ -617,7 +618,7 @@ def page_socratique():
         st.subheader("Choisis un concept à explorer")
 
         modules_avec_concepts = []
-        for m in sorted(NOMS_MODULES.keys()):
+        for m in ORDRE_AFFICHAGE_MODULES:
             cs = get_concepts_par_module(m)
             if cs:
                 modules_avec_concepts.append((m, cs))

@@ -798,6 +798,13 @@ NOMS_MODULES = {
     22: "Gouvernance de l'IA",
 }
 
+# Ordre d'affichage des modules dans l'UI.
+# Le module 22 (Gouvernance de l'IA) est mis en TÊTE de liste; les autres
+# suivent dans l'ordre numérique normal.
+ORDRE_AFFICHAGE_MODULES = [22] + [
+    m for m in sorted(NOMS_MODULES.keys()) if m != 22
+]
+
 DOMAINES_MODULES = {
     1: "statistiques", 2: "statistiques", 3: "statistiques",
     4: "statistiques", 5: "statistiques",
