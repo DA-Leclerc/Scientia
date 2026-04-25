@@ -60,32 +60,43 @@ def _extraire_pdf(filepath: Path) -> str:
 # ── Découpage en concepts ─────────────────────────────────────────────────────
 
 PROMPT_DECOUPAGE = """Tu reçois le texte brut d'un document. Ton travail :
-extraire 1 à 5 concepts pédagogiques distincts à mémoriser, sous une forme
-utilisable dans un système de révision espacée (style Anki/Scientia).
+extraire 1 à 5 concepts pédagogiques distincts à intégrer dans Scientia,
+système de révision espacée (style Anki) utilisé pour la pratique
+professionnelle.
+
+CONTEXTE D'USAGE — Dominic-André Leclerc, fondateur de Nord Paradigm
+(Québec), cabinet de conseil en gouvernance d'IA. 21+ ans RCAF, auditeur
+AF9000+ sur systèmes aéronautiques. Il alimente Scientia avec des textes
+qu'il rencontre dans sa pratique : décisions de la CAI, articles de
+règlements (Loi 25, EU AI Act, AIDA, RGPD), normes (ISO/IEC 42001,
+27001, 27701), publications NIST, lignes directrices de l'AI Office,
+décisions EDPB, jurisprudence, articles académiques sur la gouvernance
+de l'IA et l'audit.
 
 Chaque concept doit :
-- Cibler une seule idée claire, mémorable, testable par des questions
-- Avoir un texte de référence de 150 à 350 mots (pas plus)
-  contenant l'essentiel à comprendre sur ce concept
-- Porter un titre court et mémorable (3 à 7 mots)
-
-Le contexte d'usage : Charles Roy, investisseur et entraîneur de JJB à Saguenay,
-apprend pour lire des recherches en apprentissage moteur, biologie, psychométrie,
-et pour développer ses projets (bots, apps pédagogiques).
+- Cibler une SEULE idée claire, mémorable, testable par des questions
+  de niveau praticien.
+- Avoir un texte de référence de 200 à 400 mots, dense, opérationnel,
+  rédigé pour un PROFESSIONNEL avancé (pas pour un débutant).
+- Porter un titre court et mémorable (3 à 8 mots).
+- Privilégier les éléments DIRECTEMENT UTILISABLES en mission client :
+  articles précis, seuils de sanction, calendriers, échéances,
+  obligations cumulatives, cas d'application, points de friction
+  fréquents avec d'autres cadres.
 
 Règles de découpage :
-- Un long document → plusieurs concepts atomiques (max 5)
-- Un court article → 1 à 2 concepts
-- Privilégie la profondeur sur la largeur : mieux vaut 2 bons concepts que 5 superficiels
-- Le texte de chaque concept doit être auto-suffisant
+- Un long document → plusieurs concepts atomiques (max 5).
+- Un court article → 1 à 2 concepts.
+- Privilégie la profondeur sur la largeur : 2 bons concepts > 5 superficiels.
+- Le texte de chaque concept doit être auto-suffisant.
 
 Retourne UNIQUEMENT un tableau JSON valide. Pas de markdown, pas de backticks.
 Format exact :
 [
   {
     "titre": "Titre mémorable du concept",
-    "texte": "Texte de référence complet (150-350 mots). Prose dense, exemples concrets.",
-    "module_suggere": "Suggestion de thème (ex: Apprentissage moteur, Biologie, Finance, IA...)"
+    "texte": "Texte de référence complet (200-400 mots). Prose dense, articles précis, exemples concrets.",
+    "module_suggere": "Suggestion de thème (ex: Gouvernance IA — Loi 25, Gouvernance IA — EU AI Act, Audit ISO 42001, NIST AI RMF, Jurisprudence CAI, ...)"
   }
 ]"""
 
