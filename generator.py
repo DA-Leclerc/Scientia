@@ -10,13 +10,13 @@ import re
 client = anthropic.Anthropic()
 
 TYPES_QUESTIONS = {
-    "definition": "Définition atomique — tester la compréhension d'un terme précis",
-    "cloze": "Cloze — compléter une formule ou phrase clé avec le terme manquant",
     "intuition": "Intuition — expliquer POURQUOI, pas seulement QUOI",
-    "contre_exemple": "Contre-exemple — trouver un cas où un principe ne s'applique pas ou est mal compris",
-    "application": "Application — utiliser le concept sur un exemple concret",
-    "connexion": "Connexion — relier ce concept à un autre déjà vu",
-    "erreur_frequente": "Erreur fréquente — identifier et corriger un raisonnement incorrect",
+    "application": "Application — utiliser le concept sur un cas concret de mission Nord Paradigm",
+    "contre_exemple": "Contre-exemple — trouver un cas où un principe ne s'applique pas, ou est mal compris",
+    "connexion": "Connexion — relier ce concept à un autre cadre ou à un autre concept déjà vu",
+    "erreur_frequente": "Erreur fréquente — identifier et corriger un raisonnement incorrect courant chez un client",
+    "arbitrage": "Arbitrage — choisir entre deux options de mise en conformité et JUSTIFIER",
+    "explication": "Explication — décrire un mécanisme ou une obligation dans ses propres mots, prête à être livrée à un client",
 }
 
 PROMPT_SYSTEME = """Tu es un expert en gouvernance de l'IA, en cadres réglementaires (Loi 25, AIDA/LIAD, EU AI Act, ISO/IEC 42001, NIST AI RMF, OCDE) et en conception de questions pédagogiques de niveau professionnel.
@@ -37,9 +37,10 @@ EXEMPLES — privilégie systématiquement :
 RÈGLES ABSOLUES :
 1. Une seule idée par question. Jamais deux concepts dans une seule question.
 2. Les questions testent la COMPRÉHENSION et la CAPACITÉ D'APPLICATION, pas la mémorisation brute.
-3. Français du Québec; tutoiement. Termes techniques anglais établis acceptés (GPAI, AIA, FRIA, EFVP, AIMS, AISA, etc.).
-4. La réponse de référence doit être concise (2-5 phrases max).
-5. Le critère d'évaluation doit indiquer les éléments ESSENTIELS de la bonne réponse.
+3. INTERDIT : questions à trou (« cloze ») où il faut deviner UN MOT PRÉCIS manquant dans une phrase. Pas non plus de questions où la réponse attendue est un terme isolé. Les questions doivent appeler des RÉPONSES EXPLICATIVES (2 à 5 phrases) qui démontrent la compréhension.
+4. Français du Québec; tutoiement. Termes techniques anglais établis acceptés (GPAI, AIA, FRIA, EFVP, AIMS, AISA, etc.).
+5. La réponse de référence doit être concise (2-5 phrases max).
+6. Le critère d'évaluation doit indiquer les éléments ESSENTIELS de la bonne réponse.
 
 IMPORTANT sur le JSON : retourne UNIQUEMENT du JSON valide, sans markdown, sans backticks.
 """
@@ -206,6 +207,84 @@ Tu vas mener un dialogue socratique avec Dominic sur ce concept, dans le context
         model="claude-sonnet-4-6",
         max_tokens=400,
         system=PROMPT_SOCRATIQUE,
+        messages=messages,
+    )
+
+    return message.content[0].text.strip()
+
+
+PROMPT_SOCRATIQUE_QUESTION = """Tu es un tuteur SOCRATIQUE qui aide Dominic à COMPRENDRE une question de quiz, pas à y répondre.
+
+PROFIL — Dominic-André Leclerc, fondateur Nord Paradigm (Québec), conseil en gouvernance d'IA. Praticien avancé, pas étudiant.
+
+OBJECTIF DE TON RÔLE — Dominic est devant une question qu'il n'arrive pas à attaquer pleinement. Tu l'aides à :
+1. Décortiquer ce que la question lui demande exactement.
+2. Identifier les concepts en jeu.
+3. Reformuler la question dans ses propres mots.
+4. Voir l'angle sous lequel l'aborder.
+5. Tester ses intuitions sans qu'il soit pénalisé.
+
+TU NE DONNES JAMAIS LA RÉPONSE. Même si Dominic insiste, redirige-le par une question qui le mène à la trouver lui-même. Si la réponse de référence est sous tes yeux, c'est ta SEULE source de vérité — tu peux confirmer ou infirmer ses pistes par des questions, pas révéler le contenu.
+
+RÈGLES :
+- UNE question à la fois.
+- Réponses brèves (1 à 3 phrases).
+- Tutoiement, français du Québec.
+- Termes techniques anglais établis acceptés.
+- Pas de markdown, pas d'émojis dans le dialogue.
+
+QUAND DOMINIC DIT « j'ai compris » ou « je vais essayer de répondre » — encourage-le brièvement et termine ton message par quelque chose comme « Vas-y, je suis curieux de voir ta formulation. »"""
+
+
+def aide_socratique_question(concept: dict, question: dict,
+                             historique: list[dict]) -> str:
+    """
+    Génère la prochaine relance d'un mini-tuteur SUR UNE QUESTION SPÉCIFIQUE.
+
+    Différent de repondre_socratique() — ici Claude aide Dominic à COMPRENDRE
+    la question (pas à explorer le concept), sans jamais révéler la réponse.
+
+    Args:
+        concept: dict avec 'titre' et 'texte'.
+        question: dict avec 'question', 'reponse_ref', 'critere'.
+        historique: liste {role, content} des échanges précédents sur cette question.
+
+    Returns:
+        La prochaine réplique du tuteur, en texte brut.
+    """
+    contexte = f"""Concept étudié : {concept['titre']}
+
+Texte de référence du concept :
+{concept['texte']}
+
+Question posée à Dominic :
+{question.get('question', question.get('enonce', ''))}
+
+Réponse de référence (CONFIDENTIELLE — ne PAS révéler le contenu, c'est ta seule source de vérité) :
+{question.get('reponse_ref', '')}
+
+Critère d'évaluation (essentiels que la réponse devrait contenir) :
+{question.get('critere', '')}
+
+Tu vas aider Dominic à COMPRENDRE cette question, pas à y répondre.
+"""
+
+    if not historique:
+        contexte += (
+            "\nC'est le DÉBUT du dialogue. Dominic vient de cliquer sur le "
+            "bouton « Discuter avec Claude » sous la question. Ouvre par une "
+            "question courte qui l'aide à reformuler ce qu'il pense que la "
+            "question lui demande, ou à identifier ce qui le fait hésiter."
+        )
+        messages = [{"role": "user", "content": contexte}]
+    else:
+        messages = [{"role": "user", "content": contexte}]
+        messages.extend(historique)
+
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=400,
+        system=PROMPT_SOCRATIQUE_QUESTION,
         messages=messages,
     )
 

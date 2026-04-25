@@ -97,6 +97,7 @@ from generator import (
     evaluer_reponse,
     repondre_socratique,
     resumer_socratique,
+    aide_socratique_question,
 )
 
 # ── État de session ───────────────────────────────────────────────────────────
@@ -127,6 +128,13 @@ if "soc_resume" not in st.session_state:
     st.session_state.soc_resume = None
 if "soc_pending_user" not in st.session_state:
     st.session_state.soc_pending_user = ""
+# Mini-tuteur socratique attaché à une question de quiz spécifique.
+# Clé = (concept_id, question_index). Valeur = liste de messages {role, content}.
+if "q_soc_dialogues" not in st.session_state:
+    st.session_state.q_soc_dialogues = {}
+# Quelles questions ont leur expander socratique ouvert
+if "q_soc_ouverts" not in st.session_state:
+    st.session_state.q_soc_ouverts = set()
 
 
 def aller_a(page: str, **kwargs):
@@ -420,6 +428,7 @@ def page_etudier():
             st.info(f"💡 {indice_txt}")
 
     cle_zone = f"reponse_{cle}_{i}"
+    cle_soc = (cle, i)
     if st.session_state.evaluation_courante is None:
         reponse = st.text_area(
             "Ta réponse",
@@ -427,6 +436,68 @@ def page_etudier():
             height=150,
             placeholder="Réponds librement, en français…",
         )
+
+        # ── Tuteur socratique sur la question (sous le champ de réponse) ──
+        soc_ouvert = cle_soc in st.session_state.q_soc_ouverts
+        if not soc_ouvert:
+            if st.button("🎓 Discuter avec Claude pour mieux comprendre la question",
+                         key=f"open_soc_{cle}_{i}",
+                         use_container_width=True):
+                st.session_state.q_soc_ouverts.add(cle_soc)
+                # Ouverture du dialogue : Claude pose la première question
+                if cle_soc not in st.session_state.q_soc_dialogues:
+                    with st.spinner("Claude prépare une ouverture…"):
+                        try:
+                            ouverture = aide_socratique_question(
+                                concept, question, []
+                            )
+                            st.session_state.q_soc_dialogues[cle_soc] = [
+                                {"role": "assistant", "content": ouverture}
+                            ]
+                        except Exception as e:
+                            st.error(f"Erreur Socratique : {e}")
+                            st.session_state.q_soc_dialogues[cle_soc] = []
+                st.rerun()
+        else:
+            with st.container(border=True):
+                st.caption("🎓 Mini-tuteur socratique — Claude ne donnera "
+                           "JAMAIS la réponse, il t'aide à comprendre la question.")
+
+                dialogue = st.session_state.q_soc_dialogues.get(cle_soc, [])
+                for m in dialogue:
+                    if m["role"] == "assistant":
+                        with st.chat_message("assistant", avatar="🎓"):
+                            st.markdown(m["content"])
+                    else:
+                        with st.chat_message("user", avatar="🧑"):
+                            st.markdown(m["content"])
+
+                # Champ de saisie dans l'expander
+                user_msg = st.chat_input(
+                    "Pose une question, partage ton intuition…",
+                    key=f"soc_input_{cle}_{i}",
+                )
+                if user_msg:
+                    dialogue.append({"role": "user", "content": user_msg})
+                    with st.spinner("Claude réfléchit…"):
+                        try:
+                            relance = aide_socratique_question(
+                                concept, question, dialogue
+                            )
+                            dialogue.append(
+                                {"role": "assistant", "content": relance}
+                            )
+                        except Exception as e:
+                            st.error(f"Erreur : {e}")
+                    st.session_state.q_soc_dialogues[cle_soc] = dialogue
+                    st.rerun()
+
+                if st.button("Fermer le tuteur",
+                             key=f"close_soc_{cle}_{i}",
+                             use_container_width=False):
+                    st.session_state.q_soc_ouverts.discard(cle_soc)
+                    st.rerun()
+
         col_a, col_b = st.columns([1, 1])
         if col_a.button("✓ Soumettre",
                         type="primary",
