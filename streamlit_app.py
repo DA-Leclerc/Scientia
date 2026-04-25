@@ -410,6 +410,10 @@ def page_etudier():
     progress = (i) / total
     st.progress(progress, text=f"Question {i + 1} / {total}")
 
+    # Texte source disponible pendant tout le quiz (livre ouvert)
+    with st.expander("📖 Texte source (livre ouvert)", expanded=False):
+        st.markdown(concept["texte"])
+
     type_q = question.get("type", "?").replace("_", " ").title()
     st.caption(f"Type : {type_q}")
     st.markdown(f"### {question['question']}")
