@@ -91,7 +91,12 @@ if not API_PRESENTE:
 
 # Le générateur instancie un client Anthropic au moment de l'import,
 # donc on ne l'importe que si la clé est définie.
-from generator import generer_questions, evaluer_reponse
+from generator import (
+    generer_questions,
+    evaluer_reponse,
+    repondre_socratique,
+    resumer_socratique,
+)
 
 # ── État de session ───────────────────────────────────────────────────────────
 
@@ -111,6 +116,16 @@ if "evaluation_courante" not in st.session_state:
     st.session_state.evaluation_courante = None
 if "debut_question" not in st.session_state:
     st.session_state.debut_question = 0.0
+if "indice_visible" not in st.session_state:
+    st.session_state.indice_visible = {}
+if "soc_concept" not in st.session_state:
+    st.session_state.soc_concept = None
+if "soc_historique" not in st.session_state:
+    st.session_state.soc_historique = []
+if "soc_resume" not in st.session_state:
+    st.session_state.soc_resume = None
+if "soc_pending_user" not in st.session_state:
+    st.session_state.soc_pending_user = ""
 
 
 def aller_a(page: str, **kwargs):
@@ -140,6 +155,9 @@ with st.sidebar:
         st.rerun()
     if st.button("📚 Parcourir les modules", use_container_width=True):
         aller_a("modules")
+        st.rerun()
+    if st.button("🗣️ Dialogue socratique", use_container_width=True):
+        aller_a("socratique")
         st.rerun()
     if st.button("📈 Ma progression", use_container_width=True):
         aller_a("progression")
@@ -297,6 +315,7 @@ def page_etudier():
                         "question": q["enonce"],
                         "reponse_ref": q["reponse_ref"],
                         "critere": q["critere"],
+                        "indice": q.get("indice", "") or "",
                         "difficulte": q["niveau"],
                     }
                     for q in cartes_existantes
@@ -385,6 +404,19 @@ def page_etudier():
     type_q = question.get("type", "?").replace("_", " ").title()
     st.caption(f"Type : {type_q}")
     st.markdown(f"### {question['question']}")
+
+    # Bouton indice (n'apparaît que si la question en a un)
+    indice_txt = question.get("indice", "") or ""
+    if indice_txt:
+        cle_indice = f"indice_{cle}_{i}"
+        deja_visible = st.session_state.indice_visible.get(cle_indice, False)
+        if not deja_visible:
+            if st.button("💡 Voir un indice", key=f"btn_{cle_indice}",
+                         use_container_width=False):
+                st.session_state.indice_visible[cle_indice] = True
+                st.rerun()
+        else:
+            st.info(f"💡 {indice_txt}")
 
     cle_zone = f"reponse_{cle}_{i}"
     if st.session_state.evaluation_courante is None:
@@ -571,12 +603,177 @@ def page_documents():
         st.info("Aucun document ingéré pour l'instant.")
 
 
+# ── Page : DIALOGUE SOCRATIQUE ───────────────────────────────────────────────
+
+def page_socratique():
+    st.title("🗣️ Dialogue socratique")
+    st.caption(
+        "Mode tuteur : Claude te guide par questions plutôt que de te tester. "
+        "Le dialogue n'est pas noté pendant l'échange — un bilan apparaît à la fin."
+    )
+
+    # Étape 1 : sélection du concept
+    if not st.session_state.soc_concept:
+        st.subheader("Choisis un concept à explorer")
+
+        modules_avec_concepts = []
+        for m in sorted(NOMS_MODULES.keys()):
+            cs = get_concepts_par_module(m)
+            if cs:
+                modules_avec_concepts.append((m, cs))
+
+        m_choisi = st.selectbox(
+            "Module",
+            options=[m for m, _ in modules_avec_concepts],
+            format_func=lambda m: f"M{m:02d} — {NOMS_MODULES.get(m, '?')}",
+            key="soc_module_select",
+        )
+        concepts = get_concepts_par_module(m_choisi)
+
+        cle_choisie = st.selectbox(
+            "Concept",
+            options=concepts,
+            format_func=lambda k: CURRICULUM[k]["titre"],
+            key="soc_concept_select",
+        )
+
+        if st.button("▶️ Démarrer le dialogue",
+                     type="primary", use_container_width=True):
+            st.session_state.soc_concept = cle_choisie
+            st.session_state.soc_historique = []
+            st.session_state.soc_resume = None
+            st.session_state.soc_pending_user = ""
+            # Génère la question d'ouverture
+            with st.spinner("Claude prépare une question d'ouverture…"):
+                try:
+                    ouverture = repondre_socratique(
+                        CURRICULUM[cle_choisie], []
+                    )
+                    st.session_state.soc_historique.append(
+                        {"role": "assistant", "content": ouverture}
+                    )
+                except Exception as e:
+                    st.error(f"Erreur : {e}")
+                    st.session_state.soc_concept = None
+                    return
+            st.rerun()
+        return
+
+    # Étape 2 : dialogue en cours
+    cle = st.session_state.soc_concept
+    concept = CURRICULUM.get(cle)
+    if not concept:
+        st.warning("Concept introuvable.")
+        st.session_state.soc_concept = None
+        return
+
+    st.markdown(f"**Concept : {concept['titre']}**")
+    st.caption(
+        f"Module {concept['module']} — "
+        f"{NOMS_MODULES.get(concept['module'], '?')}"
+    )
+
+    col_a, col_b = st.columns([1, 1])
+    if col_a.button("🔄 Nouveau concept", use_container_width=True):
+        st.session_state.soc_concept = None
+        st.session_state.soc_historique = []
+        st.session_state.soc_resume = None
+        st.rerun()
+    termine = col_b.button(
+        "✓ Terminer et obtenir un bilan",
+        type="primary",
+        use_container_width=True,
+        disabled=len(st.session_state.soc_historique) < 3,
+    )
+
+    # Si bilan demandé : génère et affiche
+    if termine and not st.session_state.soc_resume:
+        with st.spinner("Claude rédige ton bilan…"):
+            try:
+                resume = resumer_socratique(
+                    concept, st.session_state.soc_historique
+                )
+                st.session_state.soc_resume = resume
+                # Met à jour la progression avec le score du dialogue
+                maj_progression(cle, [int(resume.get("score", 0))])
+            except Exception as e:
+                st.error(f"Erreur : {e}")
+
+    # Affichage du bilan si présent
+    if st.session_state.soc_resume:
+        r = st.session_state.soc_resume
+        score = int(r.get("score", 0))
+        st.markdown("---")
+        st.subheader("📋 Bilan du dialogue")
+
+        if score >= 3:
+            st.success(f"Score : {score}/4 — bonne maîtrise")
+        elif score >= 2:
+            st.warning(f"Score : {score}/4 — partielle")
+        else:
+            st.error(f"Score : {score}/4 — à retravailler")
+
+        st.markdown(f"**Points forts** — {r.get('points_forts', '')}")
+        st.markdown(f"**À approfondir** — {r.get('a_approfondir', '')}")
+
+        with st.expander("📖 Synthèse du concept"):
+            st.markdown(r.get("synthese", ""))
+
+        col_c, col_d = st.columns(2)
+        if col_c.button("🔁 Relancer un dialogue sur ce concept",
+                        use_container_width=True):
+            st.session_state.soc_historique = []
+            st.session_state.soc_resume = None
+            with st.spinner("Nouvelle ouverture…"):
+                ouverture = repondre_socratique(concept, [])
+                st.session_state.soc_historique.append(
+                    {"role": "assistant", "content": ouverture}
+                )
+            st.rerun()
+        if col_d.button("📚 Autre concept",
+                        type="primary", use_container_width=True):
+            st.session_state.soc_concept = None
+            st.session_state.soc_historique = []
+            st.session_state.soc_resume = None
+            st.rerun()
+        return
+
+    # Affichage du dialogue
+    st.markdown("---")
+    for m in st.session_state.soc_historique:
+        if m["role"] == "assistant":
+            with st.chat_message("assistant", avatar="🎓"):
+                st.markdown(m["content"])
+        else:
+            with st.chat_message("user", avatar="🧑"):
+                st.markdown(m["content"])
+
+    # Zone de saisie
+    reponse = st.chat_input("Ta réponse à Claude…", key="soc_chat_input")
+    if reponse:
+        st.session_state.soc_historique.append(
+            {"role": "user", "content": reponse}
+        )
+        with st.spinner("Claude réfléchit…"):
+            try:
+                relance = repondre_socratique(
+                    concept, st.session_state.soc_historique
+                )
+                st.session_state.soc_historique.append(
+                    {"role": "assistant", "content": relance}
+                )
+            except Exception as e:
+                st.error(f"Erreur : {e}")
+        st.rerun()
+
+
 # ── Routeur principal ─────────────────────────────────────────────────────────
 
 PAGES = {
     "accueil": page_accueil,
     "modules": page_modules,
     "etudier": page_etudier,
+    "socratique": page_socratique,
     "progression": page_progression,
     "documents": page_documents,
 }
