@@ -55,7 +55,7 @@ Pour chaque question, fournis un objet JSON avec ces champs :
 - "type" : le type de question
 - "question" : la question posée à Charles (tu/toi)
 - "reponse_ref" : la réponse de référence complète
-- "critere" : les 2-3 éléments ESSENTIELS que la réponse doit contenir
+- "critere" : CHAÎNE DE CARACTÈRES unique listant les 2-3 éléments ESSENTIELS que la réponse doit contenir, séparés par "; ". Pas de tableau JSON, juste une chaîne.
 - "difficulte" : 1 (facile), 2 (moyen), 3 (difficile)
 
 Retourne un tableau JSON de {n} objets. Rien d'autre. Pas de markdown. Juste le JSON."""

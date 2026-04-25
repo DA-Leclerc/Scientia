@@ -505,13 +505,31 @@ def get_cartes_concept(concept_id: str) -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def _coerce_str(v) -> str:
+    """
+    Sécurise une valeur pour insertion SQLite TEXT.
+    Claude peut parfois renvoyer une liste ou un dict pour un champ
+    où on attend une chaîne — on aplatit proprement.
+    """
+    if v is None:
+        return ""
+    if isinstance(v, str):
+        return v
+    if isinstance(v, (list, tuple)):
+        return "; ".join(_coerce_str(x) for x in v)
+    if isinstance(v, dict):
+        return "; ".join(f"{k}: {_coerce_str(val)}" for k, val in v.items())
+    return str(v)
+
+
 def sauvegarder_cartes(concept_id: str, questions: list[dict]) -> list[int]:
     """
     Persiste une liste de questions générées par generator.py
     et retourne la liste des id des cartes créées.
 
     Convertit le format generator (question, difficulte) → format DB
-    (enonce, niveau).
+    (enonce, niveau). Coerce les champs texte au cas où Claude renvoie
+    une liste plutôt qu'une chaîne.
     """
     ids: list[int] = []
     with conn() as c:
@@ -523,12 +541,12 @@ def sauvegarder_cartes(concept_id: str, questions: list[dict]) -> list[int]:
                     enonce, reponse_ref, critere, indice)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (concept_id, i,
-                 q.get("type", ""),
-                 int(q.get("difficulte", q.get("niveau", 1))),
-                 q.get("question", q.get("enonce", "")),
-                 q.get("reponse_ref", ""),
-                 q.get("critere", ""),
-                 q.get("indice", ""))
+                 _coerce_str(q.get("type", "")),
+                 int(q.get("difficulte", q.get("niveau", 1)) or 1),
+                 _coerce_str(q.get("question", q.get("enonce", ""))),
+                 _coerce_str(q.get("reponse_ref", "")),
+                 _coerce_str(q.get("critere", "")),
+                 _coerce_str(q.get("indice", "")))
             )
             ids.append(cur.lastrowid)
     return ids
