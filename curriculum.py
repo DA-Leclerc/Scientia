@@ -822,6 +822,17 @@ DOMAINES_MODULES = {
 # "min"/"max" correspondent à l'attribut "ordre" des concepts.
 
 SOUS_GROUPES: dict[int, list[dict]] = {
+    22: [
+        {"titre": "A — Fondations",                "min": 1,  "max": 3},
+        {"titre": "B — Principes OCDE",            "min": 4,  "max": 4},
+        {"titre": "C — Loi 25 (Québec)",           "min": 5,  "max": 9},
+        {"titre": "D — AIDA et Code volontaire",   "min": 10, "max": 12},
+        {"titre": "E — EU AI Act",                 "min": 13, "max": 18},
+        {"titre": "F — NIST AI RMF",               "min": 19, "max": 22},
+        {"titre": "G — ISO/IEC 42001",             "min": 23, "max": 25},
+        {"titre": "H — Mise en œuvre pratique",    "min": 26, "max": 29},
+        {"titre": "I — Synthèse comparative",      "min": 30, "max": 31},
+    ],
     7: [
         {"titre": "Théorie générale & Relations internationales", "min": 1, "max": 9},
         {"titre": "Canada",        "min": 10, "max": 10},
@@ -5742,143 +5753,2098 @@ Règle d'or : avant d'utiliser rm ou mv, confirme avec pwd et ls que tu es exact
 
 
 # ══════════════════════════════════════════════════════════════════════
-# MODULE 22 — GOUVERNANCE DE L'IA  (7 concepts)
-# Cadres réglementaires et normatifs pour les systèmes d'IA :
-# Loi 25 (Québec), AIDA (Canada, projet), ISO 42001, NIST AI RMF,
-# EU AI Act, principes de l'OCDE, et synthèse comparative.
+# MODULE 22 — GOUVERNANCE DE L'IA  (31 concepts, cours approfondi)
+#
+# Structure pédagogique en 9 sections :
+#   A. Fondations              (c1-c3)     pourquoi gouverner, typologie des outils
+#   B. OCDE                    (c4)        socle international
+#   C. Loi 25 (Québec)         (c5-c9)     vie privée et décisions automatisées
+#   D. AIDA (Canada)           (c10-c12)   projet, code volontaire intérimaire
+#   E. EU AI Act               (c13-c18)   première loi globale sur l'IA
+#   F. NIST AI RMF             (c19-c22)   cadre opérationnel américain
+#   G. ISO/IEC 42001           (c23-c25)   norme certifiable de management
+#   H. Mise en œuvre pratique  (c26-c29)   cartographie, AIA, doc, RACI
+#   I. Synthèse comparative    (c30-c31)   matrice + stratégie PME québécoise
 # ══════════════════════════════════════════════════════════════════════
 
 CURRICULUM.update({
 
-    "m22_c1_loi25_quebec": {
+    # ────────────── SECTION A — FONDATIONS ──────────────
+
+    "m22_c1_pourquoi_gouverner_ia": {
         "module": 22, "ordre": 1,
-        "titre": "Loi 25 — Québec (vie privée et IA)",
+        "titre": "Pourquoi gouverner l'IA",
         "prereqs": [],
         "texte": """
-La Loi 25 (officiellement « Loi modernisant des dispositions législatives en matière de protection des renseignements personnels ») est la réforme québécoise de la vie privée. Elle s'applique aux organismes publics ET aux entreprises privées qui détiennent des renseignements personnels sur des Québécois.
-Entrée en vigueur en TROIS phases :
-  22 septembre 2022 — Phase 1 : nomination obligatoire d'un responsable de la protection des renseignements personnels (RPRP), obligation de signaler les incidents de confidentialité à la CAI (Commission d'accès à l'information) et aux personnes concernées.
-  22 septembre 2023 — Phase 2 : la majorité des nouvelles obligations entrent en vigueur (consentement, transparence, évaluations des facteurs relatifs à la vie privée, droits des personnes).
-  22 septembre 2024 — Phase 3 : droit à la portabilité des données.
-Implications pour l'IA — DEUX articles clés :
-  Article 12.1 : obligation d'INFORMER la personne lorsqu'une décision la concernant est prise UNIQUEMENT sur la base d'un traitement automatisé. La personne peut demander à être informée des renseignements utilisés et à présenter ses observations à un humain qui peut réviser la décision.
-  Article 8.1 (transparence des algorithmes) : obligation de fournir des explications sur les facteurs et paramètres principaux ayant mené à la décision.
-Sanctions administratives : jusqu'à 10 millions $ ou 2 % du chiffre d'affaires mondial. Sanctions pénales : jusqu'à 25 millions $ ou 4 % du chiffre d'affaires mondial. Plus sévère que la LPRPDE fédérale.
-Pour une entreprise québécoise utilisant l'IA pour de la sélection de candidats, du crédit ou de la tarification : la Loi 25 est OBLIGATOIRE et déjà en vigueur.
+PROBLÈME CENTRAL — L'IA introduit des risques que les régimes juridiques classiques (responsabilité civile, contrats, vie privée, droit de la consommation) ne couvrent pas adéquatement. Trois propriétés des systèmes d'IA expliquent pourquoi un cadre dédié devient nécessaire.
+
+PREMIÈRE PROPRIÉTÉ — L'OPACITÉ. Un modèle d'apprentissage profond peut compter des milliards de paramètres et produire une décision sans que ni le concepteur ni l'utilisateur ne puissent expliquer le raisonnement précis. Le droit classique présuppose qu'on peut reconstituer une chaîne de causalité; l'IA brise cette présupposition. Conséquence juridique : difficulté à prouver une faute, à contester une décision, à attribuer une responsabilité.
+
+DEUXIÈME PROPRIÉTÉ — L'AUTOMATISATION À L'ÉCHELLE. Un système d'IA peut traiter des millions de dossiers en quelques secondes. Une discrimination subtile (par exemple un biais de 2 % contre un groupe protégé) qui passerait inaperçue chez un humain produit, à l'échelle, des effets disparates massifs. La régulation doit donc s'attaquer aux EFFETS STATISTIQUES et non seulement aux intentions individuelles.
+
+TROISIÈME PROPRIÉTÉ — LE COUPLAGE AVEC LES DONNÉES. Un modèle est aussi bon que les données qui l'ont entraîné. Or, ces données reflètent souvent des inégalités historiques (sous-représentation, étiquetage biaisé, prélèvement non consenti). Gouverner l'IA, c'est nécessairement gouverner aussi les données — d'où l'imbrication entre lois sur la vie privée (Loi 25, RGPD) et lois sur l'IA (EU AI Act, AIDA).
+
+QUATRE FAMILLES DE RISQUES (taxonomie largement adoptée) :
+1. RISQUES POUR LES DROITS FONDAMENTAUX — discrimination dans l'embauche, le crédit, le logement, la justice, l'accès aux services publics; surveillance disproportionnée; restriction de l'autonomie individuelle. Exemples documentés : COMPAS (récidive criminelle aux États-Unis), Apple Card (limites de crédit accordées aux femmes inférieures à celles de leurs maris pour des dossiers identiques), modèles de reconnaissance faciale moins précis sur les peaux foncées.
+2. RISQUES DE SÉCURITÉ PHYSIQUE — IA dans les dispositifs médicaux, les véhicules autonomes, les systèmes de contrôle industriel, les infrastructures critiques. Une défaillance peut tuer.
+3. RISQUES SYSTÉMIQUES — manipulation à grande échelle (deepfakes électoraux, désinformation), concentration extrême du marché autour de quelques fournisseurs de modèles de base, dépendance économique, fragilité de la chaîne d'approvisionnement.
+4. RISQUES POUR L'ÉCOSYSTÈME INFORMATIONNEL — pollution informationnelle (textes, images, voix synthétiques indistinguables), érosion de la confiance dans les médias, atteinte à la propriété intellectuelle, effondrement progressif de la qualité des données d'entraînement (« model collapse »).
+
+DEUX DÉFAILLANCES DE MARCHÉ justifient l'intervention publique :
+A. ASYMÉTRIE D'INFORMATION — l'utilisateur final (employé évalué par un algorithme RH, demandeur de prêt) n'a pas l'information ni l'expertise pour évaluer le système qui le juge. Le marché ne corrige pas ce déséquilibre.
+B. EXTERNALITÉS — les coûts d'une IA défaillante (discrimination, pollution informationnelle, accidents) ne sont pas internalisés par le producteur. Sans règle, le producteur sous-investit dans la sécurité.
+
+QUATRE OBJECTIFS DE LA GOUVERNANCE DE L'IA, communs à tous les cadres étudiés dans ce module : (1) garantir la sécurité et la fiabilité; (2) protéger les droits fondamentaux; (3) maintenir la responsabilité humaine et la possibilité de contester; (4) préserver la confiance dans les institutions et les marchés.
         """.strip(),
     },
 
-    "m22_c2_aida_canada": {
+    "m22_c2_typologie_outils": {
         "module": 22, "ordre": 2,
-        "titre": "AIDA — Canada (projet de loi)",
-        "prereqs": ["m22_c1_loi25_quebec"],
+        "titre": "Cartographie des outils de gouvernance",
+        "prereqs": ["m22_c1_pourquoi_gouverner_ia"],
         "texte": """
-AIDA (Artificial Intelligence and Data Act / Loi sur l'intelligence artificielle et les données) est le projet de loi fédéral canadien qui créerait le PREMIER cadre national spécifique à l'IA. AIDA fait partie du projet de loi C-27 (Loi de 2022 sur la mise en œuvre de la Charte du numérique), déposé en juin 2022.
-Statut au 25 avril 2026 : TOUJOURS PROPOSÉ. Le projet de loi a fait face à de fortes critiques (vague, processus précipité, manque de consultation) et n'a PAS été adopté à la dissolution du Parlement. Toute entreprise canadienne doit donc surveiller son évolution mais NE PEUT PAS encore se conformer à un texte qui n'est pas en vigueur.
-Concepts clés du texte proposé :
-  Cible les « high-impact AI systems » (systèmes d'IA à incidence élevée) — terme dont la définition précise serait laissée aux règlements.
-  Création d'un poste de COMMISSAIRE À L'IA ET AUX DONNÉES, hébergé à Innovation, Sciences et Développement économique Canada (ISDE).
-  Obligations attendues : évaluation de l'incidence, mesures d'atténuation des biais, mécanismes de surveillance, transparence, tenue de registres.
-  Sanctions : jusqu'à 25 millions $ ou 5 % du revenu brut mondial pour les violations les plus graves, plus des infractions criminelles distinctes pour usage malveillant.
-Document d'accompagnement (« companion document » publié en mars 2023) : sert de guide d'intention et précise que le gouvernement vise un alignement avec l'EU AI Act et le NIST AI RMF.
-Critique principale : la définition de « high-impact » est renvoyée aux règlements, ce qui crée de l'incertitude pour les entreprises pendant des années après l'adoption.
+La gouvernance de l'IA combine QUATRE FAMILLES D'INSTRUMENTS aux statuts juridiques distincts. Confondre ces familles est l'erreur la plus fréquente des dirigeants : on entend « on est conforme NIST » comme si c'était équivalent à « on est conforme Loi 25 ». Ce n'est pas le cas.
+
+FAMILLE 1 — DROIT DUR (HARD LAW). Texte juridique contraignant, adopté par un Parlement, exécutoire devant les tribunaux, assorti de sanctions civiles, administratives ou pénales. Exemples couverts dans ce module : Loi 25 du Québec (en vigueur), EU AI Act (en vigueur, application phasée), RGPD pour le volet données, AIDA si elle est adoptée. Caractéristique clé : on ne peut pas y déroger contractuellement; le texte s'impose.
+
+FAMILLE 2 — DROIT SOUPLE (SOFT LAW). Principes, déclarations, recommandations adoptés par des organisations internationales ou des autorités publiques sans force contraignante directe. Exemples : Principes de l'OCDE sur l'IA, Recommandation de l'UNESCO sur l'éthique de l'IA (2021), Principes de Bletchley (Sommet sur la sécurité de l'IA, novembre 2023), Code de conduite volontaire canadien. Ils n'imposent pas d'obligation, mais ils façonnent les normes ultérieures de droit dur et servent de référence dans l'interprétation des textes.
+
+FAMILLE 3 — NORMES TECHNIQUES (STANDARDS). Documents techniques produits par des organismes de normalisation (ISO, IEEE, CEN-CENELEC, NIST). Volontaires, mais souvent incorporés par référence dans le droit dur — l'EU AI Act renvoie explicitement à des normes harmonisées CEN-CENELEC pour démontrer la conformité. Exemples : ISO/IEC 42001 (management de l'IA), ISO/IEC 23894 (gestion des risques d'IA), ISO/IEC 22989 (terminologie IA), IEEE 7000 (conception éthique). Caractéristique clé : certifiables par un tiers, ce qui crée un signal de marché.
+
+FAMILLE 4 — CADRES OPÉRATIONNELS (FRAMEWORKS). Méthodologies de mise en œuvre, ni lois ni normes certifiables, mais des outils de référence largement adoptés. Exemples : NIST AI Risk Management Framework, OWASP AI Security and Privacy Guide, MITRE ATLAS (taxonomie des attaques sur l'IA). Ils décrivent COMMENT faire — pas QUOI faire au sens contraignant.
+
+POURQUOI LA DISTINCTION COMPTE en pratique :
+A. Une certification ISO 42001 ne dispense PAS de la conformité Loi 25. Le certificat est un signal de qualité; la loi est obligatoire indépendamment.
+B. Adopter NIST AI RMF n'a aucune valeur juridique en soi, mais le suivre rigoureusement constitue un argument fort pour démontrer la « due diligence » devant un régulateur ou un juge.
+C. Les Principes de l'OCDE n'imposent rien, mais ils servent de socle d'interprétation dans presque toutes les lois nationales — connaître les 5 principes permet de comprendre l'esprit des textes plus contraignants.
+
+HIÉRARCHIE D'IMPACT JURIDIQUE (du plus contraignant au moins contraignant) :
+1. Constitution / Charte (droits fondamentaux qui s'imposent à toute loi)
+2. Lois ordinaires (Loi 25, EU AI Act, AIDA quand adoptée)
+3. Règlements d'application (précisent les lois)
+4. Lignes directrices d'autorités publiques (CAI au Québec, EDPB en Europe)
+5. Normes techniques harmonisées (ISO 42001 si référencée par la loi)
+6. Codes de conduite sectoriels (volontaires)
+7. Cadres opérationnels (NIST RMF)
+8. Déclarations internationales (OCDE, UNESCO, G20)
+
+INSTRUMENTS HYBRIDES émergents : la « bac à sable réglementaire » (regulatory sandbox) — l'EU AI Act crée des sandboxes nationaux où une PME peut tester un système d'IA à haut risque sous supervision allégée. Le Québec a mis sur pied des bacs à sable similaires en santé et en finance. Ces instruments brouillent la frontière entre régulation et expérimentation.
         """.strip(),
     },
 
-    "m22_c3_iso_42001": {
+    "m22_c3_approches_reglementaires": {
         "module": 22, "ordre": 3,
-        "titre": "ISO/IEC 42001 — Management de l'IA",
-        "prereqs": [],
+        "titre": "Trois grandes approches réglementaires",
+        "prereqs": ["m22_c2_typologie_outils"],
         "texte": """
-ISO/IEC 42001:2023 est la PREMIÈRE norme internationale CERTIFIABLE pour les systèmes de management de l'IA (AIMS — AI Management System). Publiée le 18 décembre 2023 par l'Organisation internationale de normalisation et la Commission électrotechnique internationale.
-Différence avec un cadre comme NIST AI RMF : ISO 42001 est une NORME DE MANAGEMENT certifiable par un organisme tiers accrédité. Une entreprise peut obtenir un certificat ISO 42001 et l'afficher comme preuve de gouvernance, comme elle le fait déjà avec ISO 27001 (sécurité) ou ISO 9001 (qualité).
-Structure type High-Level Structure (HLS) — alignée avec ISO 27001 et ISO 9001 :
-  Contexte de l'organisation, leadership, planification, support, opération, évaluation de la performance, amélioration. Cycle Plan-Do-Check-Act.
-Annexe A : 38 contrôles couvrant 9 domaines :
-  Politiques liées à l'IA, organisation interne, ressources, évaluation des incidences, cycle de vie du système d'IA, données pour l'IA, information aux parties intéressées, utilisation des systèmes d'IA, relations avec les tiers.
-Annexe B : guide d'implémentation des contrôles. Annexe C : objectifs et risques liés à l'IA. Annexe D : usage à travers les domaines.
-Avantage stratégique : pour une entreprise québécoise vendant des services d'IA à des clients européens ou internationaux, une certification ISO 42001 facilite la démonstration de conformité au-delà de la Loi 25 et anticipe AIDA. La norme est VOLONTAIRE mais devient un signal de marché de plus en plus attendu dans les appels d'offres B2B.
+Les régulateurs ont essayé TROIS GRANDES STRATÉGIES pour encadrer l'IA. Chacune a ses forces et ses faiblesses, et les principaux régimes étudiés dans ce module se positionnent différemment sur ce spectre.
+
+APPROCHE 1 — RÉGULATION PAR LES RISQUES (RISK-BASED). Le système est classé selon le niveau de risque qu'il pose; les obligations augmentent avec le risque. Le cas paradigmatique est l'EU AI Act, qui distingue quatre niveaux : risque inacceptable (interdit), risque élevé (obligations lourdes), risque limité (obligations de transparence), risque minimal (rien). AIDA propose une variante simplifiée centrée sur le seul concept de « high-impact AI system ».
+  FORCES : proportionnalité, focalisation des ressources réglementaires sur les vrais enjeux, évite de paralyser les usages anodins.
+  FAIBLESSES : la classification est elle-même un travail réglementaire complexe et contesté. Le modèle de fondation (GPT, Claude, Llama) peut servir indifféremment à un usage minimal et à un usage à haut risque — comment classer ce qui est en amont? L'EU AI Act y répond par un régime spécifique GPAI; AIDA n'a pas tranché.
+
+APPROCHE 2 — RÉGULATION PAR LES PRINCIPES (PRINCIPLES-BASED). Le législateur fixe des principes généraux (équité, transparence, responsabilité, sûreté) et laisse aux acteurs le soin de les opérationnaliser, sous le contrôle ex post d'un régulateur. C'est l'approche des Principes de l'OCDE, du Code de conduite volontaire canadien, et largement de la Loi 25 québécoise (qui pose des obligations générales sans prescrire de méthode technique).
+  FORCES : flexibilité face à une technologie qui évolue plus vite que la loi; permet l'adaptation sectorielle; n'enferme pas dans des solutions techniques rapidement obsolètes.
+  FAIBLESSES : insécurité juridique pour les entreprises qui ne savent pas si leur méthode de mise en œuvre est jugée suffisante; risque d'inégalité entre les grandes entreprises (qui peuvent se payer des juristes) et les PME (qui ne peuvent pas).
+
+APPROCHE 3 — RÉGULATION SECTORIELLE (USE-CASE BASED). Le législateur n'adopte pas de loi transversale sur l'IA mais adapte chaque réglementation sectorielle. C'est l'approche historique des États-Unis avant l'Executive Order de 2023 et le décret de 2025 : la FDA encadre l'IA médicale, la FTC encadre les pratiques commerciales déloyales, l'EEOC encadre la discrimination à l'embauche. Le Royaume-Uni a explicitement choisi cette voie en 2023 avec sa « pro-innovation approach ».
+  FORCES : règles précises adaptées aux risques sectoriels; aucune duplication réglementaire; évite la création d'une bureaucratie horizontale.
+  FAIBLESSES : zones grises pour les IA polyvalentes; difficulté à coordonner plusieurs autorités sur un même système; lenteur d'adaptation du droit sectoriel; les « usages émergents » (chatbots de service à la clientèle, outils de productivité) tombent souvent entre deux chaises.
+
+POSITIONNEMENT DES RÉGIMES couverts dans ce module :
+  EU AI Act = risques + horizontal + détaillé (la version la plus prescriptive).
+  AIDA = risques + horizontal mais minimaliste (renvoie aux règlements).
+  Loi 25 = principes + transversale (vie privée, pas IA-spécifique mais s'y applique).
+  NIST AI RMF = principes mais opérationnalisés (volontaire).
+  ISO 42001 = principes + management (volontaire, certifiable).
+  OCDE = principes purs (soft law).
+
+QUATRIÈME APPROCHE ÉMERGENTE — L'AUTORÉGULATION CONCURRENTIELLE. Les grands fournisseurs de modèles (Anthropic, OpenAI, Google DeepMind, Meta) publient des « policies » internes (Acceptable Use, Responsible Scaling, frontier safety frameworks). Ce ne sont ni des lois ni des normes; ce sont des engagements unilatéraux. Le risque : transformer la gouvernance en discrétion privée. La parade : référencer ces engagements dans le droit dur (l'EU AI Act le fait pour les codes de conduite GPAI).
+
+LEÇON STRATÉGIQUE : aucune entreprise ne sera concernée par UNE seule approche. Une PME québécoise vendant un outil RH d'IA en Europe est régulée par la Loi 25 (principes), l'EU AI Act (risques) et indirectement par les règles sectorielles d'embauche. La gouvernance interne doit être suffisamment générique pour répondre simultanément à plusieurs logiques.
         """.strip(),
     },
 
-    "m22_c4_nist_ai_rmf": {
+    # ────────────── SECTION B — OCDE ──────────────
+
+    "m22_c4_principes_ocde": {
         "module": 22, "ordre": 4,
-        "titre": "NIST AI RMF — Cadre américain",
-        "prereqs": [],
+        "titre": "Principes de l'OCDE — le socle international",
+        "prereqs": ["m22_c3_approches_reglementaires"],
         "texte": """
-Le NIST AI Risk Management Framework (AI RMF 1.0) est le cadre VOLONTAIRE américain de gestion des risques liés à l'IA, publié par le National Institute of Standards and Technology le 26 janvier 2023. Mandaté par le National AI Initiative Act de 2020.
-Différence avec une loi : ce n'est pas un texte contraignant. C'est une boîte à outils de référence largement adoptée comme « état de l'art » par les régulateurs, les assureurs et les acheteurs B2B.
-QUATRE FONCTIONS centrales (à mémoriser) :
-  GOVERN — Cultiver une culture de gestion des risques d'IA dans l'organisation. Politiques, rôles, responsabilités, formation.
-  MAP — Cadrer le contexte d'utilisation. Qui sont les parties prenantes? Quels sont les risques spécifiques de ce système d'IA?
-  MEASURE — Évaluer, analyser et suivre les risques identifiés. Métriques quantitatives et qualitatives.
-  MANAGE — Prioriser et traiter les risques. Allouer les ressources, planifier les réponses aux incidents.
-SEPT caractéristiques d'une IA digne de confiance (« trustworthy AI ») :
-  Validité et fiabilité, sûreté, sécurité et résilience, responsabilité et transparence, explicabilité et interprétabilité, protection de la vie privée, équité avec biais maîtrisés.
-Le NIST AI RMF Generative AI Profile (juillet 2024) ajoute un profil spécifique pour l'IA générative : risques de confabulation, contenu CBRN, personnalisation pour la cybercriminalité, contenu obscène, désinformation, violation de propriété intellectuelle.
-Le RMF est fortement INTEROPÉRABLE avec ISO 42001 : une entreprise peut utiliser le RMF comme méthode opérationnelle ET viser une certification ISO 42001 comme preuve formelle.
+Les Principes de l'OCDE sur l'IA (« OECD AI Principles ») sont la première RECOMMANDATION INTERGOUVERNEMENTALE sur l'IA digne de confiance. Adoptés le 22 mai 2019 par le Conseil de l'OCDE, ils ont été endossés par les 38 pays membres puis par 9 partenaires additionnels, totalisant 47+ adhérents (dont le Canada). Première mise à jour majeure le 3 mai 2024 pour intégrer l'IA générative.
+
+STATUT JURIDIQUE — c'est une RECOMMANDATION du Conseil de l'OCDE, instrument de droit souple. Aucune sanction directe en cas de non-respect. Mais les pays adhérents s'engagent politiquement à les promouvoir et à en tenir compte dans leur droit national.
+
+POURQUOI LES CONNAÎTRE — DEUX RAISONS :
+1. Les Principes de l'OCDE ont été REPRIS QUASI MOT POUR MOT par les Principes du G20 (juin 2019), ce qui leur donne une portée diplomatique mondiale.
+2. Ils ont SERVI DE MATRICE pour les textes contraignants ultérieurs : EU AI Act (préambule cite explicitement l'OCDE), NIST AI RMF (caractéristiques de trustworthy AI alignées), AIDA (companion document cite l'OCDE), Loi 25 (l'esprit des articles 8.1 et 12.1 reflète les principes 3 et 5).
+
+LES CINQ PRINCIPES (à mémoriser dans l'ordre, ils sont numérotés 1.1 à 1.5 dans le texte) :
+
+PRINCIPE 1.1 — CROISSANCE INCLUSIVE, DÉVELOPPEMENT DURABLE ET BIEN-ÊTRE. L'IA devrait bénéficier aux personnes et à la planète, en stimulant la croissance inclusive, le développement durable et le bien-être. Implication concrète : on ne juge pas un système d'IA seulement sur sa performance technique, mais sur ses bénéfices sociétaux et environnementaux.
+
+PRINCIPE 1.2 — RESPECT DE L'ÉTAT DE DROIT, DES DROITS HUMAINS, DES VALEURS DÉMOCRATIQUES, ET DE LA DIVERSITÉ, INCLUANT L'ÉQUITÉ. C'est le principe le plus dense : il englobe non-discrimination, dignité humaine, protection de la vie privée, processus équitable, justice sociale, et préservation des cultures et identités. Mise à jour 2024 : ajout explicite de la « primauté du droit » et de la lutte contre la mésinformation.
+
+PRINCIPE 1.3 — TRANSPARENCE ET EXPLICABILITÉ. Trois éléments distincts : (a) divulgation responsable (les acteurs doivent communiquer sur les capacités et limites du système); (b) information aux personnes affectées (qu'elles savent qu'elles interagissent avec une IA et qu'elles puissent comprendre les résultats); (c) capacité à contester (« meaningful explanation » suffisante pour permettre à une personne d'attaquer une décision défavorable). Influence directe sur l'article 8.1 de la Loi 25 et sur les articles 13-14 du RGPD.
+
+PRINCIPE 1.4 — ROBUSTESSE, SÛRETÉ ET SÉCURITÉ. Tout au long du cycle de vie. Inclut traçabilité (data lineage), gestion des risques cyber, capacité à fonctionner correctement en cas d'usage non prévu, et sortie de service contrôlée. Mise à jour 2024 : ajout d'exigences spécifiques pour les modèles génératifs (filtrage des sorties, watermarking, prévention de l'usage à des fins CBRN).
+
+PRINCIPE 1.5 — RESPONSABILITÉ. Les acteurs de l'IA doivent être responsables (« accountable ») du fonctionnement adéquat des systèmes selon leur rôle. Inclut la documentation, la traçabilité, les mécanismes d'audit, et l'allocation claire des responsabilités le long de la chaîne de valeur (concepteur, déployeur, utilisateur). Ce principe fonde l'idée d'un « accountability framework » qu'on retrouve dans toutes les normes ultérieures.
+
+LES CINQ RECOMMANDATIONS aux gouvernements (numérotées 2.1 à 2.5) :
+2.1 Investir dans la R&D en IA fiable (financement public).
+2.2 Favoriser un écosystème numérique pour l'IA (infrastructures, données ouvertes, savoir-faire).
+2.3 Créer un environnement réglementaire et politique favorable à l'IA digne de confiance (cadres juridiques agiles).
+2.4 Bâtir des compétences humaines et préparer la transition du marché du travail (formation, requalification).
+2.5 Coopérer internationalement pour une IA digne de confiance (interopérabilité réglementaire, partage de bonnes pratiques).
+
+MISE À JOUR 2024 — APPORTS PRINCIPAUX :
+A. Inclusion des modèles génératifs et systèmes d'IA généralistes dans le périmètre.
+B. Garde-fous explicites contre la mésinformation, la désinformation, et l'usage malveillant des contenus synthétiques.
+C. Renforcement des références aux droits humains et à la sécurité de l'information.
+D. Reconnaissance des risques pour la stabilité démocratique (manipulation électorale).
+E. Référence à la durabilité environnementale (consommation énergétique des centres de données, eau).
+
+UTILISATION PRATIQUE — quand on lit n'importe quelle loi nationale sur l'IA, identifier en marge à quel principe OCDE chaque article répond. Exercice utile : prendre le texte de l'EU AI Act, encadrer les obligations de transparence (Art. 13, 50, 52) et les rattacher au principe 1.3; encadrer les obligations de robustesse (Art. 9, 15) et les rattacher au principe 1.4. Cela révèle la cohérence sous-jacente de tous les régimes.
         """.strip(),
     },
 
-    "m22_c5_eu_ai_act": {
+    # ────────────── SECTION C — LOI 25 (Québec) ──────────────
+
+    "m22_c5_loi25_vue_ensemble": {
         "module": 22, "ordre": 5,
-        "titre": "EU AI Act — Règlement européen",
-        "prereqs": [],
+        "titre": "Loi 25 — vue d'ensemble et calendrier",
+        "prereqs": ["m22_c4_principes_ocde"],
         "texte": """
-Le Règlement (UE) 2024/1689 sur l'intelligence artificielle (« EU AI Act ») est la PREMIÈRE loi globale et contraignante au monde sur l'IA. Adopté en mai 2024, entré en vigueur le 1er août 2024. Application phasée jusqu'au 2 août 2027.
-PORTÉE EXTRATERRITORIALE — c'est ce qui le rend pertinent pour le Canada : le règlement s'applique à tout fournisseur ou utilisateur dont les sorties d'un système d'IA sont utilisées dans l'UE, peu importe où il est établi. Une entreprise québécoise dont le SaaS d'IA a des clients européens DOIT s'y conformer.
-APPROCHE BASÉE SUR LES RISQUES — quatre niveaux :
-  RISQUE INACCEPTABLE (interdit) : notation sociale par les gouvernements, manipulation cognitive ciblant les enfants, identification biométrique à distance en temps réel dans l'espace public (sauf exceptions), reconnaissance d'émotions au travail ou à l'école, scraping non ciblé de visages, prédiction de criminalité individuelle.
-  RISQUE ÉLEVÉ : IA pour le recrutement, le crédit, l'éducation, la justice, l'application de la loi, la migration, les infrastructures critiques, les dispositifs médicaux. Obligations lourdes : évaluation de la conformité, gestion des risques, qualité des données, documentation technique, surveillance humaine, robustesse, marquage CE.
-  RISQUE LIMITÉ : chatbots, deepfakes, systèmes de reconnaissance d'émotions hors interdictions. Obligation de TRANSPARENCE (informer l'utilisateur qu'il interagit avec une IA).
-  RISQUE MINIMAL : tout le reste. Aucune obligation, codes de conduite volontaires.
-Calendrier : interdictions applicables le 2 février 2025; règles GPAI (modèles à usage général) le 2 août 2025; obligations principales pour systèmes à risque élevé le 2 août 2026; pleine application le 2 août 2027.
-Sanctions : jusqu'à 35 millions € ou 7 % du chiffre d'affaires mondial annuel pour les pratiques interdites — plus sévère que le RGPD.
+La Loi 25 (avant adoption : Projet de loi 64) est officiellement la « Loi modernisant des dispositions législatives en matière de protection des renseignements personnels », sanctionnée le 22 septembre 2021. Elle modifie deux lois antérieures :
+A. La Loi sur l'accès aux documents des organismes publics et sur la protection des renseignements personnels (« Loi sur l'accès », pour le secteur public).
+B. La Loi sur la protection des renseignements personnels dans le secteur privé (« LPRPSP », pour les entreprises privées).
+
+CHAMP D'APPLICATION TRÈS LARGE — la Loi 25 couvre :
+1. Tous les organismes publics du Québec (ministères, organismes paragouvernementaux, municipalités, commissions scolaires, établissements de santé).
+2. Toutes les entreprises privées qui exploitent une entreprise au Québec et qui détiennent ou traitent des renseignements personnels concernant des résidents du Québec, peu importe où l'entreprise a son siège.
+3. Effet extraterritorial : une entreprise hors Québec qui offre des produits ou services à des résidents du Québec est également visée — la portée se rapproche du RGPD européen.
+
+NOTION CLÉ DE « RENSEIGNEMENT PERSONNEL » : tout renseignement qui concerne une personne physique et qui permet de l'identifier directement ou indirectement. Cela inclut les identifiants techniques (adresse IP, identifiants publicitaires, données biométriques) — pas seulement nom et adresse.
+
+ENTRÉE EN VIGUEUR EN TROIS PHASES :
+
+PHASE 1 — 22 SEPTEMBRE 2022 (12 mois après la sanction) :
+A. Désignation obligatoire d'une personne RESPONSABLE DE LA PROTECTION DES RENSEIGNEMENTS PERSONNELS (le « RPRP »). Par défaut, c'est la personne ayant la plus haute autorité (président, directeur général). Peut être délégué.
+B. Obligation de signaler à la Commission d'accès à l'information (CAI) et aux personnes concernées tout INCIDENT DE CONFIDENTIALITÉ présentant un risque sérieux de préjudice.
+C. Tenue d'un REGISTRE DES INCIDENTS conservé pendant 5 ans.
+D. Cadre pour la communication de renseignements personnels à des tiers à des fins commerciales (transactions d'entreprise).
+
+PHASE 2 — 22 SEPTEMBRE 2023 (24 mois après la sanction). C'est la phase la plus dense, qui contient l'essentiel des nouvelles obligations :
+A. Politique de confidentialité publique, claire, accessible, en langage simple.
+B. Évaluation des facteurs relatifs à la vie privée (EFVP, équivalent du DPIA européen) obligatoire pour tout projet impliquant l'acquisition, le développement ou la refonte d'un système de traitement de RP.
+C. Règles de consentement renforcées : consentement manifeste, libre, éclairé, donné à des fins spécifiques. Pour les renseignements sensibles : consentement EXPLICITE.
+D. Droits étendus des personnes : droit de rectification, droit à la cessation de la diffusion, droit à la désindexation (« droit à l'oubli »), droit d'accès, droit d'être informé d'une décision automatisée (Art. 12.1).
+E. Règles de transparence sur l'utilisation de témoins (cookies) à des fins de profilage.
+F. Communications hors Québec : évaluation préalable du niveau de protection accordé par la juridiction étrangère.
+G. Sanctions administratives pécuniaires de la CAI jusqu'à 10 millions $ ou 2 % du chiffre d'affaires mondial de l'exercice précédent (le plus élevé). Sanctions pénales jusqu'à 25 millions $ ou 4 %.
+
+PHASE 3 — 22 SEPTEMBRE 2024 (36 mois après la sanction). Phase courte mais structurante :
+A. DROIT À LA PORTABILITÉ. Toute personne peut exiger, dans un format structuré, technologiquement courant, que ses renseignements personnels lui soient communiqués ou transmis directement à un autre tiers.
+B. Cette obligation rejoint l'article 20 du RGPD et l'article 100 du Digital Markets Act (DMA) européen.
+
+ARTICULATION AVEC LE FÉDÉRAL — la LPRPDE fédérale (Loi sur la protection des renseignements personnels et les documents électroniques) s'applique au Québec uniquement aux activités fédérales (banques, télécoms, transport interprovincial). Pour la quasi-totalité des entreprises locales, c'est la Loi 25 qui prime. Si C-27 (qui contient AIDA et la nouvelle LPRPDE — la « LPVPC ») est éventuellement adoptée, le Québec demandera à la CAI de demeurer l'autorité de référence pour ses résidents.
+
+POURQUOI LA LOI 25 EST CRUCIALE POUR L'IA — bien qu'elle ne soit pas une « loi sur l'IA », elle régule les CONDITIONS D'ENTRÉE de l'IA dans tout traitement de RP : consentement à l'utilisation de données pour l'entraînement, transparence sur les décisions automatisées (Art. 8.1, 12.1), évaluation d'incidence préalable (EFVP), responsabilité du RPRP. Pratiquement, on ne peut pas déployer d'IA basée sur des données personnelles au Québec sans toucher à la Loi 25.
         """.strip(),
     },
 
-    "m22_c6_oecd_principles": {
+    "m22_c6_loi25_rprp_efvp": {
         "module": 22, "ordre": 6,
-        "titre": "Principes de l'OCDE sur l'IA",
-        "prereqs": [],
+        "titre": "Loi 25 — gouvernance interne (RPRP, EFVP, registres)",
+        "prereqs": ["m22_c5_loi25_vue_ensemble"],
         "texte": """
-Les Principes de l'OCDE sur l'IA sont les premiers principes intergouvernementaux sur l'IA digne de confiance. Adoptés le 22 mai 2019 par les 38 pays membres de l'OCDE et plusieurs partenaires (47+ pays au total, incluant le Canada). Mis à jour le 3 mai 2024 pour intégrer l'IA générative.
-Ce ne sont PAS des lois — c'est du « droit souple » (soft law). Mais ils servent de SOCLE COMMUN qui a influencé l'EU AI Act, le NIST AI RMF, AIDA, et les principes du G20 (qui les a repris en juin 2019).
-CINQ PRINCIPES fondés sur des valeurs (à connaître) :
-  1. CROISSANCE INCLUSIVE, développement durable et bien-être — l'IA doit bénéficier aux personnes et à la planète.
-  2. VALEURS CENTRÉES SUR L'HUMAIN ET ÉQUITÉ — respect des droits humains, primauté du droit, démocratie, diversité, équité, justice sociale.
-  3. TRANSPARENCE ET EXPLICABILITÉ — possibilité de comprendre, de contester et de challenger les décisions issues de systèmes d'IA.
-  4. ROBUSTESSE, SÛRETÉ ET SÉCURITÉ — fonctionnement fiable et résilience tout au long du cycle de vie.
-  5. RESPONSABILITÉ — les acteurs de l'IA sont responsables du fonctionnement adéquat des systèmes selon leur rôle.
-CINQ RECOMMANDATIONS aux gouvernements : investir dans la R&D, favoriser un écosystème numérique pour l'IA, créer un environnement réglementaire favorable, bâtir des compétences humaines, coopérer internationalement.
-Mise à jour 2024 : ajout de garde-fous spécifiques contre la mésinformation, la désinformation et l'usage malveillant de l'IA générative; renforcement des références aux droits humains et à la sécurité de l'information.
-Pourquoi ils comptent : ils forment le langage commun entre régulateurs nationaux. Connaître les 5 principes permet de RECONNAÎTRE leur déclinaison dans n'importe quelle loi nationale (Loi 25, AIDA, EU AI Act).
+La Loi 25 ne se contente pas d'imposer des obligations comportementales; elle exige une INFRASTRUCTURE DE GOUVERNANCE interne. Trois éléments structurent cette infrastructure : le RPRP, les EFVP, et les registres.
+
+LE RPRP (RESPONSABLE DE LA PROTECTION DES RENSEIGNEMENTS PERSONNELS) — Article 3.1 LPRPSP :
+A. Désignation OBLIGATOIRE depuis le 22 septembre 2022.
+B. Par défaut, c'est la personne ayant la plus haute autorité dans l'entreprise (président, propriétaire). Peut être DÉLÉGUÉ par écrit à un employé ou à un tiers.
+C. Le titre et les coordonnées du RPRP doivent être PUBLIÉS sur le site web de l'entreprise (Art. 3.2). Une simple adresse courriel suffit, mais elle doit être fonctionnelle et surveillée.
+D. Rôles attendus (non énumérés précisément dans la loi mais déduits des obligations) : superviser le programme de protection, coordonner les EFVP, gérer les incidents, tenir les registres, traiter les demandes des personnes (accès, rectification, cessation, portabilité).
+E. Différence avec le DPO européen (RGPD Art. 37-39) : le DPO doit être indépendant, libre de tout conflit d'intérêts, et ne peut être sanctionné pour l'exercice de ses fonctions. La Loi 25 n'impose pas explicitement ces protections — point de friction relevé par plusieurs juristes.
+
+LES EFVP (ÉVALUATIONS DES FACTEURS RELATIFS À LA VIE PRIVÉE) — Article 3.3 LPRPSP, en vigueur depuis le 22 septembre 2023.
+A. Obligation de réaliser une EFVP AVANT TOUT PROJET d'acquisition, de développement ou de refonte d'un système d'information ou de prestation électronique de services impliquant la collecte, l'utilisation, la communication, la conservation ou la destruction de RP.
+B. Application IA — concrètement, déployer un nouveau modèle de scoring de crédit, de tri de CV, de chatbot avec rétention de conversations, ou d'analyse vidéo en magasin DÉCLENCHE l'obligation d'EFVP.
+C. Contenu attendu de l'EFVP (la loi n'impose pas un format strict, mais la CAI a publié des lignes directrices) :
+   - Description du système, de ses finalités, de la nécessité;
+   - Cartographie des flux de RP;
+   - Identification des risques pour la vie privée;
+   - Analyse des mesures de mitigation (techniques, organisationnelles, contractuelles);
+   - Décision motivée d'aller de l'avant ou non, et conditions de mise en œuvre.
+D. L'EFVP doit être proportionnée à la sensibilité, à la finalité et au volume des renseignements concernés.
+E. Conservation : la loi n'impose pas de durée explicite, mais en pratique on garde l'EFVP au moins 3 ans après la fin du projet.
+
+LES REGISTRES — la Loi 25 impose plusieurs registres distincts :
+1. REGISTRE DES INCIDENTS (Art. 3.8). Tout incident de confidentialité doit y être consigné, qu'il y ait ou non risque sérieux. Conservation : 5 ans après la date de l'incident. Contenu : description, date, RP touchés, nombre de personnes, mesures correctives.
+2. REGISTRE DES COMMUNICATIONS hors Québec (Art. 17). Toute communication de RP à un destinataire à l'extérieur du Québec doit être documentée, accompagnée de l'évaluation préalable du niveau de protection.
+3. REGISTRE DES UTILISATIONS À DES FINS SECONDAIRES (Art. 12). Quand on utilise des RP pour une finalité distincte de celle pour laquelle ils ont été recueillis (recherche, statistique, étude), inscrire la finalité, la base juridique, les mesures.
+4. REGISTRE DES DÉCISIONS AUTOMATISÉES — non explicitement requis par la loi, mais fortement recommandé pour démontrer la conformité aux articles 8.1 et 12.1 (voir concept dédié).
+
+INTERACTIONS ENTRE LES TROIS — le RPRP supervise les EFVP, qui alimentent les registres, qui sont à leur tour utilisés par le RPRP pour répondre aux demandes des personnes et aux enquêtes de la CAI. Une organisation mature documente cette articulation dans une POLITIQUE INTÉGRÉE DE GOUVERNANCE DES DONNÉES.
+
+ERREURS FRÉQUENTES observées dans la mise en conformité :
+A. Désigner le RPRP mais ne pas publier ses coordonnées sur le site web — non-conformité formelle facile à constater.
+B. Réaliser une EFVP « formelle » qui ne fait que cocher des cases sans véritable analyse des risques.
+C. Confondre le registre des incidents (Art. 3.8) et le registre des activités de traitement (registre type Art. 30 RGPD, qui n'est pas requis par la Loi 25 mais souvent attendu par les partenaires européens).
+D. Omettre de mettre à jour l'EFVP quand le projet évolue significativement (nouveau modèle, nouvelle source de données, nouvelle finalité).
+
+LIEN AVEC L'IA — pour un projet d'IA, l'EFVP est l'instrument de premier rang. Elle doit examiner spécifiquement : (i) les sources de données d'entraînement et leur licéité; (ii) les risques de biais; (iii) la transparence offerte aux personnes affectées; (iv) la capacité de contester une décision automatisée; (v) les mesures de surveillance humaine. C'est dans l'EFVP qu'on documente la conformité aux articles 8.1 et 12.1 — articles couverts dans le concept dédié.
         """.strip(),
     },
 
-    "m22_c7_synthese_gouvernance": {
+    "m22_c7_loi25_consentement_droits": {
         "module": 22, "ordre": 7,
-        "titre": "Synthèse — Quel cadre pour quelle situation",
-        "prereqs": ["m22_c1_loi25_quebec", "m22_c2_aida_canada", "m22_c3_iso_42001", "m22_c4_nist_ai_rmf", "m22_c5_eu_ai_act", "m22_c6_oecd_principles"],
+        "titre": "Loi 25 — consentement et droits des personnes",
+        "prereqs": ["m22_c5_loi25_vue_ensemble"],
         "texte": """
-Hiérarchie des cadres et stratégie d'application pour une organisation québécoise.
-DROIT DUR (obligatoire, sanctions) :
-  Loi 25 — DÉJÀ EN VIGUEUR. Toute organisation traitant des renseignements personnels au Québec doit s'y conformer. Pertinente pour l'IA via les articles 8.1 et 12.1 (décisions automatisées, transparence des algorithmes).
-  EU AI Act — EN VIGUEUR mais application phasée. S'applique extraterritorialement si vos systèmes ont une sortie utilisée dans l'UE. Risque élevé = obligations lourdes à partir du 2 août 2026.
-  AIDA — PROJET. Surveillez son évolution. Pas d'obligation actuelle, mais alignement utile car le projet vise la convergence avec EU AI Act et NIST RMF.
-DROIT SOUPLE (non contraignant, influence forte) :
-  OCDE — socle international. Sert de boussole pour interpréter les autres cadres.
-NORMES VOLONTAIRES (certifiables, signal de marché) :
-  ISO/IEC 42001 — certificat délivré par tiers accrédité. Utile pour B2B, appels d'offres, exportation vers l'UE.
-CADRES OPÉRATIONNELS (méthodologies internes) :
-  NIST AI RMF — méthode pour gouverner, cartographier, mesurer et gérer les risques d'IA. Voluntary mais devenu standard de facto.
-ROUTE PRATIQUE pour une PME québécoise utilisant ou développant de l'IA :
-  ÉTAPE 1 — Conformité Loi 25 (obligatoire) : nommer un RPRP, faire les évaluations des facteurs relatifs à la vie privée, prévoir l'information sur les décisions automatisées.
-  ÉTAPE 2 — Adopter NIST AI RMF comme méthode opérationnelle interne (aucun coût, structure éprouvée).
-  ÉTAPE 3 — Selon la stratégie commerciale : viser ISO 42001 si exportation/B2B, ou se contenter du RMF.
-  ÉTAPE 4 — Si exposition européenne : cartographier les systèmes d'IA selon les niveaux de risque de l'EU AI Act et anticiper août 2026.
-  ÉTAPE 5 — Surveiller AIDA et ajuster quand le texte sera adopté.
-La règle d'or : la conformité IA n'est PAS un projet ponctuel; c'est un système de management continu (d'où l'utilité de structures comme ISO 42001 ou le RMF).
+La Loi 25 a profondément renforcé les règles de CONSENTEMENT et a créé ou consolidé une demi-douzaine de droits subjectifs au bénéfice des personnes. Ces règles encadrent la « licéité » de toute collecte, utilisation et communication de renseignements personnels — y compris pour entraîner ou faire fonctionner un système d'IA.
+
+QUATRE QUALITÉS REQUISES DU CONSENTEMENT (Art. 14 LPRPSP) :
+1. MANIFESTE — le consentement doit résulter d'une démarche claire de la personne. Le silence, l'inaction, ou les paramètres par défaut ne valent pas consentement.
+2. LIBRE — pas de pression, pas de chantage, pas de conditionnement à l'accès à un service essentiel. Une organisation ne peut pas refuser un service au seul motif que la personne refuse une utilisation secondaire.
+3. ÉCLAIRÉ — la personne doit comprendre la finalité, les destinataires, la durée, et les conséquences possibles. C'est ici que la TRANSPARENCE rejoint le consentement.
+4. DONNÉ À DES FINS SPÉCIFIQUES — un consentement « pour toute utilisation que nous jugerons utile » est NUL. Chaque finalité distincte exige son propre consentement.
+
+CONSENTEMENT EXPLICITE pour les RP SENSIBLES (Art. 12 al. 4) — quand le RP est de nature sensible (santé, biométrie, opinion politique ou religieuse, orientation sexuelle, données génétiques), le consentement doit être donné par un acte AFFIRMATIF distinct (case à cocher non pré-cochée, signature, déclaration enregistrée).
+
+EXCEPTIONS AU CONSENTEMENT (à connaître, car souvent invoquées à tort pour justifier l'IA) :
+A. Nécessité contractuelle — le RP est nécessaire à l'exécution du contrat avec la personne. Attention : « nécessaire » s'entend strictement, pas « utile ».
+B. Obligation légale — la collecte est imposée par une loi ou un règlement.
+C. Intérêt légitime de l'organisation, dans des conditions très restreintes (Art. 12 al. 3) : finalité déterminée, RP nécessaire, et utilisation manifestement légitime — la CAI interprète restrictivement.
+D. Recherche, étude, statistique d'intérêt public, sous encadrement strict (Art. 12 al. 2 et 21).
+E. Sécurité publique, prévention de fraude, situations urgentes (Art. 12 al. 5 et autres).
+
+DROITS DES PERSONNES (Art. 27 et suivants LPRPSP) :
+
+DROIT D'ACCÈS — toute personne peut obtenir confirmation qu'on détient des RP la concernant et en obtenir communication. Réponse dans les 30 jours, gratuite (sauf cas exceptionnels). En IA, ce droit s'étend aux DONNÉES UTILISÉES pour entraîner un modèle si elles sont identifiables — point délicat pour les modèles génératifs entraînés sur des corpus massifs.
+
+DROIT DE RECTIFICATION — la personne peut faire corriger un RP inexact, incomplet ou équivoque. En IA, cela peut imposer la mise à jour des prédictions ou recommandations qui dépendent du RP corrigé.
+
+DROIT À LA CESSATION DE LA DIFFUSION et DROIT À LA DÉSINDEXATION (Art. 28.1) — souvent appelés ensemble « droit à l'oubli ». La personne peut exiger la cessation de la diffusion ou la désindexation par les moteurs de recherche d'un renseignement diffusé en contravention de la loi ou contre sa volonté, lorsque le préjudice est sérieux et que cela ne porte pas atteinte à la liberté d'expression d'intérêt public.
+
+DROIT À LA PORTABILITÉ (Art. 27 al. 2, en vigueur depuis le 22 septembre 2024) — la personne peut exiger qu'on lui transmette ses RP dans un format technologiquement courant et structuré, ou qu'on les transmette directement à un autre tiers qu'elle désigne.
+
+DROIT D'OPPOSITION ET DROIT DE RETRAIT — la personne peut retirer son consentement à tout moment, ce qui implique l'arrêt de l'utilisation prospective.
+
+DROIT D'ÊTRE INFORMÉ D'UNE DÉCISION AUTOMATISÉE (Art. 12.1) — couvert en détail dans le concept dédié.
+
+DÉLAIS — l'organisation doit répondre aux demandes des personnes dans les 30 jours, par écrit, dans la langue choisie par la personne (français ou anglais sous certaines conditions). Refus possible mais doit être motivé en faisant référence à la disposition légale qui l'autorise.
+
+CONTRAT vs CONSENTEMENT — distinction importante : un consommateur qui s'abonne à un service N'A PAS nécessairement consenti à l'utilisation de ses données pour entraîner un modèle d'IA. Si l'entraînement est une finalité secondaire (non nécessaire à l'exécution du service souscrit), un consentement spécifique est requis. Plusieurs entreprises de SaaS qui ont voulu utiliser les données clients pour entraîner leurs modèles ont dû ajuster leurs CGU et offrir un opt-out clair après pression de la CAI et de leurs clients corporatifs.
+
+DONNÉES DES MINEURS (Art. 4.1 LPRPSP) — pour un mineur de moins de 14 ans, c'est le titulaire de l'autorité parentale ou le tuteur qui consent. De 14 à 18 ans, le mineur peut consentir lui-même mais l'organisation doit prêter une attention particulière à la clarté du consentement.
+
+POINT CRITIQUE POUR L'IA — le « consentement éclairé » exige de la personne qu'elle comprenne les conséquences. Pour un système d'IA, cela signifie qu'on doit pouvoir décrire de façon intelligible : ce que le système fait, sur quelles données il s'appuie, quelles décisions il influence, quels biais ou limites sont connus. Cette exigence pédagogique se double de l'exigence de transparence des articles 8 et 8.1.
+        """.strip(),
+    },
+
+    "m22_c8_loi25_decisions_automatisees": {
+        "module": 22, "ordre": 8,
+        "titre": "Loi 25 — décisions automatisées (Art. 8.1 et 12.1)",
+        "prereqs": ["m22_c7_loi25_consentement_droits"],
+        "texte": """
+Les articles 8.1 et 12.1 de la Loi 25 (sur le secteur privé : LPRPSP; transposés à l'identique pour le secteur public) sont LE CŒUR DE LA RÉGULATION QUÉBÉCOISE DE L'IA. Ils encadrent les « décisions fondées exclusivement sur un traitement automatisé » des renseignements personnels. Ils sont en vigueur depuis le 22 septembre 2023.
+
+ARTICLE 12.1 — TRANSPARENCE ET DROIT DE CONTESTATION DES DÉCISIONS AUTOMATISÉES.
+
+Texte simplifié : « Toute personne concernée par une décision fondée EXCLUSIVEMENT sur un traitement automatisé doit être informée de ce fait au plus tard au moment où elle est informée de la décision. À sa demande, elle doit être informée des renseignements personnels utilisés pour rendre la décision, des raisons et des principaux facteurs et paramètres ayant mené à la décision, et de son droit de faire rectifier les renseignements utilisés. Elle doit aussi se voir donner l'occasion de présenter ses observations à un membre du personnel en mesure de réviser la décision. »
+
+CONDITION DÉCLENCHANTE — le mot « EXCLUSIVEMENT » est crucial. Si la décision est ASSISTÉE par une IA mais qu'un humain l'évalue substantiellement avant de la rendre, l'article 12.1 ne s'applique pas. Mais attention : la CAI suit l'esprit du RGPD (Art. 22) et exige une intervention humaine SIGNIFICATIVE, pas seulement une signature de validation perfunctoire (« rubber-stamping »). Une revue humaine purement formelle ne sort pas du champ de 12.1.
+
+EXEMPLES TYPIQUES de décisions visées :
+A. Refus automatique d'une demande de prêt sur la base d'un score algorithmique.
+B. Tarification dynamique d'une prime d'assurance déterminée par un modèle.
+C. Élimination automatique d'un CV par un système ATS sans revue humaine préalable.
+D. Refus d'une transaction par carte de crédit sur fondement d'un modèle anti-fraude.
+E. Décision d'éligibilité à un programme social calculée automatiquement.
+
+QUATRE OBLIGATIONS distinctes contenues dans l'article 12.1 :
+1. INFORMATION À POSTERIORI sur le caractère automatisé — au moment de la décision.
+2. INFORMATION SUR LES RP UTILISÉS, sur demande de la personne.
+3. INFORMATION SUR LES RAISONS, FACTEURS ET PARAMÈTRES PRINCIPAUX, sur demande — c'est l'exigence d'EXPLICABILITÉ. La personne doit pouvoir comprendre POURQUOI cette décision lui a été appliquée.
+4. POSSIBILITÉ DE PRÉSENTER DES OBSERVATIONS à un humain habilité à RÉVISER la décision — droit procédural fort. La révision doit être réelle, pas symbolique.
+
+ARTICLE 8.1 — TRANSPARENCE DES TECHNOLOGIES D'IDENTIFICATION, DE LOCALISATION, DE PROFILAGE.
+
+Texte simplifié : « Une organisation qui recueille des RP au moyen d'une technologie comprenant des fonctions d'identification, de localisation ou de profilage doit informer la personne concernée du recours à cette technologie ainsi que des moyens offerts, le cas échéant, pour activer ces fonctions. »
+
+CHAMP D'APPLICATION — TROIS CATÉGORIES de technologies :
+A. IDENTIFICATION — reconnaissance faciale, reconnaissance vocale, biométrie en général.
+B. LOCALISATION — géolocalisation par GPS, balises BLE, Wi-Fi triangulation, IP, beacons.
+C. PROFILAGE — toute analyse algorithmique de comportement, de préférences, de traits de personnalité, de risques, basée sur des RP.
+
+LE PROFILAGE — DÉFINITION QUÉBÉCOISE — déduite des principes : toute évaluation d'aspects personnels (situation économique, comportement, préférences, performance professionnelle, état de santé, etc.) au moyen d'un traitement automatisé de RP. Très large; couvre la quasi-totalité des modèles d'IA prédictifs sur données personnelles.
+
+OBLIGATION SPÉCIFIQUE — informer ACTIVEMENT la personne du recours à la technologie ET des moyens d'activer ou désactiver ses fonctions. Cela impose souvent un mécanisme d'opt-in ou opt-out clair.
+
+INTERACTION ENTRE 8.1 ET 12.1 — l'article 8.1 s'applique en AMONT (au moment de la collecte / activation de la technologie); l'article 12.1 s'applique en AVAL (au moment de la décision rendue). Un même système d'IA peut donc déclencher les deux.
+
+POINT JURIDIQUE FRÉQUEMMENT CONTESTÉ — qu'est-ce qu'un « principal facteur ou paramètre »? La loi ne fournit pas de seuil. La CAI a indiqué que l'explication doit être SIGNIFICATIVE et SUFFISANTE pour permettre à la personne de contester. Cela pose un défi technique réel pour les modèles à apprentissage profond, dont les facteurs internes ne sont pas directement intelligibles. Les solutions techniques retenues incluent : SHAP values, LIME, attention maps, contrefactuels, ou plus simplement la divulgation des CATÉGORIES de variables (sans nécessairement leur poids exact).
+
+INTERSECTION AVEC LE RGPD — l'article 22 du RGPD impose des règles très similaires (« personne ne doit faire l'objet d'une décision fondée exclusivement sur un traitement automatisé... »). La Loi 25 s'inspire directement du RGPD mais s'arrête juste avant l'interdiction de principe. En Europe, la décision est INTERDITE par défaut sauf trois exceptions; au Québec, elle est PERMISE moyennant transparence et droit de contestation.
+
+CONFORMITÉ PRATIQUE — pour un système d'IA déployé au Québec, voici les questions à se poser : (1) La décision est-elle exclusivement automatisée ou y a-t-il une revue humaine substantielle? (2) Si exclusivement automatisée : informe-t-on la personne au moment de la décision? (3) Peut-on, sur demande, fournir les RP utilisés et les principaux facteurs? (4) Existe-t-il un canal opérationnel de révision humaine, et le personnel concerné est-il formé pour la mener? (5) L'EFVP du système documente-t-elle ces choix?
+        """.strip(),
+    },
+
+    "m22_c9_loi25_incidents_sanctions": {
+        "module": 22, "ordre": 9,
+        "titre": "Loi 25 — incidents, sanctions, jurisprudence CAI",
+        "prereqs": ["m22_c5_loi25_vue_ensemble"],
+        "texte": """
+La Loi 25 a complètement repensé le régime de SANCTIONS. Avant 2022, les pouvoirs de la CAI étaient surtout consultatifs. Depuis 2023, la CAI dispose d'un arsenal qui rivalise — en montants — avec celui des autorités européennes au titre du RGPD.
+
+INCIDENTS DE CONFIDENTIALITÉ — Article 3.5 et suivants LPRPSP. Définition : « tout accès, utilisation ou communication non autorisé par la loi, ainsi que toute perte ou tout autre événement portant atteinte à la protection des renseignements personnels ». Le concept est plus large que la simple « fuite » : un employé qui consulte sans nécessité un dossier client constitue un incident.
+
+OBLIGATION DE NOTIFICATION — l'organisation qui constate un incident doit :
+A. Prendre les mesures raisonnables pour réduire les risques de préjudice et éviter la répétition (Art. 3.5).
+B. Évaluer le RISQUE SÉRIEUX DE PRÉJUDICE (RSP). Critères : sensibilité des RP, conséquences appréhendées, probabilité que les RP soient utilisés à des fins préjudiciables.
+C. Si RSP — notifier la CAI ET les personnes concernées « avec diligence ». La pratique : 72 heures pour la CAI (par analogie avec le RGPD), idéalement plus rapide si le préjudice est imminent.
+D. Tenir le REGISTRE DES INCIDENTS, conservé 5 ans, qu'il y ait notification ou non.
+
+CONTENU DE LA NOTIFICATION (Règlement de la CAI sur les incidents, en vigueur depuis 2023) :
+- Description de l'incident, date ou période, nature des RP touchés;
+- Nombre estimé de personnes touchées;
+- Description des mesures prises pour atténuer le risque;
+- Mesures que la personne peut prendre elle-même;
+- Coordonnées du RPRP ou d'une autre personne pour obtenir plus d'information.
+
+DEUX RÉGIMES DE SANCTIONS distincts :
+
+RÉGIME 1 — SANCTIONS ADMINISTRATIVES PÉCUNIAIRES (SAP) — Art. 90.1 et 90.2 LPRPSP. Imposées directement par la CAI, sans passer par les tribunaux ordinaires. Procédure plus rapide. Plafonds :
+A. 10 millions $ OU 2 % du chiffre d'affaires mondial de l'exercice précédent — le PLUS ÉLEVÉ.
+B. Doublé en cas de récidive dans les 5 ans.
+Type d'infractions visées : non-désignation du RPRP, défaut de notification d'incident, refus d'accès, défaut d'EFVP, manquement à l'obligation de transparence des décisions automatisées (Art. 12.1).
+
+RÉGIME 2 — SANCTIONS PÉNALES — Art. 91 et suivants. Imposées par les tribunaux suite à une poursuite. Procédure plus lourde mais sanctions plus sévères :
+A. 25 millions $ OU 4 % du chiffre d'affaires mondial — le PLUS ÉLEVÉ.
+B. Visent les infractions « volontaires » ou « graves » (collecte sans consentement, communication illégale, entrave à l'enquête de la CAI).
+
+PLUS SÉVÈRE QUE LA LPRPDE FÉDÉRALE — la LPRPDE prévoyait des amendes maximales de 100 000 $. La Loi 25 a multiplié par 250 les plafonds. Cela en fait, en pourcentage du CA, l'un des régimes les plus sévères au Canada et l'un des plus alignés avec le RGPD européen (4 % du CA mondial pour les infractions les plus graves).
+
+POUVOIRS D'ENQUÊTE de la CAI :
+A. Inspections sur place sans mandat dans les locaux ouverts au public, avec mandat ailleurs.
+B. Demandes de production de documents.
+C. Interrogatoires sous serment.
+D. Décisions exécutoires : ordonnance de cesser, de corriger, de communiquer, etc.
+E. Pouvoir de désigner un enquêteur spécial.
+
+PRINCIPALES DÉCISIONS DE LA CAI depuis l'entrée en vigueur de la Loi 25 (échantillon, à titre indicatif — les références exactes évoluent) :
+A. Plusieurs décisions précisant le caractère « manifestement excessif » d'un consentement formulé en termes vagues ou imposant un opt-in à toute utilisation secondaire dans une seule case.
+B. Décisions sur la notification d'incidents impliquant des fournisseurs cloud, précisant que l'obligation incombe à l'entreprise québécoise même si le sous-traitant est à l'origine de la fuite.
+C. Lignes directrices sur les EFVP, précisant qu'une analyse purement formelle ne suffit pas.
+D. Avis publics sur l'utilisation de la reconnaissance faciale dans les lieux ouverts au public, en lien avec l'article 8.1.
+E. Décisions sur la nécessité d'un consentement spécifique pour l'entraînement de modèles à partir de données clients.
+
+POINT D'ATTENTION POUR L'IA — la CAI a été particulièrement vigilante depuis 2023 sur :
+1. L'utilisation de données client pour entraîner des modèles sans consentement spécifique.
+2. La conformité aux articles 8.1 et 12.1 dans les chatbots et systèmes de recommandation.
+3. Les EFVP des projets d'IA qui se contentent de cocher des cases sans analyse réelle des biais et des impacts disparates.
+4. Les communications hors Québec de RP dans les architectures cloud.
+
+ROUTE PRATIQUE — en cas d'incident lié à un système d'IA :
+ÉTAPE 1 : ISOLER le système (couper l'accès, suspendre les inférences).
+ÉTAPE 2 : DOCUMENTER l'incident (date, nature, RP touchés, nombre de personnes, mesures prises).
+ÉTAPE 3 : ÉVALUER LE RSP (consultation interne, conseil juridique).
+ÉTAPE 4 : NOTIFIER la CAI avec diligence (72 heures si possible) et les personnes affectées.
+ÉTAPE 5 : INSCRIRE au registre des incidents.
+ÉTAPE 6 : POST-MORTEM technique et organisationnel; mise à jour des EFVP et des contrôles.
+        """.strip(),
+    },
+
+    # ────────────── SECTION D — AIDA (Canada) ──────────────
+
+    "m22_c10_aida_contexte_c27": {
+        "module": 22, "ordre": 10,
+        "titre": "AIDA — contexte, projet C-27, statut politique",
+        "prereqs": ["m22_c3_approches_reglementaires"],
+        "texte": """
+AIDA (Artificial Intelligence and Data Act / Loi sur l'intelligence artificielle et les données) est le projet de loi fédéral qui aurait créé le PREMIER cadre canadien horizontal sur l'IA. Au 25 avril 2026, AIDA n'est PAS adoptée. Le statut exact évolue selon les législatures fédérales successives.
+
+GENÈSE — Innovation, Sciences et Développement économique Canada (ISDE) prépare le texte depuis 2018-2019. Déposé le 16 juin 2022 dans le projet de loi C-27 (« Loi de 2022 sur la mise en œuvre de la Charte du numérique »), un véhicule législatif qui contient TROIS LOIS distinctes :
+1. Loi sur la protection de la vie privée des consommateurs (LPVPC) — qui remplacerait la LPRPDE.
+2. Loi sur le Tribunal de la protection des renseignements personnels et des données.
+3. AIDA elle-même.
+
+C-27 a été plusieurs fois critiqué pour COUPLER la réforme de la vie privée et la nouvelle loi sur l'IA dans un seul projet, ce qui complique son adoption — chaque partie soulève des objections distinctes.
+
+CRITIQUES PRINCIPALES dirigées contre AIDA :
+A. VAGUE — la définition de « high-impact AI system » (ce qui déclenche les obligations) n'est pas dans la loi mais renvoyée à des règlements à venir. Conséquence : insécurité juridique pour les entreprises pendant les années qui suivront l'adoption.
+B. CONSULTATION INSUFFISANTE — le texte initial a été déposé sans consultation publique substantielle, ce qui a soulevé l'ire de la société civile, des universitaires et de plusieurs caucus parlementaires.
+C. CHEVAUCHEMENT FÉDÉRAL-PROVINCIAL — le Québec a déjà la Loi 25; l'Ontario a sa propre stratégie. Comment AIDA s'articule-t-elle avec les régimes provinciaux? La réponse n'est pas claire dans le texte.
+D. ABSENCE DE MÉCANISME D'EXÉCUTION FORT — pas de tribunal indépendant, le commissaire est hébergé à ISDE (donc rattaché à l'exécutif), pas de pouvoirs propres d'enquête comparables à la CAI ou à l'EDPB.
+E. INTERDICTION QUASI ABSENTE — contrairement à l'EU AI Act qui interdit explicitement plusieurs pratiques (Art. 5), AIDA ne contient pas de catégorie de pratiques interdites en première version.
+
+PARCOURS PARLEMENTAIRE :
+A. Première lecture juin 2022.
+B. Deuxième lecture et étude en comité INDU (Industrie et technologie) à partir de 2023.
+C. Amendements gouvernementaux importants déposés en novembre 2023 — précisant la définition de « high-impact », ajoutant un régime explicite pour les systèmes généraux (GPAI).
+D. Étude article par article tout au long de 2024.
+E. Le projet n'a PAS été adopté avant la dissolution du Parlement; il faudrait le redéposer dans la nouvelle législature.
+
+Au 25 avril 2026, AIDA reste donc PROPOSÉ. Il existe deux scénarios prospectifs :
+SCÉNARIO A — REDÉPÔT D'UN TEXTE RÉVISÉ. Le gouvernement reprend une version modifiée tenant compte des critiques. La rédaction se rapproche de l'EU AI Act sur la classification des risques.
+SCÉNARIO B — APPROCHE PARALLÈLE PAR LA NORME ET LE CODE VOLONTAIRE. À court terme, le gouvernement promeut le Code de conduite volontaire pour la gestion responsable des systèmes d'IA générative avancée (août 2023) et incite à l'adoption de la norme ISO/IEC 42001. C'est l'approche actuellement opérationnelle.
+
+EN ATTENDANT — les entreprises canadiennes ne sont pas dans un vide réglementaire :
+1. Loi 25 (Québec) — applicable et en vigueur.
+2. LPRPDE fédérale — encore en vigueur jusqu'à l'adoption de la LPVPC.
+3. Lois sectorielles fédérales (Loi sur la concurrence, Code criminel, Loi sur les banques, Loi canadienne sur les droits de la personne).
+4. Code de conduite volontaire signé par plusieurs entreprises (BlackBerry, Cohere, OpenText, TELUS, et d'autres).
+5. Normes ISO en adoption progressive.
+
+ANTICIPATION RÉGLEMENTAIRE — pour une PME canadienne, il est rationnel de :
+A. Se mettre en conformité Loi 25 (obligation actuelle).
+B. Adopter le NIST AI RMF comme méthode opérationnelle (gratuit, structure éprouvée, alignée avec AIDA prospective).
+C. Surveiller les annonces du Bureau de la concurrence et d'ISDE.
+D. Adhérer au Code de conduite volontaire si pertinent (signal de sérieux).
+E. Si exposition européenne — anticiper les obligations de l'EU AI Act, qui sont effectivement plus prescriptives qu'AIDA.
+
+POINT POLITIQUE — AIDA reflète une tension canadienne classique : volonté de leadership en matière d'IA (Stratégie pancanadienne en matière d'IA depuis 2017, fonds substantiels au CIFAR, instituts Mila, Vector, Amii), mais hésitation à imposer des contraintes qui pourraient désavantager les entreprises canadiennes face aux Américains et aux Européens. Cette tension explique pourquoi AIDA est moins prescriptive que l'EU AI Act mais plus structurée que le statu quo américain pré-2024.
+        """.strip(),
+    },
+
+    "m22_c11_aida_obligations_sanctions": {
+        "module": 22, "ordre": 11,
+        "titre": "AIDA — obligations proposées et sanctions",
+        "prereqs": ["m22_c10_aida_contexte_c27"],
+        "texte": """
+Bien qu'AIDA ne soit pas adoptée, comprendre ses obligations proposées est utile : (1) elles donnent l'orientation politique fédérale; (2) elles servent de référence implicite pour les entreprises qui veulent anticiper; (3) le Code de conduite volontaire reprend largement leur structure; (4) elles seront probablement la base de la version qui sera éventuellement adoptée.
+
+CHAMP D'APPLICATION — AIDA viserait deux catégories d'acteurs :
+A. CONCEPTEUR / DÉVELOPPEUR — toute entité qui conçoit, développe ou met à disposition un système d'IA dans le cadre du commerce international ou interprovincial.
+B. UTILISATEUR / DÉPLOYEUR — toute entité qui utilise un système d'IA dans une activité commerciale.
+
+NOTION CENTRALE — « HIGH-IMPACT AI SYSTEM ». La version initiale renvoyait la définition aux règlements. La version amendée (novembre 2023) propose une liste explicite de SEPT CATÉGORIES, largement inspirées de l'Annexe III de l'EU AI Act :
+1. Système utilisé en matière d'EMPLOI (recrutement, évaluation, promotion, congédiement).
+2. Système utilisé pour FOURNIR DES SERVICES À UNE PERSONNE (crédit, assurance, accès aux services essentiels).
+3. Système traitant des données BIOMÉTRIQUES.
+4. Système de modération de CONTENU sur une plateforme accessible au public.
+5. Système servant à PRENDRE DES DÉCISIONS dans le contexte d'activités gouvernementales (services aux citoyens, attribution de prestations).
+6. Système utilisé dans le contexte des SOINS DE SANTÉ ou des services d'urgence.
+7. Système pour faire respecter la loi (« law enforcement »).
+
+OBLIGATIONS PROPOSÉES (pour les concepteurs et les déployeurs de high-impact AI systems) :
+
+OBLIGATION 1 — ÉVALUATION D'INCIDENCE (« assessment ») — analyse documentée des risques, des biais, des préjudices possibles, avant la mise sur le marché ou en service.
+
+OBLIGATION 2 — MESURES D'ATTÉNUATION — mise en place de contrôles techniques et organisationnels proportionnés aux risques identifiés (filtrage, ré-entraînement, supervision humaine, documentation).
+
+OBLIGATION 3 — SURVEILLANCE EN SERVICE — monitoring continu des performances, des biais, des incidents.
+
+OBLIGATION 4 — TENUE DE REGISTRES — documentation des données d'entraînement, des modifications, des incidents, des décisions de mise hors service.
+
+OBLIGATION 5 — TRANSPARENCE — publication d'une description plain-language du système, de son objectif, de ses limites.
+
+OBLIGATION 6 — NOTIFICATION D'INCIDENT — au commissaire à l'IA et aux données dans des délais à préciser par règlement.
+
+OBLIGATION 7 — COOPÉRATION AVEC LE COMMISSAIRE — fournir documents et explications à sa demande.
+
+OBLIGATIONS ADDITIONNELLES POUR LES SYSTÈMES À USAGE GÉNÉRAL (« general-purpose AI ») — la version novembre 2023 ajoute un régime spécifique pour les fournisseurs de modèles de fondation, inspiré du régime GPAI de l'EU AI Act. Inclut documentation technique, gestion des risques systémiques, et exigences de transparence accrue pour les modèles « à incidence élevée généralisée ».
+
+INSTITUTIONS PROPOSÉES :
+
+A. COMMISSAIRE À L'INTELLIGENCE ARTIFICIELLE ET AUX DONNÉES (« AI and Data Commissioner ») — hébergé à ISDE. Pouvoirs : enquêter, ordonner des audits, publier des conclusions, recommander des sanctions au ministre. Critique : indépendance limitée par le rattachement à un ministère.
+
+B. COMITÉ CONSULTATIF — structure de conseil sur les questions techniques et politiques.
+
+C. RECOURS DEVANT LES TRIBUNAUX — pas de tribunal spécialisé créé; les sanctions seraient prononcées par les tribunaux de droit commun à la suite d'une poursuite.
+
+SANCTIONS PROPOSÉES (montants à confirmer dans la version finale) :
+A. SANCTIONS ADMINISTRATIVES PÉCUNIAIRES — maximum 10 millions $ OU 3 % du revenu brut mondial pour des manquements aux obligations de la loi.
+B. SANCTIONS PÉNALES — maximum 25 millions $ OU 5 % du revenu brut mondial pour les violations les plus graves.
+C. INFRACTIONS CRIMINELLES distinctes (Code criminel modifié) pour usage MALVEILLANT d'IA causant un préjudice grave (manipulation à grande échelle, deepfakes diffamatoires, etc.). Peines d'emprisonnement possibles.
+
+ARTICULATION AVEC LA LOI 25 — la Loi 25 régit les RP utilisés dans un système d'IA; AIDA régirait le système d'IA en tant que tel et ses sorties. Les deux régimes peuvent s'appliquer SIMULTANÉMENT : une décision automatisée fondée sur des RP au Québec déclenche la Loi 25 (Art. 12.1) ET, si AIDA était en vigueur, AIDA pour le système d'IA lui-même. Pas de mécanisme « one-stop-shop » prévu — la coordination CAI / Commissaire à l'IA reste à définir.
+
+PROBABILITÉ D'ADOPTION — incertaine au 25 avril 2026. Les éléments politiques en faveur : pression du milieu d'affaires pour avoir des règles claires, alignement nécessaire avec le partenaire commercial principal (États-Unis sous Executive Order 14110, puis décrets ultérieurs) et avec l'UE. Les éléments en défaveur : opposition d'une partie de l'écosystème tech canadien, divergences entre partis sur l'ampleur de l'intervention, urgences politiques concurrentes.
+
+POSITION D'INVESTISSEMENT D'EFFORT pour une PME : AIDA n'étant pas adoptée, l'effort doit être proportionné à la probabilité d'adoption ET à la rapidité d'adaptation. Une PME qui structure sa gouvernance d'IA selon le NIST AI RMF est en bonne position pour répondre rapidement à AIDA si elle est adoptée — la majorité des obligations proposées correspondent à des fonctions du RMF.
+        """.strip(),
+    },
+
+    "m22_c12_code_volontaire_canada": {
+        "module": 22, "ordre": 12,
+        "titre": "Code de conduite volontaire (Canada) — l'instrument intérimaire",
+        "prereqs": ["m22_c11_aida_obligations_sanctions"],
+        "texte": """
+En l'absence d'AIDA adoptée, le gouvernement fédéral canadien s'est doté en septembre 2023 d'un instrument intérimaire : le « Code de conduite volontaire visant un développement et une gestion responsables des systèmes d'IA générative avancée ». Le code n'a aucune force contraignante directe — c'est un engagement public unilatéral de signataires. Mais il joue trois rôles importants.
+
+LES TROIS RÔLES DU CODE :
+A. SIGNAL POLITIQUE — fixe l'orientation gouvernementale et démontre que le Canada n'est pas inactif en attendant AIDA.
+B. ENGAGEMENT RÉPUTATIONNEL — les signataires (entreprises canadiennes ou opérant au Canada) s'engagent publiquement à respecter ses six principes; un manquement est susceptible d'attirer l'attention médiatique et politique.
+C. PRÉFIGURATION RÉGLEMENTAIRE — le contenu du code reflète largement ce qui pourrait devenir contraignant via AIDA. Le suivre, c'est se mettre en bonne position pour l'éventuel cadre légal.
+
+LES SIX PRINCIPES du code (à mémoriser) :
+
+PRINCIPE 1 — RESPONSABILITÉ. L'organisation est responsable de la conception, du développement et du déploiement responsables. Implique : politiques internes, formation du personnel, allocation claire des responsabilités le long de la chaîne de valeur.
+
+PRINCIPE 2 — SÉCURITÉ. Tests rigoureux pré-déploiement, surveillance post-déploiement, mesures techniques et organisationnelles pour prévenir les dommages. Inclut spécifiquement la prévention de l'usage malveillant (fraude, désinformation, exploitation).
+
+PRINCIPE 3 — JUSTICE ET ÉQUITÉ. Tests pour identifier et atténuer les biais discriminatoires; documentation des données d'entraînement; mécanismes de redressement.
+
+PRINCIPE 4 — TRANSPARENCE. Publication d'une description du système, de ses limites, de ses sources de données dans la mesure du possible; étiquetage des contenus générés par IA.
+
+PRINCIPE 5 — SURVEILLANCE HUMAINE ET MONITORING. Mécanismes permettant à un humain d'intervenir, de désactiver, de réviser. Suivi continu en service.
+
+PRINCIPE 6 — VALIDATION. Vérification que le système répond à sa finalité déclarée et n'a pas de comportements imprévus dommageables.
+
+DEUX RÔLES DISTINCTS — le code distingue les responsabilités selon qu'on est :
+A. DÉVELOPPEUR de système d'IA générative avancée.
+B. DÉPLOYEUR (utilisateur final qui le met en service).
+
+Pour chaque principe, le code énumère les MESURES ATTENDUES de chacun — utile car la chaîne de valeur d'IA implique souvent plusieurs entreprises.
+
+SIGNATAIRES — la liste évolue. Au lancement (septembre 2023), une dizaine d'entreprises canadiennes ont signé : BlackBerry, Cohere, IBM Canada, Mila, OpenText, TELUS, et d'autres. La signature est ouverte aux organisations qui en font la demande.
+
+LIMITE — le code se concentre sur l'IA GÉNÉRATIVE AVANCÉE. Il ne couvre pas exhaustivement les systèmes d'IA classiques (modèles supervisés, classification, scoring), même si plusieurs principes s'y appliquent par analogie.
+
+ARTICULATION AVEC LE NIST AI RMF — les six principes du code se cartographient bien sur les sept caractéristiques de trustworthy AI du RMF :
+- Responsabilité ↔ Accountability & Transparency
+- Sécurité ↔ Safe + Secure & Resilient
+- Justice ↔ Fair (with managed bias)
+- Transparence ↔ Explainable & Interpretable + Privacy-Enhanced
+- Surveillance humaine ↔ une partie de Accountability
+- Validation ↔ Valid & Reliable
+
+Cela signifie qu'une organisation qui implante le NIST AI RMF répond simultanément au code volontaire canadien — pas besoin de duplicateur d'efforts.
+
+INTERACTION AVEC LE BLETCHLEY DECLARATION et le SOMMET DE LA SÉCURITÉ DE L'IA. Le code canadien a été développé en parallèle de l'engagement de l'UK Bletchley (novembre 2023) et du processus de Hiroshima du G7 (octobre 2023). Le texte canadien est aligné avec ces deux processus internationaux, ce qui crée une cohérence pour les entreprises actives à l'échelle internationale.
+
+UTILITÉ POUR UNE PME QUÉBÉCOISE :
+A. SIGNAL DE SÉRIEUX vis-à-vis des partenaires gouvernementaux (le code est cité dans plusieurs appels d'offres fédéraux comme bonne pratique attendue).
+B. PRÉPARATION À AIDA — couvrir les six principes, c'est anticiper 70-80 % des obligations probables d'AIDA quand elle sera adoptée.
+C. COMPLÉMENT À LA LOI 25 — le code traite des aspects que la Loi 25 ne couvre pas (sécurité technique, gestion des biais, validation), même si elles ne sont pas obligatoires.
+D. POSITIONNEMENT INTERNATIONAL — démontrer une gouvernance responsable est de plus en plus exigé par les clients européens et américains.
+
+POSITION CRITIQUE — un instrument volontaire de droit souple n'a pas la même force qu'une loi. Plusieurs voix de la société civile demandent qu'AIDA soit adoptée pour précisément donner force exécutoire à ces principes. Le code est un PLANCHER éthique et un outil pédagogique, pas un substitut au droit dur.
+        """.strip(),
+    },
+
+})
+
+
+# ────────────── SECTION E — EU AI ACT ──────────────
+
+CURRICULUM.update({
+
+    "m22_c13_eu_ai_act_vue_ensemble": {
+        "module": 22, "ordre": 13,
+        "titre": "EU AI Act — vue d'ensemble et extraterritorialité",
+        "prereqs": ["m22_c3_approches_reglementaires"],
+        "texte": """
+Le Règlement (UE) 2024/1689, communément appelé EU AI Act, est la première loi globale et contraignante au monde sur l'intelligence artificielle. Adopté définitivement par le Parlement européen le 13 mars 2024 et par le Conseil le 21 mai 2024, publié au Journal officiel de l'Union européenne le 12 juillet 2024, entré en vigueur le 1er août 2024. Application phasée jusqu'au 2 août 2027.
+
+CARACTÈRE JURIDIQUE — c'est un RÈGLEMENT (pas une directive). Conséquence importante : il s'applique DIRECTEMENT dans les 27 États membres sans nécessiter de loi de transposition, sauf pour quelques dispositions sur les autorités nationales et les sanctions où une marge nationale subsiste. Le régulateur est unifié au niveau européen via le AI Office (DG CNECT, Commission européenne).
+
+OBJECTIFS ÉNONCÉS dans les considérants :
+A. Promouvoir l'adoption d'une IA digne de confiance dans le marché intérieur.
+B. Garantir un niveau élevé de protection de la santé, de la sécurité, des droits fondamentaux, de la démocratie, de l'État de droit et de l'environnement.
+C. Soutenir l'innovation par la sécurité juridique et les bacs à sable réglementaires.
+
+DÉFINITION DU « SYSTÈME D'IA » (Art. 3, 1) — alignée sur la définition mise à jour de l'OCDE de 2023 : un système basé sur une machine, conçu pour fonctionner avec différents niveaux d'autonomie, qui peut faire preuve d'adaptabilité après son déploiement, et qui, pour des objectifs explicites ou implicites, déduit, à partir des entrées qu'il reçoit, comment générer des sorties (prédictions, contenu, recommandations, décisions) qui influencent des environnements physiques ou virtuels. La définition est large mais exclut les logiciels traditionnels purement déterministes.
+
+CHAMP D'APPLICATION (Art. 2) :
+A. FOURNISSEURS qui mettent un système d'IA sur le marché ou en service dans l'UE, où qu'ils soient établis.
+B. DÉPLOYEURS établis dans l'UE.
+C. FOURNISSEURS ET DÉPLOYEURS établis hors UE lorsque les sorties produites par leur système sont utilisées dans l'UE.
+D. IMPORTATEURS et DISTRIBUTEURS de systèmes d'IA dans l'UE.
+E. FABRICANTS de produits qui intègrent un système d'IA et le mettent sur le marché sous leur nom.
+F. REPRÉSENTANTS AUTORISÉS dans l'UE des fournisseurs établis hors UE.
+
+EXTRATERRITORIALITÉ — c'est la disposition qui rend l'EU AI Act pertinente pour les entreprises canadiennes. Le critère C ci-dessus signifie qu'une PME québécoise dont les sorties d'IA sont utilisées par un client européen doit se conformer, peu importe que la PME ait ou non une présence physique en Europe.
+
+EXEMPLES CONCRETS d'extraterritorialité :
+A. Une PME de Montréal vend un SaaS de scoring de candidats à un cabinet de recrutement en France. Les décisions du système (sorties) influencent l'embauche en Europe. La PME est fournisseur dans le sens de l'EU AI Act.
+B. Un institut de recherche canadien publie un modèle open-source téléchargeable en Europe et utilisé par des hôpitaux européens. Soumis à des obligations spécifiques aux modèles open-source.
+C. Une plateforme québécoise de modération de contenu sert des forums publics en Europe. Le système est probablement à risque limité (transparence) ou à risque élevé selon les usages.
+
+EXCLUSIONS DU CHAMP :
+A. Systèmes d'IA exclusivement à des fins militaires, de défense, de sécurité nationale.
+B. Activités de recherche, développement, prototypage AVANT mise sur le marché.
+C. Particuliers utilisant un système d'IA dans le cadre d'activités personnelles non professionnelles.
+D. Composants gratuits et open source, sauf s'ils sont mis sur le marché ou en service en tant que système à haut risque ou GPAI à risque systémique.
+E. Modèles d'IA fournis dans le cadre d'enquêtes scientifiques publiées.
+
+ARCHITECTURE EN QUATRE NIVEAUX DE RISQUE — pierre angulaire du règlement :
+NIVEAU 1 — RISQUE INACCEPTABLE → INTERDICTION (Art. 5).
+NIVEAU 2 — RISQUE ÉLEVÉ → OBLIGATIONS LOURDES (Art. 6-49).
+NIVEAU 3 — RISQUE LIMITÉ → OBLIGATIONS DE TRANSPARENCE (Art. 50, 52).
+NIVEAU 4 — RISQUE MINIMAL → AUCUNE OBLIGATION JURIDIQUE; codes de conduite volontaires.
++ RÉGIME PARALLÈLE pour les modèles d'IA à usage général (GPAI), Art. 51-55, indépendamment du niveau de risque de l'application aval.
+
+ARTICULATION AVEC LE RGPD — l'EU AI Act NE REMPLACE PAS le RGPD. Les deux régimes coexistent. Quand un système d'IA traite des données personnelles, le RGPD s'applique en plus de l'EU AI Act. Le RGPD régit le traitement des données; l'EU AI Act régit le système d'IA en tant qu'objet régulé. Une IA peut être conforme RGPD mais non conforme à l'EU AI Act, et vice-versa.
+
+POSITIONNEMENT INTERNATIONAL — l'EU AI Act établit un STANDARD GLOBAL de fait, comme le RGPD l'a fait pour la vie privée. Les fournisseurs internationaux préfèrent souvent appliquer un seul niveau de conformité (le plus strict) à toute leur clientèle plutôt que de gérer plusieurs régimes. Effet « Brussels effect » : la régulation européenne devient norme mondiale par diffusion commerciale.
+        """.strip(),
+    },
+
+    "m22_c14_eu_ai_act_pratiques_interdites": {
+        "module": 22, "ordre": 14,
+        "titre": "EU AI Act — pratiques interdites (Article 5)",
+        "prereqs": ["m22_c13_eu_ai_act_vue_ensemble"],
+        "texte": """
+L'article 5 de l'EU AI Act énumère les pratiques d'IA INTERDITES sur le territoire de l'UE. Cet article est entré en vigueur le 2 février 2025, soit six mois après l'entrée en vigueur du règlement. Il représente la catégorie de risque INACCEPTABLE — celle où aucune mitigation, aucune surveillance humaine, aucune supervision réglementaire ne peut rendre l'usage acceptable.
+
+PRINCIPE — l'interdiction reflète l'idée qu'il existe certains usages de l'IA qui sont par nature incompatibles avec les valeurs fondamentales de l'UE (dignité humaine, autonomie, non-discrimination, démocratie, État de droit). Dans ces cas, le régulateur ne demande pas « comment ce système peut-il être utilisé en sécurité? » mais « ce système doit-il exister? ».
+
+LISTE DÉTAILLÉE DES HUIT PRATIQUES INTERDITES :
+
+INTERDICTION 1 — Manipulation cognitive (Art. 5(1)(a)). Système qui déploie des techniques subliminales au-delà de la conscience d'une personne, ou des techniques manifestement manipulatrices ou trompeuses, dans le but ou avec l'effet d'altérer matériellement le comportement d'une personne en l'amenant à prendre une décision qu'elle n'aurait pas prise autrement, causant ou susceptible de causer un préjudice significatif. Exemples : interfaces de jeu vidéo conçues pour pousser à des achats compulsifs en exploitant des biais cognitifs; chatbots qui manipulent émotionnellement des personnes vulnérables.
+
+INTERDICTION 2 — Exploitation des vulnérabilités (Art. 5(1)(b)). Système qui exploite les vulnérabilités d'un individu ou d'un groupe de personnes en raison de leur âge, de leur handicap, ou de leur situation sociale ou économique, dans le but ou avec l'effet d'altérer matériellement leur comportement et de causer un préjudice significatif. Exemples : ciblage publicitaire prédateur des personnes en détresse financière; jouets connectés qui manipulent les enfants.
+
+INTERDICTION 3 — Notation sociale (Art. 5(1)(c)). Évaluation ou classification des personnes par les autorités publiques OU pour leur compte sur la base de comportements sociaux ou de caractéristiques personnelles, conduisant à un traitement préjudiciable dans des contextes non liés ou disproportionné par rapport au comportement initial. Modèle visé : système chinois de social credit. La régulation interdit cette logique en Europe, qu'elle soit déployée par l'État ou pour son compte.
+
+INTERDICTION 4 — Évaluation de risque criminel individuel (Art. 5(1)(d)). Système qui prédit la probabilité qu'une personne particulière commette une infraction, fondé uniquement sur le profilage ou sur l'évaluation de traits de personnalité. Exception : systèmes d'aide à l'évaluation humaine fondés sur des faits objectifs et vérifiables directement liés à une activité criminelle (Art. 5(1)(d), 2e phrase). Modèle visé : COMPAS et systèmes similaires de prédiction de récidive.
+
+INTERDICTION 5 — Reconnaissance faciale par moisson non ciblée (Art. 5(1)(e)). Création ou élargissement de bases de données de reconnaissance faciale par moissonnage non ciblé d'images sur Internet ou par CCTV. Modèle visé : Clearview AI et entreprises similaires. L'interdiction couvre l'acte de constitution de la base, pas seulement son utilisation.
+
+INTERDICTION 6 — Reconnaissance d'émotions au travail et à l'école (Art. 5(1)(f)). Système d'IA qui infère les émotions d'une personne dans les lieux de travail ou les établissements d'enseignement, sauf raisons médicales ou de sécurité. Exemple visé : systèmes qui surveillent l'expression faciale des employés en visioconférence ou des élèves en classe.
+
+INTERDICTION 7 — Catégorisation biométrique sensible (Art. 5(1)(g)). Système qui catégorise les personnes sur la base de leurs données biométriques pour déduire leur race, opinion politique, appartenance syndicale, conviction religieuse ou philosophique, vie sexuelle ou orientation sexuelle. Quelques exceptions étroites pour l'application de la loi.
+
+INTERDICTION 8 — Identification biométrique à distance en temps réel dans les lieux publics aux fins de l'application de la loi (Art. 5(1)(h)). C'est l'interdiction la plus politiquement contestée et la plus complexe. Trois exceptions strictes : recherche ciblée de victimes spécifiques (enlèvement, traite, exploitation sexuelle d'enfants); prévention d'une menace spécifique, substantielle et imminente pour la vie ou la sécurité physique; localisation ou identification d'un suspect d'une infraction grave (liste fermée). Conditions cumulatives : autorisation judiciaire préalable, nécessité, proportionnalité, durée et zone limitées.
+
+PORTÉE TECHNIQUE — les interdictions visent l'usage, pas la technologie en soi. Un modèle de reconnaissance faciale n'est pas interdit; sa MISE EN SERVICE pour de l'identification biométrique à distance en temps réel dans les lieux publics aux fins de l'application de la loi l'est.
+
+SANCTIONS pour violation de l'article 5 — les plus sévères du règlement (Art. 99) : jusqu'à 35 millions € OU 7 % du chiffre d'affaires annuel mondial total — le PLUS ÉLEVÉ. Plus sévère que le maximum du RGPD (4 %).
+
+IMPLICATIONS POUR LE QUÉBEC — un fournisseur québécois ne peut pas vendre un système qui correspond à une de ces pratiques à un client européen. Il ne peut pas non plus, depuis février 2025, en faire usage si les sorties sont utilisées en Europe. La conformité passe par un FILTRAGE EN AMONT des cas d'usage du système : architecture, contractualisation avec les clients, conditions d'utilisation, et techniquement par des verrous (kill-switches géographiques, restrictions d'API).
+        """.strip(),
+    },
+
+    "m22_c15_eu_ai_act_haut_risque_typologie": {
+        "module": 22, "ordre": 15,
+        "titre": "EU AI Act — systèmes à haut risque (typologie)",
+        "prereqs": ["m22_c13_eu_ai_act_vue_ensemble"],
+        "texte": """
+La catégorie « système d'IA à haut risque » est le cœur opérationnel de l'EU AI Act. Elle est définie par les articles 6 et 7, et concrétisée par DEUX ANNEXES distinctes (I et III) qui énumèrent les cas d'usage couverts.
+
+DEUX VOIES POUR ÊTRE QUALIFIÉ DE HAUT RISQUE (Art. 6) :
+
+VOIE 1 — Annexe I : systèmes d'IA intégrés dans des PRODUITS soumis à une législation européenne d'harmonisation. Liste qui couvre 12 catégories réglementées, incluant : machines, jouets, ascenseurs, équipements radio, équipements de protection individuelle, dispositifs médicaux, dispositifs médicaux de diagnostic in vitro, équipements maritimes, véhicules à moteur, aviation civile, voies ferrées, et certains équipements industriels. La qualification suit la régulation produit.
+
+VOIE 2 — Annexe III : systèmes d'IA déployés dans des CAS D'USAGE spécifiques jugés à haut risque, peu importe le produit. C'est cette voie qui est nouvelle et qui touche le plus largement les entreprises non-industrielles.
+
+ANNEXE III — HUIT DOMAINES de cas d'usage à haut risque :
+
+DOMAINE 1 — IDENTIFICATION ET CATÉGORISATION BIOMÉTRIQUE non interdites par l'article 5. Inclut l'identification biométrique à distance (autre que celle interdite à l'art. 5(1)(h)) et la catégorisation biométrique selon des attributs sensibles si non interdite par l'art. 5(1)(g).
+
+DOMAINE 2 — INFRASTRUCTURES CRITIQUES. IA utilisée comme composant de sécurité dans la gestion et l'exploitation d'infrastructures numériques critiques, du trafic routier, de la fourniture d'eau, de gaz, de chauffage, d'électricité.
+
+DOMAINE 3 — ÉDUCATION ET FORMATION PROFESSIONNELLE. Quatre cas : (1) admission ou affectation; (2) évaluation des résultats d'apprentissage et orientation du parcours; (3) évaluation du niveau d'éducation approprié; (4) détection de comportements interdits durant des examens.
+
+DOMAINE 4 — EMPLOI, GESTION DES TRAVAILLEURS ET ACCÈS AU TRAVAIL INDÉPENDANT. Deux cas majeurs : (1) recrutement, présélection, évaluation des candidats (filtrage de CV, entretiens automatisés, tests vidéo); (2) prise de décisions affectant les conditions de travail, la promotion, le licenciement, l'allocation de tâches, la surveillance et l'évaluation des performances.
+
+DOMAINE 5 — ACCÈS À DES SERVICES PRIVÉS ESSENTIELS et SERVICES ET PRESTATIONS PUBLICS. Quatre cas : (1) éligibilité aux prestations sociales et services publics essentiels; (2) évaluation de la solvabilité et scoring de crédit (sauf détection de fraude); (3) évaluation des risques en matière d'assurance vie et santé; (4) priorisation des appels d'urgence et tri médical.
+
+DOMAINE 6 — APPLICATION DE LA LOI. Six cas couvrant l'évaluation du risque qu'une personne soit victime d'infraction, polygraphe et autres outils similaires, fiabilité de la preuve, profilage, etc. Restrictions strictes à l'usage par les autorités policières.
+
+DOMAINE 7 — MIGRATION, ASILE ET CONTRÔLE AUX FRONTIÈRES. Quatre cas : polygraphes, évaluation des risques de migration, examen des demandes d'asile, identification des personnes dans le contexte de gestion des frontières.
+
+DOMAINE 8 — ADMINISTRATION DE LA JUSTICE ET PROCESSUS DÉMOCRATIQUES. Deux cas : (1) aide à la décision judiciaire dans la recherche et l'interprétation des faits et du droit; (2) influence sur le résultat d'une élection ou d'un référendum, ou sur le comportement de vote, sauf systèmes uniquement administratifs ou logistiques.
+
+EXCEPTION DE FAIBLE INCIDENCE (Art. 6(3)). Un système d'IA visé par l'Annexe III peut ne PAS être considéré à haut risque s'il NE pose PAS de risque significatif d'atteinte à la santé, à la sécurité ou aux droits fondamentaux, parce qu'il n'influence pas matériellement le résultat de la décision. Quatre conditions cumulatives :
+A. Tâche procédurale étroite (par exemple : transformation de format).
+B. Amélioration du résultat d'une activité humaine antérieurement effectuée.
+C. Détection de schémas ou d'écarts sans remplacer ou influencer l'évaluation humaine sans révision appropriée.
+D. Tâche préparatoire à une évaluation des cas pertinents.
+
+L'exception est délicate à manier : elle est susceptible d'interprétation et le fournisseur doit DOCUMENTER la justification (Art. 6(4)). Les autorités peuvent contester. Si un système Annexe III qui se prétend exempté procède en réalité au profilage de personnes physiques, l'exception NE s'applique PAS — il reste à haut risque.
+
+POUVOIR D'ADAPTATION DE LA LISTE (Art. 7). La Commission européenne peut, par actes délégués, ajouter ou modifier des cas d'usage à l'Annexe III, sur la base de critères de risque énumérés (vulnérabilité des personnes, dépendance vis-à-vis des sorties, étendue de l'utilisation, etc.). La liste est donc DYNAMIQUE.
+
+EXEMPLES SPÉCIFIQUES POUR UNE ENTREPRISE QUÉBÉCOISE :
+A. SaaS de recrutement vendu en Europe : DOMAINE 4. Haut risque.
+B. Plateforme de scoring de crédit utilisée par des prêteurs européens : DOMAINE 5. Haut risque.
+C. Assistant éducatif qui note les copies d'étudiants européens : DOMAINE 3. Haut risque.
+D. Outil de détection de fraude (anti-fraude pure, sans scoring de solvabilité) : exclu explicitement du Domaine 5.
+E. Chatbot de service à la clientèle généraliste : pas Annexe III, donc en principe risque limité.
+
+CONSÉQUENCE OPÉRATIONNELLE — la première décision pour tout fournisseur d'IA exposé au marché européen est : MON SYSTÈME EST-IL DANS L'ANNEXE III? Si oui, les obligations détaillées des articles 8 à 49 s'appliquent (concept suivant). La cartographie initiale est cruciale; elle conditionne le coût et la complexité de la mise en conformité.
+        """.strip(),
+    },
+
+    "m22_c16_eu_ai_act_haut_risque_obligations": {
+        "module": 22, "ordre": 16,
+        "titre": "EU AI Act — obligations sur systèmes à haut risque",
+        "prereqs": ["m22_c15_eu_ai_act_haut_risque_typologie"],
+        "texte": """
+Une fois qu'un système est qualifié de haut risque, les articles 8 à 49 imposent un éventail d'obligations distribuées entre fournisseurs, importateurs, distributeurs et déployeurs. C'est le cœur prescriptif de l'EU AI Act et la partie la plus coûteuse à mettre en œuvre.
+
+NEUF EXIGENCES TECHNIQUES ET ORGANISATIONNELLES pour les fournisseurs (Art. 8-15) :
+
+EXIGENCE 1 — SYSTÈME DE GESTION DES RISQUES (Art. 9). Processus continu et itératif tout au long du cycle de vie : identification, estimation, évaluation des risques connus et raisonnablement prévisibles; adoption de mesures appropriées; tests; documentation. Doit être révisé régulièrement.
+
+EXIGENCE 2 — GOUVERNANCE DES DONNÉES (Art. 10). Données d'entraînement, validation et test pertinentes, représentatives, exemptes d'erreurs et complètes au regard de la finalité. Examen approfondi des biais possibles. Procédures de collecte, étiquetage, agrégation, prétraitement documentées.
+
+EXIGENCE 3 — DOCUMENTATION TECHNIQUE (Art. 11 et Annexe IV). Rédigée AVANT la mise sur le marché, mise à jour ensuite. Annexe IV liste 9 sections obligatoires : description générale, description détaillée, surveillance humaine, fonctionnement, données utilisées, gestion des risques, modifications, normes utilisées, déclaration de conformité.
+
+EXIGENCE 4 — ENREGISTREMENT AUTOMATIQUE DES ÉVÉNEMENTS (Art. 12). Capacités intégrées de journalisation pour assurer la traçabilité du fonctionnement durant toute la durée de vie. Obligatoire pour les systèmes biométriques.
+
+EXIGENCE 5 — TRANSPARENCE ET INSTRUCTIONS POUR LES DÉPLOYEURS (Art. 13). Notice d'utilisation claire, complète, à jour : identité du fournisseur, performances attendues, mesures de surveillance humaine, ressources informatiques nécessaires, durée de vie attendue, maintenance.
+
+EXIGENCE 6 — SURVEILLANCE HUMAINE (Art. 14). Le système doit être conçu pour permettre une surveillance humaine effective. Personnes physiques chargées doivent comprendre les capacités et limites, surveiller le fonctionnement, interpréter correctement les sorties, intervenir si nécessaire (« STOP »).
+
+EXIGENCE 7 — EXACTITUDE, ROBUSTESSE, CYBERSÉCURITÉ (Art. 15). Niveau approprié d'exactitude documenté, résilience aux erreurs et incohérences, protection contre les attaques (data poisoning, model evasion, model inversion).
+
+EXIGENCE 8 — SYSTÈME DE GESTION DE LA QUALITÉ (Art. 17). Documenté, structurellement similaire à ISO 9001 + ISO 42001 + ISO 27001 combinés.
+
+EXIGENCE 9 — SURVEILLANCE POST-COMMERCIALISATION (Art. 72). Plan formalisé, collecte continue de données sur le fonctionnement réel, mise à jour de la gestion des risques.
+
+OBLIGATIONS ADMINISTRATIVES POUR LES FOURNISSEURS :
+
+A. ENREGISTREMENT dans la base de données européenne des systèmes à haut risque (Art. 49 et 71) avant la mise sur le marché.
+B. ÉVALUATION DE LA CONFORMITÉ (Art. 43). Trois voies : (1) contrôle interne pour la majorité des systèmes Annexe III; (2) impliquant un organisme notifié pour certains systèmes biométriques; (3) modules spécifiques pour les systèmes intégrés à des produits régulés (Annexe I).
+C. DÉCLARATION UE DE CONFORMITÉ et MARQUAGE CE.
+D. NOTIFICATION DES INCIDENTS GRAVES aux autorités nationales.
+E. REPRÉSENTANT AUTORISÉ dans l'UE pour les fournisseurs hors UE (Art. 22).
+
+OBLIGATIONS POUR LES DÉPLOYEURS (Art. 26) :
+
+A. Utiliser le système conformément à la notice et selon une finalité prévue.
+B. Confier la surveillance humaine à des personnes compétentes.
+C. S'assurer que les données d'entrée sont pertinentes au regard de la finalité.
+D. Surveiller le fonctionnement et notifier les incidents au fournisseur et aux autorités nationales.
+E. Conserver les journaux générés automatiquement (Art. 12) pendant au moins 6 mois.
+F. Quand le déployeur est employeur ou fournit des services publics, INFORMER les personnes affectées AVANT la mise en service du système.
+G. Réaliser une ÉVALUATION D'INCIDENCE SUR LES DROITS FONDAMENTAUX (FRIA, Art. 27) avant la mise en service, pour les déployeurs publics ou ceux fournissant certains services essentiels.
+
+PRÉSOMPTION DE CONFORMITÉ — un système qui respecte les NORMES HARMONISÉES publiées par CEN-CENELEC (en cours de finalisation au 25 avril 2026) bénéficie d'une présomption de conformité aux exigences correspondantes (Art. 40). Voie pratique pour réduire le coût de démonstration de conformité.
+
+ARTICULATION AVEC LE RGPD ET LA LOI 25 — un système à haut risque qui traite des RP doit aussi satisfaire le RGPD (et la Loi 25 si déployé au Québec). Les EFVP / DPIA et la FRIA peuvent être combinées dans une seule évaluation intégrée, à condition que les dimensions de chaque cadre soient toutes couvertes.
+
+COÛT INDICATIF — la mise en conformité d'un système à haut risque pour une PME représente typiquement 6 à 18 mois de travail et plusieurs centaines de milliers à plusieurs millions $ selon la complexité technique et l'étendue des données. C'est ce qui explique pourquoi certains fournisseurs canadiens choisissent de NE PAS vendre certains produits en Europe — le marché ne justifie pas le coût.
+
+POSITION D'INVESTISSEMENT pour une PME québécoise : avant tout, EXÉCUTER UNE CARTOGRAPHIE pour identifier si on est concerné par l'Annexe III. Si oui, choisir entre conformité complète et réorientation commerciale. Si non, vérifier si le système entre dans les obligations de transparence (concept suivant).
+        """.strip(),
+    },
+
+    "m22_c17_eu_ai_act_gpai": {
+        "module": 22, "ordre": 17,
+        "titre": "EU AI Act — modèles d'IA à usage général (GPAI)",
+        "prereqs": ["m22_c13_eu_ai_act_vue_ensemble"],
+        "texte": """
+L'apparition des modèles de fondation (GPT-4, Claude, Gemini, Llama, Mistral) a forcé les législateurs européens à ajouter en cours de négociation un régime spécifique aux modèles d'IA à USAGE GÉNÉRAL — General-Purpose AI (GPAI), articles 51 à 55 de l'EU AI Act, complétés par les annexes XI à XIII. Ce régime s'applique INDÉPENDAMMENT du niveau de risque de l'application aval.
+
+DÉFINITION DU MODÈLE D'IA À USAGE GÉNÉRAL (Art. 3, 63) — un modèle d'IA, y compris quand il est entraîné avec une grande quantité de données utilisant l'auto-supervision à grande échelle, qui montre une généralité significative et est capable d'exécuter de manière compétente un large éventail de tâches distinctes, et qui peut être intégré dans une variété de systèmes ou applications en aval.
+
+DEUX CATÉGORIES :
+
+CATÉGORIE A — GPAI STANDARD. Tout modèle qui correspond à la définition mais n'atteint pas le seuil de risque systémique. Obligations de base.
+
+CATÉGORIE B — GPAI À RISQUE SYSTÉMIQUE (Art. 51). Modèles qui ont des « capacités à fort impact » mesurées par leur compute d'entraînement, par défaut au seuil de 10^25 opérations en virgule flottante (FLOP) cumulés. Au moment de l'adoption, ce seuil correspondait à un petit nombre de modèles : GPT-4 et probablement Claude 3 Opus, Gemini Ultra. Le seuil peut être ajusté par actes délégués. La Commission peut aussi désigner d'autres modèles via une décision motivée.
+
+OBLIGATIONS POUR TOUS LES GPAI (Art. 53) :
+
+A. DOCUMENTATION TECHNIQUE selon l'Annexe XI : description du modèle (y compris architecture, paramètres, données d'entraînement de manière agrégée), processus d'évaluation, consommation énergétique, utilisations prévues et restreintes.
+B. INFORMATION POUR LES INTÉGRATEURS EN AVAL — fournir aux fournisseurs de systèmes d'IA qui intègrent le modèle suffisamment d'information pour qu'ils comprennent les capacités et limites et puissent assumer leurs propres obligations.
+C. POLITIQUE DE RESPECT DU DROIT D'AUTEUR DE L'UE — y compris une politique pour identifier et respecter les réservations de droits exprimées via des mécanismes de retrait conformes à l'article 4(3) de la Directive 2019/790.
+D. RÉSUMÉ PUBLIC SUFFISAMMENT DÉTAILLÉ des données d'entraînement utilisées, selon un modèle fourni par l'AI Office.
+
+EXEMPTION OPEN-SOURCE (Art. 53(2)). Les obligations A et B ne s'appliquent PAS aux modèles open-source dont les paramètres, l'architecture et les informations d'utilisation sont rendus publics, sauf s'ils sont également GPAI à risque systémique. Mais les obligations C (droit d'auteur) et D (résumé des données) s'appliquent toujours.
+
+OBLIGATIONS ADDITIONNELLES POUR LES GPAI À RISQUE SYSTÉMIQUE (Art. 55) :
+
+A. ÉVALUATION DU MODÈLE selon des protocoles et outils standardisés reflétant l'état de l'art, y compris des tests adversariaux (« red teaming ») pour identifier et atténuer les risques systémiques.
+B. ÉVALUATION ET ATTÉNUATION des risques systémiques au niveau de l'UE découlant du développement, de la mise sur le marché ou de l'utilisation du modèle.
+C. SUIVI, DOCUMENTATION ET NOTIFICATION sans délai à l'AI Office et aux autorités nationales compétentes des incidents graves et des mesures correctives.
+D. NIVEAU APPROPRIÉ DE PROTECTION DE LA CYBERSÉCURITÉ pour le modèle et son infrastructure physique.
+
+CODE DE BONNES PRATIQUES (Art. 56). L'AI Office a coordonné l'élaboration d'un code de pratiques GPAI publié en 2025, qui détaille comment mettre en œuvre concrètement les obligations. L'adhésion au code crée une présomption de conformité. Les fournisseurs majeurs (OpenAI, Anthropic, Google, Meta, Mistral, Cohere) ont participé à sa rédaction.
+
+CALENDRIER ET ENTRÉE EN VIGUEUR :
+A. Obligations GPAI applicables à partir du 2 AOÛT 2025.
+B. Modèles déjà sur le marché avant cette date bénéficient d'une période de mise en conformité jusqu'au 2 août 2027.
+
+CONCEPT CLÉ DE LA CHAÎNE DE VALEUR — l'EU AI Act introduit la distinction entre :
+A. Fournisseur de MODÈLE GPAI (ex : Anthropic qui fournit Claude).
+B. Fournisseur de SYSTÈME D'IA basé sur le modèle (ex : une PME québécoise qui construit un assistant juridique en utilisant Claude via l'API).
+C. DÉPLOYEUR du système (ex : le cabinet d'avocats qui utilise l'assistant).
+
+Chacun a ses obligations distinctes. La PME qui intègre Claude dans un système à haut risque doit :
+1. S'assurer qu'Anthropic l'a fournie en information conforme à l'Art. 53(1)(b);
+2. Réaliser ses propres obligations en tant que fournisseur du système à haut risque (Art. 16);
+3. Le cabinet d'avocats déployeur applique l'Art. 26.
+
+C'est une chaîne de responsabilités où chacun couvre son périmètre.
+
+POURQUOI CE RÉGIME EST CRUCIAL — les GPAI ne sont pas eux-mêmes des systèmes à risque limité ou élevé au sens de l'Art. 6, car ils n'ont pas de finalité spécifique. Sans le régime GPAI, ils auraient échappé au règlement. L'ajout de ce régime corrige cette faille et impose des obligations d'amont qui irriguent l'ensemble de l'écosystème.
+
+POSITION D'EFFORT pour une PME canadienne :
+A. Si vous CONSOMMEZ un modèle GPAI dans votre produit : vérifier que le fournisseur (Anthropic, OpenAI, etc.) fournit la documentation Art. 53; conserver les attestations dans votre dossier de conformité.
+B. Si vous DÉVELOPPEZ un modèle GPAI propre : ce régime s'applique à vous dès lors qu'il est mis sur le marché européen, en open-source ou non. Documentation, droits d'auteur, résumé des données.
+C. Si votre modèle franchit le seuil de 10^25 FLOP : régime GPAI à risque systémique, obligations très lourdes — consultation juridique recommandée.
+        """.strip(),
+    },
+
+    "m22_c18_eu_ai_act_sanctions_calendrier": {
+        "module": 22, "ordre": 18,
+        "titre": "EU AI Act — sanctions, calendrier, gouvernance européenne",
+        "prereqs": ["m22_c13_eu_ai_act_vue_ensemble"],
+        "texte": """
+Le régime de sanctions et la gouvernance institutionnelle de l'EU AI Act déterminent la PROBABILITÉ et le COÛT du non-respect. Ces deux dimensions sont aussi importantes que les obligations elles-mêmes pour calibrer un programme de conformité.
+
+GOUVERNANCE EN COUCHES — l'EU AI Act crée une architecture institutionnelle multiple :
+
+NIVEAU UE — AI OFFICE. Hébergé à la DG CNECT de la Commission européenne, opérationnel depuis février 2024. Compétent en particulier pour les GPAI : enquête, évaluation, sanctions sur les fournisseurs de GPAI. Coordination avec les autorités nationales. Élaboration des codes de pratiques.
+
+NIVEAU UE — COMITÉ EUROPÉEN DE L'IA (« European AI Board »). Composé de représentants des États membres. Coordonne, conseille la Commission, harmonise l'application.
+
+NIVEAU UE — FORUM CONSULTATIF et PANEL SCIENTIFIQUE D'EXPERTS INDÉPENDANTS. Apportent expertise technique, en particulier pour les GPAI à risque systémique.
+
+NIVEAU NATIONAL — AUTORITÉS NATIONALES COMPÉTENTES. Chaque État membre désigne au minimum une autorité de surveillance du marché et une autorité notifiante (pour les organismes notifiés). Ces autorités appliquent la régulation pour les systèmes autres que GPAI.
+
+POUR LES SYSTÈMES À HAUT RISQUE — la surveillance est principalement nationale. L'autorité de surveillance du marché peut : demander de la documentation, accéder aux locaux, exiger des évaluations, ordonner le retrait du marché, imposer des sanctions.
+
+POUR LES GPAI — la surveillance est principalement européenne (AI Office), avec coopération nationale.
+
+CATÉGORIES DE SANCTIONS (Art. 99) :
+
+CATÉGORIE 1 — Pratiques interdites de l'Art. 5 : jusqu'à 35 millions € OU 7 % du chiffre d'affaires annuel mondial total — le PLUS ÉLEVÉ.
+
+CATÉGORIE 2 — Manquements aux obligations relatives aux systèmes à haut risque, aux GPAI, aux obligations de transparence : jusqu'à 15 millions € OU 3 % du chiffre d'affaires mondial.
+
+CATÉGORIE 3 — Information incorrecte, incomplète ou trompeuse aux autorités : jusqu'à 7,5 millions € OU 1 % du chiffre d'affaires mondial.
+
+CATÉGORIE SPÉCIFIQUE — PME et START-UPS (Art. 99(6)) : les plafonds sont calculés en prenant le MOINS ÉLEVÉ des deux montants (au lieu du plus élevé pour les grandes entreprises). Distinction importante.
+
+CRITÈRES DE FIXATION DE L'AMENDE (Art. 99(7)) : nature, gravité et durée de la violation; nombre de personnes affectées; intentionnalité ou négligence; degré de coopération avec les autorités; mesures prises pour atténuer les dommages; antécédents du fournisseur ou déployeur.
+
+SANCTIONS GPAI (Art. 101). L'AI Office peut imposer aux fournisseurs de GPAI : jusqu'à 15 millions € OU 3 % du chiffre d'affaires mondial. La procédure est détaillée et inclut une phase contradictoire.
+
+CALENDRIER COMPLET D'APPLICATION (Art. 113) — récapitulatif :
+
+A. 1er AOÛT 2024 — entrée en vigueur du règlement.
+B. 2 FÉVRIER 2025 — applicabilité des dispositions générales (Chapitre I) et des PRATIQUES INTERDITES (Chapitre II, Art. 5). Les autorités peuvent enquêter et sanctionner sur les usages couverts par l'Art. 5 dès cette date.
+C. 2 AOÛT 2025 — applicabilité des règles relatives aux GPAI (Chapitre V), à la gouvernance (Chapitre VII), aux sanctions (Chapitre XII partiellement), et aux organismes notifiés (Chapitre III, Section 4).
+D. 2 AOÛT 2026 — applicabilité de la majorité du règlement, y compris les obligations sur les SYSTÈMES À HAUT RISQUE de l'Annexe III. C'est la date pivot pour la plupart des entreprises.
+E. 2 AOÛT 2027 — applicabilité des obligations sur les systèmes à haut risque intégrés à des produits régulés par l'Annexe I (machines, dispositifs médicaux, etc.). Phase finale.
+
+Les modèles GPAI mis sur le marché AVANT le 2 août 2025 bénéficient d'un délai supplémentaire pour la mise en conformité totale jusqu'au 2 août 2027 (Art. 111(3)).
+
+VOIES DE RECOURS — les fournisseurs et déployeurs ont droit à :
+A. Recours administratifs auprès de l'autorité qui a sanctionné.
+B. Recours juridictionnels devant les juridictions nationales (en première instance) puis Cour de justice de l'UE pour les questions d'interprétation du droit européen.
+C. Pour les GPAI sanctionnés par l'AI Office : recours devant le Tribunal de l'UE puis CJUE.
+
+INTERACTION AVEC D'AUTRES SANCTIONS — un même fait peut déclencher CUMULATIVEMENT plusieurs régimes :
+A. Sanction RGPD pour le traitement illicite de données personnelles.
+B. Sanction EU AI Act pour la non-conformité du système d'IA.
+C. Sanction nationale de droit de la consommation pour pratiques commerciales déloyales.
+D. Action civile en dommages-intérêts par les personnes affectées.
+
+C'est le RISQUE CUMULATIF qui motive l'investissement dans des programmes de conformité robustes : un seul incident peut générer plusieurs procédures parallèles.
+
+POUR UNE PME QUÉBÉCOISE — calculs pratiques :
+A. Pas d'exposition européenne → sanctions EU AI Act non applicables, mais le risque réputationnel d'une non-conformité connue subsiste.
+B. Exposition européenne → la sanction maximale dépasse souvent la valeur du contrat. Les compagnies d'assurance commencent à exiger une démonstration de conformité avant d'assurer les risques cyber/IA.
+C. Présence sur le marché européen → enregistrement dans la base EU et désignation d'un représentant autorisé sont des obligations administratives concrètes à planifier.
+
+PERSPECTIVES — au 25 avril 2026, l'application réelle vient de démarrer pour les obligations principales (haut risque). Les premières années montreront comment les autorités nationales interprètent les exigences et combien de sanctions sont effectivement prononcées. L'expérience RGPD suggère que les premières grandes amendes (au-delà de 100 M€) arriveront 2 à 4 ans après le début de l'application — donc plausiblement à partir de 2028-2030 pour l'EU AI Act.
+        """.strip(),
+    },
+
+})
+
+
+# ────────────── SECTION F — NIST AI RMF ──────────────
+
+CURRICULUM.update({
+
+    "m22_c19_nist_rmf_origine_structure": {
+        "module": 22, "ordre": 19,
+        "titre": "NIST AI RMF — origine, structure, statut volontaire",
+        "prereqs": ["m22_c3_approches_reglementaires"],
+        "texte": """
+Le NIST AI Risk Management Framework (AI RMF 1.0) est le cadre de référence opérationnel américain pour la gestion des risques liés à l'IA. Publié par le National Institute of Standards and Technology le 26 JANVIER 2023, il constitue le premier cadre majeur structuré aux États-Unis sur le sujet.
+
+CONTEXTE DE GENÈSE — l'AI RMF est mandaté par le NATIONAL AI INITIATIVE ACT OF 2020 (Title LI of Public Law 116-283), qui charge spécifiquement le NIST de développer un cadre volontaire pour la gestion des risques de l'IA. Période de développement : 2021-2023, avec une consultation publique étendue (workshops, drafts successifs, commentaires de centaines d'organisations).
+
+STATUT JURIDIQUE — VOLONTAIRE. Le RMF n'a aucune force contraignante en lui-même. Il ne crée pas d'obligations légales. Mais cette qualification est trompeuse pour trois raisons :
+
+A. ÉTAT DE L'ART — le RMF est largement reconnu comme la référence opérationnelle. Une organisation qui ignore ses recommandations s'expose à des accusations de négligence en cas d'incident.
+B. RÉFÉRENCEMENT RÉGLEMENTAIRE — plusieurs lois sectorielles américaines (Equal Employment Opportunity Commission, Consumer Financial Protection Bureau) renvoient au RMF dans leurs lignes directrices. L'Executive Order 14110 d'octobre 2023 sur l'IA digne de confiance citait spécifiquement le RMF.
+C. EXIGENCE COMMERCIALE — de plus en plus d'appels d'offres, de contrats B2B, et d'évaluations de fournisseurs exigent une démonstration de conformité au RMF. Les assurances cyber commencent à le demander.
+
+PHILOSOPHIE — le RMF adopte une approche RISK-MANAGEMENT classique (Plan-Do-Check-Act) plutôt qu'une approche prescriptive. Il ne dit pas « faites X »; il dit « identifiez les risques, mesurez-les, gérez-les selon votre contexte ». Cette flexibilité est sa force et sa faiblesse : elle permet l'adaptation sectorielle, mais elle laisse les organisations face à un effort de conception substantiel.
+
+STRUCTURE EN DEUX PARTIES :
+
+PARTIE 1 — FONDEMENTS (« Foundational Information »). Présente le cadre conceptuel : qu'est-ce qu'un risque d'IA? Pourquoi le gérer? Quelles caractéristiques d'IA sont dignes de confiance?
+
+PARTIE 2 — CŒUR (« Core »). Décrit les fonctions et catégories d'actions à mettre en œuvre. Quatre fonctions : GOVERN, MAP, MEASURE, MANAGE.
+
+PROFILES — le NIST a publié plusieurs profils d'application qui adaptent le RMF à des contextes spécifiques :
+A. NIST AI RMF GENERATIVE AI PROFILE (NIST AI 600-1), juillet 2024 — adaptation à l'IA générative.
+B. Profils sectoriels en développement (santé, finance, éducation, sécurité publique).
+
+PUBLICATIONS COMPLÉMENTAIRES — outre le RMF lui-même, le NIST publie une vaste gamme de documents :
+A. NIST SP 1270 — guide sur les biais dans l'IA.
+B. NIST AI 100-1 — explicabilité.
+C. NIST AI 100-3 — taxonomie des concepts d'IA.
+D. NIST IR 8312 — caractéristiques d'évaluation.
+Ces documents sont accessibles gratuitement et constituent une bibliothèque de référence opérationnelle.
+
+DIFFÉRENCE AVEC ISO/IEC 42001 — le RMF est un CADRE OPÉRATIONNEL, ISO 42001 est une NORME DE MANAGEMENT. Le RMF dit COMMENT gérer les risques techniques et organisationnels au quotidien; ISO 42001 dit comment STRUCTURER l'organisation pour le faire de manière auditée et certifiable. Les deux sont complémentaires : on peut implémenter le RMF en interne et ensuite chercher la certification ISO 42001 pour démontrer formellement la maturité.
+
+POSITION INTERNATIONALE — bien qu'américain par origine, le RMF a une influence mondiale. La plupart des grands cadres de gouvernance sectorielle qui apparaissent depuis 2023 (banques, santé, défense) y font référence. Les régulateurs canadiens, australiens, britanniques, japonais, brésiliens l'utilisent comme matrice de réflexion. Le RMF est interopérable avec les Principes de l'OCDE (alignement explicite dans le texte).
+
+CYCLE DE MISE À JOUR — le NIST envisage des révisions régulières. La version 1.0 reste la référence stable; les ajouts viennent par des « profils » et des publications complémentaires plutôt que par des refontes structurelles. Cette stabilité est un atout pour les organisations qui investissent dans le RMF.
+
+POUR UNE PME QUÉBÉCOISE — pourquoi adopter le RMF :
+A. GRATUIT — aucun frais de licence, aucun audit obligatoire.
+B. STRUCTURE ÉPROUVÉE — testée par des centaines de milliers d'organisations.
+C. ALIGNEMENT — couvre les attentes implicites de la Loi 25 (gouvernance, EFVP, transparence, surveillance), les principes du Code volontaire canadien, et 70-80 % des obligations probables d'AIDA.
+D. SIGNAL DE MARCHÉ — fournisseur d'un signal de sérieux dans les appels d'offres.
+E. DOCUMENTATION — fournit des templates et exemples pour démarrer rapidement.
+
+LIMITE — le RMF n'est PAS un substitut à la conformité juridique. Suivre le RMF sans réaliser une EFVP au sens de la Loi 25 ne suffit pas pour la conformité québécoise. Le RMF est un OUTIL OPÉRATIONNEL, pas un cadre juridique.
+        """.strip(),
+    },
+
+    "m22_c20_nist_rmf_caracteristiques_trustworthy": {
+        "module": 22, "ordre": 20,
+        "titre": "NIST AI RMF — sept caractéristiques d'IA digne de confiance",
+        "prereqs": ["m22_c19_nist_rmf_origine_structure"],
+        "texte": """
+La Partie 1 du NIST AI RMF identifie SEPT CARACTÉRISTIQUES qui définissent une IA « digne de confiance » (« trustworthy AI »). Ces caractéristiques sont la BOUSSOLE CONCEPTUELLE du framework : toutes les actions des fonctions GOVERN-MAP-MEASURE-MANAGE visent ultimement à les renforcer ou à les équilibrer.
+
+PRINCIPE D'ÉQUILIBRE — les sept caractéristiques sont parfois en TENSION les unes avec les autres. Maximiser la transparence peut compromettre la sécurité (exposer des vulnérabilités). Maximiser l'équité peut diminuer la précision globale. Le RMF ne donne pas de recette pour résoudre ces tensions; il oblige à les EXPLICITER et à les ARBITRER consciemment.
+
+LES SEPT CARACTÉRISTIQUES (numérotées 3.1 à 3.7 dans le RMF) :
+
+CARACTÉRISTIQUE 1 — VALIDITÉ ET FIABILITÉ (« Valid and Reliable »).
+Définition : le système d'IA produit des sorties qui sont conformes à sa finalité prévue (validité) et qui restent stables et exactes dans des conditions d'usage variées (fiabilité).
+Mesures : taux d'erreur, taux de vrais positifs/négatifs, mesures de robustesse face à la dérive (drift), précision out-of-distribution.
+Exemples de défaillance : chatbot médical qui donne des informations correctes 95 % du temps mais hallucine sur des cas critiques; modèle de scoring qui se dégrade sans avertissement lorsque la distribution des données change.
+
+CARACTÉRISTIQUE 2 — SÛRETÉ (« Safe »).
+Définition : le système ne devrait pas, dans des conditions définies, conduire à un état où la vie humaine, la santé, la propriété ou l'environnement sont mis en danger.
+Mesures : analyses formelles, simulations adversariales, fail-safes, kill switches.
+Exemples : véhicules autonomes, robots collaboratifs, IA médicale, contrôle industriel.
+
+CARACTÉRISTIQUE 3 — SÉCURITÉ ET RÉSILIENCE (« Secure and Resilient »).
+Définition : le système résiste aux attaques (data poisoning, prompt injection, model evasion, model extraction) et continue à fonctionner correctement face à des perturbations imprévues.
+Mesures : tests de pénétration, red teaming, conformité aux normes cyber (ISO 27001, NIST CSF 2.0).
+Note : la frontière entre sûreté et sécurité s'estompe pour l'IA — un système sûr en conditions normales peut devenir dangereux sous attaque.
+
+CARACTÉRISTIQUE 4 — RESPONSABILITÉ ET TRANSPARENCE (« Accountable and Transparent »).
+Définition : il est possible d'identifier qui est responsable du système à chaque étape et la logique générale du système est documentée.
+Mesures : registres de décisions, documentation technique, modèles de gouvernance, chaînes de responsabilité contractuelles.
+Note : la responsabilité (accountability) est ORGANISATIONNELLE; la transparence est INFORMATIONNELLE. Les deux sont nécessaires.
+
+CARACTÉRISTIQUE 5 — EXPLICABILITÉ ET INTERPRÉTABILITÉ (« Explainable and Interpretable »).
+Définition : un humain affecté par une décision peut obtenir une explication intelligible, et le mécanisme interne du système peut être inspecté par un expert.
+Mesures : SHAP values, LIME, attention maps, exemples contrefactuels, cartes du modèle (« model cards »).
+Distinction : l'EXPLICABILITÉ s'adresse aux personnes affectées (« pourquoi cette décision m'a-t-elle été appliquée? »); l'INTERPRÉTABILITÉ s'adresse aux experts (« comment fonctionne ce modèle? »).
+
+CARACTÉRISTIQUE 6 — VIE PRIVÉE RENFORCÉE (« Privacy-Enhanced »).
+Définition : le système respecte les attentes en matière de vie privée à travers son cycle de vie, en privilégiant les techniques de protection avancées.
+Mesures : differential privacy, federated learning, anonymization, minimisation des données, secure multiparty computation.
+Lien direct avec la Loi 25 et le RGPD : la conformité réglementaire vie privée est partie intégrante de cette caractéristique.
+
+CARACTÉRISTIQUE 7 — ÉQUITÉ AVEC BIAIS MAÎTRISÉS (« Fair with Harmful Bias Managed »).
+Définition : le système fonctionne sans introduire ou amplifier des préjudices injustes, en particulier vis-à-vis des groupes protégés ou vulnérables.
+Mesures : analyses de disparate impact, tests par sous-groupes, audits indépendants, équilibrage des données d'entraînement.
+Distinction CRUCIALE — il n'existe PAS UNE équité unique : disparate impact, equality of odds, demographic parity, individual fairness sont incompatibles entre elles dans la plupart des cas. Il faut CHOISIR explicitement quelle notion d'équité vise le système — choix qui doit être documenté et justifié.
+
+UTILISATION OPÉRATIONNELLE — pour chaque cas d'usage d'IA, l'organisation doit :
+A. EXPLICITER quelles caractéristiques sont prioritaires pour ce contexte. Un modèle de tri médical priorise validité-fiabilité-sûreté-équité; un assistant virtuel grand public priorise transparence-vie privée-équité.
+B. DÉFINIR DES MÉTRIQUES OPÉRATIONNELLES pour chaque caractéristique prioritaire.
+C. ÉTABLIR DES SEUILS d'acceptabilité; au-dessous, le système n'est pas mis en service.
+D. DOCUMENTER LES TENSIONS entre caractéristiques et les arbitrages effectués (ex : « pour atteindre 90 % d'exactitude globale, nous tolérons un écart de 3 points entre groupes A et B; cet écart est jugé acceptable au regard de [justification] »).
+E. RÉVISER PÉRIODIQUEMENT à mesure que le système évolue et que la compréhension des risques se précise.
+
+ALIGNEMENT AVEC L'OCDE et l'EU AI Act — les sept caractéristiques NIST se cartographient finement sur les principes OCDE et sur les exigences techniques de l'EU AI Act (Art. 9-15). Un système conforme au RMF est en très bonne position pour démontrer la conformité aux deux autres cadres, à condition de respecter les formalités spécifiques (documentation, certification, etc.).
+        """.strip(),
+    },
+
+    "m22_c21_nist_rmf_fonctions_govern_map_measure_manage": {
+        "module": 22, "ordre": 21,
+        "titre": "NIST AI RMF — fonctions GOVERN, MAP, MEASURE, MANAGE",
+        "prereqs": ["m22_c20_nist_rmf_caracteristiques_trustworthy"],
+        "texte": """
+La Partie 2 du NIST AI RMF — le « Core » — décrit les actions concrètes à mener via QUATRE FONCTIONS interdépendantes : GOVERN, MAP, MEASURE, MANAGE. Chaque fonction se subdivise en CATÉGORIES, qui se subdivisent à leur tour en SOUS-CATÉGORIES (actions opérationnelles). Au total, le Core contient 19 catégories et environ 70 sous-catégories.
+
+LOGIQUE GLOBALE — les quatre fonctions ne sont pas séquentielles mais ITÉRATIVES. GOVERN est le contexte permanent; MAP, MEASURE, MANAGE forment un cycle qui se répète tout au long du cycle de vie d'un système d'IA.
+
+FONCTION 1 — GOVERN (« Cultiver une culture de gestion des risques d'IA »).
+C'est la fonction TRANSVERSALE et PERMANENTE. Elle établit les conditions organisationnelles pour que les trois autres fonctions opèrent correctement.
+
+Six catégories principales :
+GOVERN 1 — Politiques, processus, procédures et pratiques sont en place pour la gestion des risques.
+GOVERN 2 — Responsabilités sont définies et documentées (RACI). Personnel formé.
+GOVERN 3 — Diversité, équité, accessibilité sont prises en compte dans la composition des équipes.
+GOVERN 4 — Engagement des parties prenantes (affectés, utilisateurs, experts externes).
+GOVERN 5 — Processus de gestion des risques de tiers et de la chaîne d'approvisionnement.
+GOVERN 6 — Gestion des risques liés à la chaîne de valeur de l'IA est intégrée à la gouvernance globale d'entreprise.
+
+Exemples concrets : politique d'IA approuvée par le conseil d'administration; comité IA mensuel multidisciplinaire (technique, juridique, conformité, métier); programme de formation annuel pour le personnel développant ou utilisant l'IA; exigences de gouvernance dans les contrats avec les fournisseurs d'IA.
+
+FONCTION 2 — MAP (« Cadrer le contexte et identifier les risques »).
+S'applique à chaque système d'IA SPÉCIFIQUE. Vise à comprendre POURQUOI on construit ce système, POUR QUI, dans QUEL CONTEXTE.
+
+Cinq catégories principales :
+MAP 1 — Contexte établi : finalité, parties prenantes, cas d'usage prévus et imprévus, hypothèses.
+MAP 2 — Catégorisation du système d'IA selon ses caractéristiques techniques.
+MAP 3 — Capacités, usages, objectifs et bénéfices attendus sont documentés.
+MAP 4 — Risques et bénéfices sont mappés sur les sept caractéristiques de trustworthy AI.
+MAP 5 — Impacts sur les individus, les groupes, les communautés, les organisations, la société sont identifiés.
+
+Outils typiques : ateliers de cadrage, matrices d'impact, personas affectés, analyse de scénarios, listes de risques sectoriels.
+
+FONCTION 3 — MEASURE (« Évaluer, analyser, suivre les risques »).
+Quantifier ou qualifier les risques identifiés en MAP. Sans MEASURE, on ne sait pas si les risques sont importants ou marginaux.
+
+Quatre catégories principales :
+MEASURE 1 — Méthodes appropriées sont identifiées et appliquées.
+MEASURE 2 — Caractéristiques de trustworthy AI sont évaluées.
+MEASURE 3 — Mécanismes pour suivre les risques au fil du temps sont en place.
+MEASURE 4 — Feedback des opérateurs et des affectés est intégré.
+
+Outils typiques : tests de validation, audits de biais, red teaming, A/B tests, indicateurs de performance par sous-groupe, monitoring continu de drift, mécanismes de retour d'expérience utilisateur.
+
+FONCTION 4 — MANAGE (« Prioriser, traiter, communiquer les risques »).
+Allouer les ressources pour répondre aux risques évalués en MEASURE.
+
+Quatre catégories principales :
+MANAGE 1 — Risques d'IA sont priorisés sur la base des évaluations.
+MANAGE 2 — Risques sont traités selon le contexte, les capacités, et la stratégie.
+MANAGE 3 — Risques résiduels sont documentés et communiqués.
+MANAGE 4 — Risques sont surveillés et les processus sont améliorés.
+
+Approches typiques de traitement des risques :
+A. ÉVITER — ne pas développer ou déployer le système.
+B. TRANSFÉRER — assurance, sous-traitance avec engagements contractuels.
+C. RÉDUIRE — mitigations techniques (filtrage, ré-entraînement, surveillance) et organisationnelles (formation, procédures).
+D. ACCEPTER — risque résiduel documenté et accepté par l'autorité compétente.
+
+CYCLE OPÉRATIONNEL TYPIQUE pour un nouveau projet d'IA :
+ÉTAPE 1 — GOVERN : vérifier que la politique d'IA, les rôles et la formation sont en place AVANT de démarrer.
+ÉTAPE 2 — MAP : atelier de cadrage avec parties prenantes; identifier finalité, contexte, risques préliminaires.
+ÉTAPE 3 — MEASURE : tests pré-déploiement sur les caractéristiques prioritaires.
+ÉTAPE 4 — MANAGE : revue d'arbitrage; décision GO / NO-GO; mitigations à mettre en place.
+ÉTAPE 5 — Mise en service.
+ÉTAPE 6 — Post-déploiement : MEASURE en continu (monitoring); MANAGE en continu (mise à jour des mitigations); MAP révisé si le contexte change.
+
+INTERACTION AVEC ISO 42001 — le RMF est INCORPORABLE dans un système de management ISO 42001. La structure HLS d'ISO (Plan-Do-Check-Act) sert de cadre de gouvernance organisationnelle (équivalent étoffé de GOVERN), tandis que les fonctions MAP-MEASURE-MANAGE alimentent les processus opérationnels d'ISO. Une organisation peut ainsi présenter sa conformité ISO 42001 (certifiée) en pointant vers son implémentation RMF (méthode opérationnelle).
+
+ARTEFACTS PRODUITS par une organisation qui implémente sérieusement le RMF :
+A. POLITIQUE D'IA d'entreprise.
+B. INVENTAIRE DES SYSTÈMES D'IA (Section H concept dédié).
+C. ÉVALUATIONS D'IMPACT par système (MAP).
+D. RAPPORTS DE TESTS et MÉTRIQUES (MEASURE).
+E. REGISTRE DES RISQUES et plans de traitement (MANAGE).
+F. RAPPORTS PÉRIODIQUES au comité IA et au conseil d'administration.
+G. MATÉRIEL DE FORMATION et bilans annuels.
+
+POUR UNE PME QUÉBÉCOISE — DÉMARRAGE PRAGMATIQUE en 90 JOURS :
+- Semaines 1-2 : adopter une POLITIQUE D'IA d'une page; nommer un PILOTE IA (peut-être le RPRP).
+- Semaines 3-6 : INVENTAIRE de tous les systèmes d'IA en service ou en développement.
+- Semaines 7-10 : MAP et MEASURE rapides sur les 2-3 systèmes les plus risqués.
+- Semaines 11-13 : MANAGE — décisions de mitigation; mise en place du monitoring.
+- Mois 4+ : industrialisation, formation, audits internes annuels.
+        """.strip(),
+    },
+
+    "m22_c22_nist_gai_profile": {
+        "module": 22, "ordre": 22,
+        "titre": "NIST GAI Profile — adaptation à l'IA générative",
+        "prereqs": ["m22_c21_nist_rmf_fonctions_govern_map_measure_manage"],
+        "texte": """
+Le NIST AI 600-1 (« Artificial Intelligence Risk Management Framework: Generative Artificial Intelligence Profile »), publié le 26 juillet 2024, adapte le RMF aux spécificités de l'IA générative. Il a été développé sur ordre de l'Executive Order 14110 du Président Biden (octobre 2023) et constitue à ce jour le profil sectoriel le plus important du RMF.
+
+POURQUOI UN PROFIL DÉDIÉ — l'IA générative pose des risques que les systèmes d'IA prédictive classiques ne posent pas, ou qu'elle pose à une échelle qualitativement différente. Ces risques nécessitent des mitigations spécifiques que le RMF de base couvre insuffisamment.
+
+LES DOUZE RISQUES SPÉCIFIQUES À L'IA GÉNÉRATIVE identifiés par le profil :
+
+RISQUE 1 — INFORMATION CBRN (Chemical, Biological, Radiological, Nuclear). L'IA générative peut faciliter la production d'armes ou d'agents dangereux en synthétisant des connaissances autrefois cloisonnées dans des publications spécialisées. Mitigations : filtrage des prompts, refus de sorties à risque, limitation de l'accès à certains modèles.
+
+RISQUE 2 — CONFABULATION (« hallucination »). Production confiante de contenus factuellement incorrects. C'est l'un des risques les plus systémiques. Mitigations : grounding via récupération de documents (RAG), citations, indication explicite du niveau d'incertitude, formation continue des utilisateurs.
+
+RISQUE 3 — CONTENUS DANGEREUX, VIOLENTS, HAINEUX. Génération de contenus violents, harassants, sexualisés sans consentement, terroristes. Mitigations : filtrage de classe (classifier-based filtering), red teaming, modération en ligne.
+
+RISQUE 4 — INFORMATIONS PERSONNELLES IDENTIFIABLES (IPI / PII) DANS LES SORTIES. Le modèle peut reproduire des données personnelles vues durant l'entraînement. Mitigations : differential privacy à l'entraînement, filtrage des sorties, suppression sur demande.
+
+RISQUE 5 — INTÉGRITÉ DE L'INFORMATION. Désinformation, mésinformation, propagande automatisée à grande échelle. Mitigations : watermarking, provenance des contenus, cohérence narrative, partenariats avec plateformes.
+
+RISQUE 6 — IMPACTS ENVIRONNEMENTAUX. Consommation énergétique massive de l'entraînement et de l'inférence, consommation d'eau pour le refroidissement. Mitigations : transparence sur les empreintes, optimisation, choix des fournisseurs cloud.
+
+RISQUE 7 — IMPACTS SUR LE TRAVAIL HUMAIN. Déqualification, déresponsabilisation, atteinte à la santé mentale. Mitigations : conception centrée sur l'humain, formation, garde-fous éthiques.
+
+RISQUE 8 — INFORMATION FALLACIEUSE OU TROMPEUSE (« deepfakes », usurpation d'identité). Mitigations : authentification cryptographique, watermarking, listes blanches de sources fiables.
+
+RISQUE 9 — VIOLATION DE LA PROPRIÉTÉ INTELLECTUELLE. Sortie qui reproduit substantiellement des œuvres protégées. Mitigations : sources d'entraînement contractualisées, opt-out, citations, mécanismes de retrait.
+
+RISQUE 10 — CONTENUS OBSCÈNES IMPLIQUANT DES MINEURS (CSAM). Tolérance zéro. Mitigations : filtrage hard, signalement à NCMEC, conservation auditable, formation des modérateurs.
+
+RISQUE 11 — CYBER-ABUS. Ingénierie sociale, génération de code malveillant, automatisation du phishing. Mitigations : refus de cas d'usage offensifs, monitoring d'API.
+
+RISQUE 12 — DANGERS DE LA DÉPENDANCE EXCESSIVE (« automation bias »). Confiance excessive dans les sorties d'IA, perte d'expertise humaine. Mitigations : mécanismes de scepticisme intégrés, exigence d'autorité humaine, formation à l'évaluation critique.
+
+ACTIONS RECOMMANDÉES par le profil — réorganisées sur les quatre fonctions du RMF :
+
+GOVERN ADAPTÉE :
+A. Politique GenAI distincte de la politique IA générale.
+B. Comité d'éthique avec autorité pour bloquer un déploiement.
+C. Engagement public sur l'usage responsable.
+D. Évaluation des fournisseurs de modèles GPAI (qualité de la documentation, transparence).
+
+MAP ADAPTÉE :
+A. Identification des cas d'usage à risque élevé (CBRN, manipulation, atteinte à la dignité).
+B. Cartographie des dépendances vis-à-vis de modèles propriétaires externes.
+C. Modélisation des scénarios d'abus (« threat modeling »).
+
+MEASURE ADAPTÉE :
+A. Tests de robustesse aux prompts adversariaux (jailbreaks).
+B. Évaluation systématique des sorties par red teaming continu.
+C. Métriques quantitatives sur les 12 risques (taux d'hallucination, taux de refus, taux de fuite IPI).
+D. Évaluation des biais dans les sorties générées.
+
+MANAGE ADAPTÉE :
+A. Mécanismes de désactivation immédiate (kill switches).
+B. Protocoles de notification d'incidents accélérés (24-72 heures).
+C. Communication coordonnée avec les utilisateurs et les autorités.
+D. Documentation des incidents pour amélioration continue.
+
+ARTICULATION AVEC L'EU AI ACT (régime GPAI) — le profil GAI du NIST et le régime GPAI de l'EU AI Act se recouvrent largement. Une organisation qui implémente le profil NIST couvre déjà la plupart des obligations GPAI européennes en termes opérationnels (la documentation et les obligations administratives spécifiques de l'EU AI Act restent à ajouter).
+
+POUR UN INTÉGRATEUR D'IA GÉNÉRATIVE (cas typique d'une PME québécoise qui construit un produit basé sur Claude, GPT ou un modèle open-source) :
+A. ÉVALUER le fournisseur du modèle (Anthropic, OpenAI, etc.) sur ses propres pratiques GAI.
+B. DÉLIMITER les cas d'usage que votre produit autorise et ceux qu'il interdit (politique d'usage acceptable).
+C. FILTRER en amont (validation des prompts) et en aval (validation des sorties).
+D. INFORMER les utilisateurs sur la nature IA générative du produit, ses limites, son taux d'erreur attendu.
+E. SURVEILLER en continu les cas d'utilisation problématiques.
+F. RÉAGIR rapidement aux incidents et aux signalements.
+
+LIMITES DU PROFIL — le profil GAI est volontaire et général. Il ne se substitue pas aux exigences sectorielles spécifiques (santé, finance, défense). Il évoluera avec l'état de l'art; consulter régulièrement les mises à jour du NIST.
+        """.strip(),
+    },
+
+})
+
+
+# ────────────── SECTION G — ISO/IEC 42001 ──────────────
+
+CURRICULUM.update({
+
+    "m22_c23_iso_42001_norme_certifiable": {
+        "module": 22, "ordre": 23,
+        "titre": "ISO/IEC 42001 — norme de management certifiable",
+        "prereqs": ["m22_c2_typologie_outils"],
+        "texte": """
+ISO/IEC 42001:2023 est la PREMIÈRE NORME INTERNATIONALE CERTIFIABLE pour les systèmes de management de l'IA. Publiée le 18 décembre 2023 conjointement par l'ISO et la CEI (Commission électrotechnique internationale), elle marque l'arrivée de l'IA dans la famille des normes de management aux côtés d'ISO 9001 (qualité, 1987), ISO 14001 (environnement, 1996), ISO 27001 (sécurité, 2005) et ISO 27701 (vie privée, 2019).
+
+NATURE — c'est une NORME DE MANAGEMENT, pas une norme technique. Elle ne dit PAS comment construire un modèle d'IA performant; elle dit comment STRUCTURER UNE ORGANISATION pour gérer l'IA de façon responsable, mesurable et auditable.
+
+CONCEPT CLÉ — l'AIMS (« AI Management System ») — système de management de l'IA. C'est le périmètre couvert par la norme : politiques, processus, ressources, contrôles utilisés pour gérer l'IA de manière intégrée à la stratégie de l'organisation.
+
+STATUT JURIDIQUE — VOLONTAIRE. Aucune obligation légale d'être certifié. Mais :
+A. Plusieurs régulateurs (en particulier l'EU AI Act) accepteront probablement la certification ISO 42001 comme PRÉSOMPTION DE CONFORMITÉ partielle aux exigences techniques.
+B. Le marché B2B exige de plus en plus une certification ISO 42001 dans les appels d'offres, comme il exige déjà ISO 27001 pour la sécurité.
+C. Les assureurs cyber tarifient à la baisse les organisations certifiées.
+
+STRUCTURE EN HIGH-LEVEL STRUCTURE (HLS) — comme toutes les normes de management ISO modernes, ISO 42001 suit le modèle Plan-Do-Check-Act et la structure HLS commune. Cela permet l'INTÉGRATION avec d'autres systèmes de management que l'organisation pourrait déjà avoir (qualité, sécurité, vie privée, environnement).
+
+LES 10 CHAPITRES PRINCIPAUX (numérotation HLS standard) :
+
+CHAPITRE 1 — Domaine d'application.
+CHAPITRE 2 — Références normatives.
+CHAPITRE 3 — Termes et définitions (renvoie à ISO/IEC 22989).
+CHAPITRE 4 — CONTEXTE DE L'ORGANISATION. Comprendre l'environnement interne et externe, identifier les parties intéressées, définir le périmètre de l'AIMS.
+CHAPITRE 5 — LEADERSHIP. Engagement de la direction, politique d'IA, rôles et responsabilités. La direction doit OBJECTIVEMENT s'engager.
+CHAPITRE 6 — PLANIFICATION. Identification des risques et opportunités, objectifs de l'AIMS, planification des changements.
+CHAPITRE 7 — SUPPORT. Ressources, compétences, sensibilisation, communication, information documentée.
+CHAPITRE 8 — OPÉRATION. Planification et contrôle opérationnels, évaluation des incidences, gestion du cycle de vie des systèmes d'IA.
+CHAPITRE 9 — ÉVALUATION DE LA PERFORMANCE. Surveillance, mesure, analyse, audits internes, revue de direction.
+CHAPITRE 10 — AMÉLIORATION. Non-conformités, actions correctives, amélioration continue.
+
+PRINCIPE CARDINAL — Plan-Do-Check-Act (PDCA) :
+PLAN — Chap. 4-7 : poser les fondations, planifier.
+DO — Chap. 8 : exécuter les opérations.
+CHECK — Chap. 9 : évaluer la performance.
+ACT — Chap. 10 : améliorer en continu.
+
+PROCESSUS DE CERTIFICATION — typiquement en cinq phases :
+PHASE 1 — DIAGNOSTIC INITIAL (« gap analysis »). 1-2 semaines pour identifier l'écart entre l'état actuel et les exigences ISO 42001.
+PHASE 2 — IMPLÉMENTATION. 3-12 mois selon la maturité de départ. Mise en place des politiques, procédures, contrôles, formation.
+PHASE 3 — AUDIT INTERNE. L'organisation s'audite elle-même pour identifier les non-conformités.
+PHASE 4 — AUDIT DE CERTIFICATION par un organisme accrédité. Deux étapes : Stage 1 (revue documentaire) + Stage 2 (audit terrain). Pour une PME, environ 5-10 jours-homme d'auditeur.
+PHASE 5 — SURVEILLANCE et RECERTIFICATION. Audits de surveillance annuels; recertification complète tous les 3 ans.
+
+COÛT — pour une PME québécoise, la certification représente typiquement :
+A. Implémentation interne : 6-12 mois × 0,3-1,0 ETP × salaire chargé = 50 000 $ à 150 000 $ d'effort interne.
+B. Conseil externe (souvent nécessaire au début) : 30 000 $ à 100 000 $.
+C. Audit de certification : 15 000 $ à 40 000 $ pour une PME.
+D. Surveillance annuelle : 8 000 $ à 20 000 $.
+TOTAL d'entrée : 100 000 $ à 290 000 $; coût annuel récurrent : 8 000 $ à 30 000 $.
+
+ORGANISMES CERTIFICATEURS au Canada — BSI, DNV, TÜV SÜD, TÜV Rheinland, Bureau Veritas, SGS, AFNOR, et plusieurs autres ouvrent leur portefeuille à ISO 42001 depuis 2024.
+
+DIFFÉRENCE AVEC NIST AI RMF — le RMF est un CADRE OPÉRATIONNEL gratuit; ISO 42001 est une NORME CERTIFIABLE payante. On peut implémenter le RMF sans certification (et c'est déjà beaucoup); on peut aussi viser la certification ISO 42001 pour démontrer la maturité. Les deux sont complémentaires :
+- LE RMF répond à : « Comment gérons-nous concrètement les risques de chaque système? »
+- ISO 42001 répond à : « Comment notre ORGANISATION est-elle structurée pour le faire de façon répétable? »
+
+CIRCONSTANCES JUSTIFIANT LA CERTIFICATION pour une PME :
+A. Marché B2B exigeant des preuves de gouvernance.
+B. Exposition européenne (présomption partielle de conformité EU AI Act).
+C. Volonté de signaler la maturité face aux concurrents.
+D. Préparation à AIDA et autres lois en gestation.
+
+CIRCONSTANCES NE LA JUSTIFIANT PAS (à court terme) :
+A. PME sans exposition B2B significative — mieux vaut investir en RMF + Loi 25.
+B. Phase d'expérimentation où les processus sont encore mouvants.
+C. Une seule application d'IA, peu critique — la lourdeur d'un AIMS formel est disproportionnée.
+
+POSITION D'INVESTISSEMENT — pour une PME québécoise, la séquence rationnelle est :
+1. Mois 0-12 : conformité Loi 25 + adoption NIST AI RMF + Code volontaire canadien.
+2. Mois 12-24 : si justifié par le marché, démarrer un projet ISO 42001 en s'appuyant sur les structures déjà en place.
+3. Mois 24-36 : audit de certification.
+        """.strip(),
+    },
+
+    "m22_c24_iso_42001_annexe_a_controles": {
+        "module": 22, "ordre": 24,
+        "titre": "ISO 42001 — Annexe A et 38 contrôles",
+        "prereqs": ["m22_c23_iso_42001_norme_certifiable"],
+        "texte": """
+La force opérationnelle d'ISO/IEC 42001:2023 réside dans son ANNEXE A — un référentiel de 38 CONTRÔLES regroupés en 9 OBJECTIFS DE CONTRÔLE. Cette annexe joue le même rôle que l'Annexe A d'ISO 27001 pour la sécurité de l'information : elle décrit ce que l'organisation DOIT (ou peut) mettre en place pour atteindre ses objectifs de gouvernance d'IA.
+
+NATURE DES CONTRÔLES — chaque contrôle énonce une mesure organisationnelle, technique ou contractuelle attendue. Ils ne sont pas tous obligatoires : l'organisation détermine, dans sa DÉCLARATION D'APPLICABILITÉ (« Statement of Applicability »), lesquels s'appliquent à elle, et justifie les exclusions.
+
+LES NEUF DOMAINES DE CONTRÔLES :
+
+DOMAINE A.2 — POLITIQUES LIÉES À L'IA (3 contrôles).
+A.2.2 Politique d'IA documentée.
+A.2.3 Alignement avec les autres politiques de l'organisation.
+A.2.4 Revue périodique de la politique d'IA.
+Objectif : que l'organisation ait une position formelle et cohérente sur l'IA, articulée à sa stratégie globale.
+
+DOMAINE A.3 — ORGANISATION INTERNE (3 contrôles).
+A.3.2 Rôles et responsabilités définis (RACI).
+A.3.3 Notification des autorités et des parties intéressées.
+A.3.4 Mécanismes pour signaler les préoccupations (« whistleblowing »).
+Objectif : que les bonnes personnes soient identifiées avec les bonnes autorités, et que les remontées de préoccupations soient possibles.
+
+DOMAINE A.4 — RESSOURCES POUR LES SYSTÈMES D'IA (6 contrôles).
+A.4.2 Documentation des ressources.
+A.4.3 Ressources de calcul et de stockage.
+A.4.4 Ressources humaines compétentes.
+A.4.5 Ressources de données.
+A.4.6 Outils et infrastructures.
+Objectif : avoir l'inventaire et la gestion des moyens nécessaires au cycle de vie de l'IA.
+
+DOMAINE A.5 — ÉVALUATION DES IMPACTS DES SYSTÈMES D'IA (4 contrôles).
+A.5.2 Processus d'évaluation des impacts.
+A.5.3 Documentation des évaluations.
+A.5.4 Évaluation des impacts sur les individus et groupes.
+A.5.5 Évaluation des impacts sociétaux.
+Objectif : avant tout déploiement, comprendre les conséquences possibles. Recoupe directement les EFVP de la Loi 25 et les FRIA de l'EU AI Act.
+
+DOMAINE A.6 — CYCLE DE VIE DU SYSTÈME D'IA (4 contrôles).
+A.6.1 Objectifs et critères pour le développement responsable.
+A.6.2 Processus de cycle de vie documentés.
+A.6.3 Exigences techniques et opérationnelles.
+A.6.4 Validation, vérification, déploiement, surveillance.
+Objectif : industrialiser la qualité et la conformité tout au long du développement, du déploiement, et du retrait du système.
+
+DOMAINE A.7 — DONNÉES POUR LES SYSTÈMES D'IA (5 contrôles).
+A.7.2 Processus de gestion des données pour l'IA.
+A.7.3 Acquisition de données.
+A.7.4 Qualité des données pour l'IA.
+A.7.5 Provenance et traçabilité.
+A.7.6 Préparation des données.
+Objectif : la qualité de l'IA dépend de la qualité des données. Ce domaine est crucial pour gérer les biais, la conformité vie privée, et la traçabilité.
+
+DOMAINE A.8 — INFORMATION AUX PARTIES INTÉRESSÉES (3 contrôles).
+A.8.2 Informations système-spécifiques.
+A.8.3 Information externe.
+A.8.4 Réception et traitement des informations entrantes.
+Objectif : transparence interne et externe sur l'usage de l'IA. Articule directement avec les obligations de transparence de la Loi 25 (Art. 8.1, 12.1) et de l'EU AI Act (Art. 50, 13).
+
+DOMAINE A.9 — UTILISATION DES SYSTÈMES D'IA (3 contrôles).
+A.9.2 Processus pour l'usage responsable.
+A.9.3 Objectifs définis pour l'utilisation.
+A.9.4 Utilisation conforme aux objectifs.
+Objectif : que les systèmes soient utilisés conformément à leur finalité prévue, sans dérive d'usage.
+
+DOMAINE A.10 — RELATIONS AVEC LES TIERS et CLIENTS (3 contrôles).
+A.10.2 Allocation des responsabilités.
+A.10.3 Fournisseurs.
+A.10.4 Clients.
+Objectif : la chaîne de valeur de l'IA implique presque toujours plusieurs entités. Ce domaine traite des contrats, de la due diligence des fournisseurs, et de l'information aux clients.
+
+DÉCLARATION D'APPLICABILITÉ (« Statement of Applicability ») — document central exigé par la norme. Liste les 38 contrôles, indique pour chacun s'il s'applique ou non, justifie les exclusions, et renvoie au document interne qui décrit sa mise en œuvre. C'est le DOCUMENT PRINCIPAL examiné lors de l'audit.
+
+ANNEXES NORMATIVES SUPPLÉMENTAIRES :
+ANNEXE B — Guide d'implémentation par contrôle. Pour chaque contrôle, B donne des explications, exemples, et bonnes pratiques. Lecture indispensable lors de la mise en œuvre.
+ANNEXE C — Objectifs et risques d'IA. Liste indicative des risques à considérer dans l'évaluation (équité, transparence, robustesse, etc.).
+ANNEXE D — Application sectorielle. Considérations pour des secteurs spécifiques (santé, finance, etc.).
+
+ARTICULATION AVEC NIST AI RMF — la cartographie est riche :
+A. Le DOMAINE A.2 (Politiques) ↔ GOVERN du RMF.
+B. Les DOMAINES A.5 (Évaluation des impacts) et A.6 (Cycle de vie) ↔ MAP, MEASURE, MANAGE du RMF.
+C. Le DOMAINE A.7 (Données) ↔ ce qui n'est pas explicitement dans le RMF mais bien couvert par les sept caractéristiques (en particulier équité, vie privée).
+D. Le DOMAINE A.8 (Information) ↔ les caractéristiques de transparence et d'explicabilité du RMF.
+
+INTÉGRATION AVEC ISO 27001 et ISO 27701 — environ 40 % des contrôles d'ISO 42001 trouvent un équivalent direct dans ISO 27001 (sécurité) et ISO 27701 (vie privée). Une organisation déjà certifiée 27001/27701 économise une quantité substantielle d'effort en visant 42001.
+
+COÛT D'IMPLÉMENTATION — selon la complexité de l'organisation et l'inventaire des systèmes d'IA, l'implémentation des 38 contrôles représente typiquement 4-9 mois de travail dédié, avec un effort intense sur les domaines A.5 (évaluations), A.6 (cycle de vie), A.7 (données) — qui sont les plus exigeants techniquement.
+        """.strip(),
+    },
+
+    "m22_c25_iso_42001_articulation": {
+        "module": 22, "ordre": 25,
+        "titre": "ISO 42001 — articulation avec ISO 27001, 9001, 27701",
+        "prereqs": ["m22_c24_iso_42001_annexe_a_controles"],
+        "texte": """
+Pour la plupart des organisations, ISO 42001 ne s'implémente pas dans un vide. Elle vient s'ajouter à des systèmes de management déjà en place — qualité (9001), sécurité (27001), vie privée (27701), environnement (14001). L'INTÉGRATION de ces normes est la clé d'une mise en œuvre efficace et économique.
+
+LE PRINCIPE D'INTÉGRATION HLS — toutes les normes de management ISO modernes partagent la même structure de haut niveau (HLS) : 10 chapitres parallèles, vocabulaire commun, principes communs. Cela permet de construire un SYSTÈME DE MANAGEMENT INTÉGRÉ (« Integrated Management System » — IMS) qui couvre simultanément plusieurs domaines avec des processus uniques.
+
+ARTICULATION ISO 42001 + ISO 27001 (Sécurité de l'information).
+
+POURQUOI 27001 EST PRÉREQUIS DE FACTO POUR 42001 — un système d'IA traite par définition de l'information, et donc présente des risques de sécurité de l'information. Sans contrôles de sécurité de l'information, on ne peut pas démontrer la sûreté ni la cybersécurité d'un système d'IA. La majorité des organismes certificateurs encouragent fortement la certification 27001 préalable ou simultanée.
+
+CHEVAUCHEMENT IDENTIFIABLE — les contrôles d'ISO 42001 qui se cartographient directement sur 27001 :
+A. Gestion des accès aux données et aux modèles.
+B. Chiffrement des données d'entraînement et des modèles.
+C. Détection et réponse aux incidents.
+D. Sauvegardes et continuité.
+E. Sécurité des fournisseurs (cloud, API tierces).
+
+ÉCONOMIES D'ÉCHELLE — une organisation qui certifie 27001 puis 42001 réutilise environ 40-50 % de l'effort documentaire et procédural. L'audit combiné est plus efficace que deux audits séparés.
+
+ARTICULATION ISO 42001 + ISO 27701 (Vie privée, extension de 27001).
+
+ISO 27701 est une extension de 27001 spécifiquement pour la vie privée. Elle est particulièrement pertinente pour les organisations soumises au RGPD ou à la Loi 25.
+
+CHEVAUCHEMENT FORT avec les éléments « vie privée » d'ISO 42001 :
+A. Gestion du consentement.
+B. Droits des personnes (accès, rectification, opposition, portabilité).
+C. Évaluations des impacts sur la vie privée (DPIA / EFVP).
+D. Notification d'incidents impliquant des RP.
+
+RECOMMANDATION — pour une organisation qui traite massivement des RP, la séquence optimale est : 27001 → 27701 → 42001. Chaque norme s'appuie sur la précédente.
+
+ARTICULATION ISO 42001 + ISO 9001 (Qualité).
+
+ISO 9001 est la norme de management de la qualité, déjà en place dans des centaines de milliers d'organisations dans le monde. Elle structure la rigueur opérationnelle générale.
+
+CHEVAUCHEMENT MOYEN — ISO 9001 fournit une base de gouvernance et de processus que 42001 réutilise :
+A. Documentation et maîtrise documentaire.
+B. Audits internes.
+C. Revues de direction.
+D. Actions correctives et amélioration continue.
+E. Compétence et formation du personnel.
+
+L'EFFORT INCRÉMENTAL pour ajouter 42001 à une organisation déjà 9001 est plus faible que pour une organisation qui n'a aucune norme de management préexistante.
+
+ARTICULATION AVEC AUTRES NORMES DE LA FAMILLE ISO IA :
+
+ISO/IEC 23894:2023 — Gestion des risques en IA. Norme TECHNIQUE complémentaire qui détaille les méthodes de gestion des risques applicables aux systèmes d'IA. Non certifiable, mais très utile comme support technique pour le DOMAINE A.5 d'ISO 42001.
+
+ISO/IEC 23053:2022 — Cadre de référence pour les systèmes d'IA utilisant l'apprentissage automatique. Vocabulaire et architecture.
+
+ISO/IEC 22989:2022 — Concepts et terminologie liés à l'IA. Référence terminologique pour ISO 42001.
+
+ISO/IEC 25059:2023 — Modèle de qualité pour les systèmes d'IA. Aide à définir les métriques de qualité (précision, robustesse, équité).
+
+ISO/IEC TR 24028:2020 — Vue d'ensemble de la fiabilité de l'IA. Document technique pour comprendre les enjeux.
+
+ISO/IEC TR 24368:2022 — Aspects éthiques et sociétaux. Guide non certifiable mais utile.
+
+LE FUTUR ISO/IEC 42005 (en développement) — guide spécifique pour l'évaluation des impacts d'IA, très attendu pour structurer la mise en œuvre du DOMAINE A.5 d'ISO 42001.
+
+STRATÉGIE D'INTÉGRATION POUR UNE PME QUÉBÉCOISE :
+
+SCÉNARIO 1 — Aucune certification préalable. Choix recommandé : démarrer simultanément 27001 et 27701 (vie privée + sécurité), puis 42001 12-18 mois plus tard. Effort total : 18-24 mois et 200 000-400 000 $.
+
+SCÉNARIO 2 — Déjà 9001. Ajouter 27001 + 27701 + 42001 en parallèle ou séquentiellement; réutiliser l'infrastructure documentaire de 9001. Effort total réduit de 30-40 %.
+
+SCÉNARIO 3 — Déjà 27001/27701. Ajouter 42001 en bénéficiant des 40-50 % de chevauchement. Effort : 6-9 mois, 60 000-120 000 $.
+
+SCÉNARIO 4 — Pas de certification mais maturité élevée (RMF déjà en place). Possible de viser directement 42001, en formalisant les pratiques RMF dans la structure normative. Risque : si la sécurité informationnelle est faible, l'audit identifiera des non-conformités majeures.
+
+ARTICULATION AVEC LES CADRES NON-ISO :
+A. NIST AI RMF — utilisé comme méthode de mise en œuvre des contrôles ISO 42001.
+B. NIST CSF 2.0 — articulé avec ISO 27001 sur la cybersécurité.
+C. Code de conduite volontaire canadien — couvert par les contrôles ISO 42001.
+D. Loi 25 et RGPD — couverts par ISO 27701 + les contrôles vie privée d'ISO 42001.
+E. EU AI Act — la certification ISO 42001 est susceptible de constituer une PRÉSOMPTION DE CONFORMITÉ partielle pour les systèmes à haut risque, à condition de compléter la documentation administrative spécifique du règlement.
+
+POSITION D'INVESTISSEMENT — pour la majorité des PME québécoises, l'objectif réaliste à 24 mois est :
+1. Loi 25 conforme (obligation immédiate).
+2. NIST AI RMF + Code volontaire (méthode opérationnelle).
+3. Si exposition européenne ou exigence B2B : ISO 27001 + ISO 27701 d'abord, puis ISO 42001.
+4. Si AIDA est adoptée : ajustement marginal du dispositif déjà en place.
+        """.strip(),
+    },
+
+})
+
+
+# ────────────── SECTION H — MISE EN ŒUVRE PRATIQUE ──────────────
+
+CURRICULUM.update({
+
+    "m22_c26_cartographie_systemes_ia": {
+        "module": 22, "ordre": 26,
+        "titre": "Cartographie et inventaire des systèmes d'IA",
+        "prereqs": ["m22_c21_nist_rmf_fonctions_govern_map_measure_manage"],
+        "texte": """
+La PREMIÈRE ACTION CONCRÈTE de tout programme de gouvernance d'IA est de SAVOIR ce qu'on a. Sans inventaire, aucun cadre (Loi 25, EU AI Act, NIST RMF, ISO 42001) n'est implémentable. La cartographie est l'étape préalable qui n'est jamais faite par défaut et qui révèle systématiquement plus de systèmes que l'organisation pensait avoir.
+
+POURQUOI L'INVENTAIRE EST DIFFICILE — trois raisons :
+A. SHADOW IA. Des employés utilisent ChatGPT, Claude, Copilot ou des outils SaaS dotés d'IA sans que la direction le sache.
+B. IA INTÉGRÉE. De nombreux logiciels d'entreprise (CRM, ERP, outils RH, plateformes marketing) intègrent désormais des fonctionnalités d'IA en arrière-plan, sans que ce soit le motif principal d'achat.
+C. FRONTIÈRE FLOUE. Quand un système devient-il « IA »? Un classificateur statistique simple? Un modèle de régression? Cette question mérite une définition opérationnelle.
+
+DÉFINITION OPÉRATIONNELLE pour l'inventaire — adopter la définition de l'EU AI Act / OCDE : un système basé sur une machine, conçu pour fonctionner avec différents niveaux d'autonomie, qui peut faire preuve d'adaptabilité après son déploiement, et qui pour des objectifs explicites ou implicites, déduit, à partir des entrées qu'il reçoit, comment générer des sorties qui influencent des environnements physiques ou virtuels.
+
+CRITÈRE PRATIQUE — tout système qui produit une sortie influençant une décision relative à une personne (employé, client, prospect) DOIT être dans l'inventaire, qu'il utilise du machine learning, des règles, ou un mélange.
+
+CONTENU MINIMAL D'UNE FICHE D'INVENTAIRE (15 champs) :
+1. NOM du système.
+2. PROPRIÉTAIRE MÉTIER (qui paie? qui utilise?).
+3. RESPONSABLE TECHNIQUE.
+4. FOURNISSEUR / DÉVELOPPEUR (interne, fournisseur SaaS, modèle GPAI).
+5. FINALITÉ DÉCLARÉE.
+6. CAS D'USAGE COUVERTS.
+7. CATÉGORIES DE PERSONNES AFFECTÉES.
+8. DONNÉES D'ENTRÉE (catégories, sources, sensibilité).
+9. DONNÉES UTILISÉES POUR L'ENTRAÎNEMENT (si applicable).
+10. SORTIES (type de décision, automatisée ou aide à la décision).
+11. NIVEAU DE CRITICITÉ (impact d'une défaillance).
+12. CLASSIFICATION RÉGLEMENTAIRE (Annexe III EU AI Act? haut-impact AIDA? décision automatisée Loi 25?).
+13. STATUT (en développement, en production, en retrait).
+14. DATE DE DERNIÈRE ÉVALUATION.
+15. RÉFÉRENCES (EFVP/DPIA, documentation technique, contrats).
+
+OUTILS POUR CONSTRUIRE L'INVENTAIRE :
+A. Tableur initial (Excel, Google Sheets) — suffisant pour une PME avec 10-30 systèmes.
+B. Outils dédiés émergents — Credo AI, FairNow, Weights & Biases, Holistic AI, Monitaur. À considérer au-delà de 30-50 systèmes.
+C. Intégration avec le CMDB (Configuration Management Database) — si l'organisation a une discipline IT mature.
+
+PROCESSUS DE COLLECTE EN 4 ÉTAPES :
+ÉTAPE 1 — RECENSEMENT TOP-DOWN. Lister les projets d'IA connus de la direction.
+ÉTAPE 2 — RECENSEMENT BOTTOM-UP. Sondage / entretiens avec chaque équipe métier : « quels outils utilisez-vous qui produisent automatiquement des recommandations, des classements, des alertes, des contenus, des décisions? »
+ÉTAPE 3 — RECENSEMENT FOURNISSEURS. Lister tous les contrats SaaS et identifier ceux qui annoncent des fonctionnalités d'IA.
+ÉTAPE 4 — RECENSEMENT TECHNIQUE. Examen des pipelines de données et des appels API vers des modèles externes (OpenAI, Anthropic, Google, Hugging Face).
+
+CLASSIFICATION DE CRITICITÉ — appliquer une matrice impact × probabilité :
+A. CRITICITÉ ÉLEVÉE — système qui prend ou influence directement des décisions ayant un impact significatif sur une personne (embauche, crédit, traitement médical, sanction). Inscription prioritaire dans tous les programmes de gouvernance.
+B. CRITICITÉ MODÉRÉE — système qui automatise des processus internes, des recommandations sans impact direct (priorisation de tickets, analyse marketing, suggestion de contenu).
+C. CRITICITÉ FAIBLE — IA d'assistance individuelle (rédaction de courriels, recherche, brouillon de code), sans externalisation de décision.
+
+LIEN AVEC LE CHAMP RÉGLEMENTAIRE :
+A. Critères Loi 25 — tout système traitant des RP entre dans le champ. Le caractère « décision exclusivement automatisée » (Art. 12.1) est le critère pivot.
+B. Critères EU AI Act — l'Annexe III fournit la liste des cas d'usage à haut risque. Vérifier chaque système contre cette liste.
+C. Critères AIDA — la liste des « high-impact AI systems » de la version novembre 2023 est notre meilleure approximation.
+D. Critères ISO 42001 — pas de catégorie réglementaire mais une obligation d'évaluer les impacts (DOMAINE A.5).
+
+GOUVERNANCE DE L'INVENTAIRE :
+A. PROPRIÉTAIRE de l'inventaire — typiquement le RPRP, le DPO ou le pilote IA.
+B. MISE À JOUR — revue trimestrielle minimum, déclenchée à chaque nouveau projet.
+C. AUDIT — vérification annuelle par audit interne (cohérence, exhaustivité).
+D. RAPPORT — bilan annuel au comité de direction et au conseil d'administration.
+
+UTILITÉ AU-DELÀ DE LA CONFORMITÉ — un bon inventaire d'IA :
+A. Aide à la décision d'investissement (identifier doublons, manques).
+B. Permet la formation ciblée des utilisateurs.
+C. Facilite la réponse rapide en cas d'incident (« quels systèmes utilisent ce modèle qui vient d'être désavoué? »).
+D. Démontre la maturité aux auditeurs, clients, assureurs.
+
+ERREURS FRÉQUENTES :
+A. Limiter l'inventaire au « machine learning » — ce qui exclut beaucoup de systèmes décisionnels.
+B. Confier l'inventaire à l'IT seul — manque de visibilité sur les usages métier.
+C. Faire un inventaire ponctuel sans gouvernance de mise à jour.
+D. Sous-estimer le shadow IA et les fonctionnalités émergentes des outils existants.
+
+POUR UNE PME QUÉBÉCOISE — une cartographie initiale en 4-6 semaines révèle typiquement 15-50 systèmes là où l'organisation pensait en avoir 3-5. C'est ce premier moment de surprise qui légitime l'investissement dans la suite du programme.
+        """.strip(),
+    },
+
+    "m22_c27_evaluation_incidence_aia_efvp": {
+        "module": 22, "ordre": 27,
+        "titre": "Évaluation d'incidence algorithmique (AIA / EFVP)",
+        "prereqs": ["m22_c26_cartographie_systemes_ia"],
+        "texte": """
+L'évaluation d'incidence est l'instrument central de plusieurs régimes : EFVP au Québec (Loi 25 Art. 3.3), DPIA au sens du RGPD (Art. 35), FRIA dans l'EU AI Act (Art. 27), Algorithmic Impact Assessment au Canada fédéral (Directive sur la prise de décisions automatisée du Conseil du Trésor depuis 2019), ASSESSMENT dans AIDA proposée. Toutes ces évaluations partagent une logique commune mais diffèrent dans leur étendue.
+
+QUATRE FAMILLES D'ÉVALUATIONS :
+
+A. EFVP — ÉVALUATION DES FACTEURS RELATIFS À LA VIE PRIVÉE (Loi 25, Québec). Centrée sur les renseignements personnels. Obligatoire pour tout projet impliquant la collecte, l'utilisation, la communication, la conservation ou la destruction de RP.
+
+B. DPIA — DATA PROTECTION IMPACT ASSESSMENT (RGPD, Europe). Centré sur les données personnelles. Obligatoire si le traitement est susceptible d'engendrer un risque élevé pour les droits et libertés des personnes physiques.
+
+C. FRIA — FUNDAMENTAL RIGHTS IMPACT ASSESSMENT (EU AI Act, Art. 27). Centré sur les droits fondamentaux. Obligatoire pour les déployeurs publics et certains déployeurs privés de systèmes à haut risque.
+
+D. AIA — ALGORITHMIC IMPACT ASSESSMENT (Canada fédéral, AIDA). Centré sur les risques algorithmiques. Obligatoire pour les institutions fédérales et probable pour les « high-impact AI systems » sous AIDA.
+
+POURQUOI LES ARTICULER — un seul système d'IA qui traite des RP au Québec et est utilisé dans l'UE peut déclencher SIMULTANÉMENT EFVP + DPIA + FRIA. Plutôt que de produire trois documents séparés, l'organisation produit une ÉVALUATION INTÉGRÉE qui couvre les exigences de chacun.
+
+STRUCTURE D'UNE ÉVALUATION INTÉGRÉE EN HUIT SECTIONS :
+
+SECTION 1 — DESCRIPTION DU SYSTÈME ET DU PROJET.
+A. Finalité, contexte, justification de la nécessité.
+B. Description technique : architecture, type de modèle, sources de données.
+C. Cycle de vie prévu, modifications anticipées.
+D. Acteurs (fournisseur, opérateur, utilisateurs, personnes affectées).
+
+SECTION 2 — CADRAGE LÉGAL ET RÉGLEMENTAIRE.
+A. Régimes applicables (Loi 25, RGPD, EU AI Act, sectoriels).
+B. Base légale du traitement (consentement, contrat, obligation légale, intérêt légitime).
+C. Catégorisation du système selon chaque régime (haut risque EU AI Act? décision automatisée Loi 25? high-impact AIDA?).
+
+SECTION 3 — CARTOGRAPHIE DES FLUX DE DONNÉES.
+A. Données collectées (catégories, sources).
+B. Données utilisées pour l'entraînement (provenance, licéité, consentement).
+C. Sorties produites.
+D. Destinataires (internes, sous-traitants, clients).
+E. Localisation des traitements (cloud, juridiction).
+F. Durée de conservation.
+
+SECTION 4 — IDENTIFICATION DES RISQUES.
+A. Risques pour la VIE PRIVÉE — accès non autorisé, fuite, ré-identification, profilage excessif.
+B. Risques pour les DROITS FONDAMENTAUX — discrimination, atteinte à la dignité, atteinte à l'autonomie, déni de service.
+C. Risques DE SÉCURITÉ — attaques sur le modèle ou les données.
+D. Risques pour la SOCIÉTÉ — désinformation, manipulation, concentration de pouvoir.
+E. Risques pour l'ENVIRONNEMENT — consommation énergétique, eau.
+
+SECTION 5 — ANALYSE DES RISQUES.
+Pour chaque risque identifié :
+A. Probabilité d'occurrence (qualitative ou quantitative).
+B. Gravité du préjudice (échelle de 1 à 5).
+C. Niveau de risque résultant (matrice probabilité × gravité).
+D. Justification.
+
+SECTION 6 — MESURES D'ATTÉNUATION.
+Pour les risques au-dessus du seuil d'acceptabilité :
+A. Mesures techniques (anonymisation, chiffrement, filtrage, ré-entraînement, monitoring).
+B. Mesures organisationnelles (formation, procédures, surveillance humaine).
+C. Mesures contractuelles (clauses fournisseurs, restrictions d'usage).
+D. Mesures d'information (transparence aux personnes affectées, droits offerts).
+
+SECTION 7 — RISQUES RÉSIDUELS ET DÉCISION.
+A. Niveau de risque APRÈS mitigation.
+B. Acceptabilité du risque résiduel par l'autorité décisionnelle.
+C. Décision : GO / NO-GO / GO conditionnel avec mesures additionnelles.
+D. Conditions de revue (déclencheurs de re-évaluation).
+
+SECTION 8 — DOCUMENTATION ET COMMUNICATION.
+A. Conservation du document (recommandation : minimum 3 ans après la fin du système).
+B. Approbations (RPRP, comité IA, conseil d'administration le cas échéant).
+C. Communication aux parties intéressées (transparence).
+D. Notification éventuelle aux autorités (selon les régimes).
+
+QUAND DÉCLENCHER UNE ÉVALUATION :
+A. AVANT mise en service (toujours).
+B. À chaque modification SUBSTANTIELLE (nouveau modèle, nouvelle finalité, nouvelle source de données, nouvelle population affectée).
+C. PÉRIODIQUEMENT (au moins annuellement pour les systèmes à haut risque).
+D. À LA SUITE D'INCIDENT.
+
+QUI PARTICIPE :
+A. CHEF DE PROJET — pilote et rédige.
+B. RPRP / DPO — supervise sur les aspects vie privée.
+C. ÉQUIPE TECHNIQUE — fournit la description technique et les données factuelles.
+D. JURIDIQUE — valide les bases légales et l'analyse réglementaire.
+E. SÉCURITÉ — analyse les risques cyber.
+F. MÉTIER — décrit la finalité, le contexte d'usage, les attentes.
+G. PARTIES PRENANTES EXTERNES — selon le degré de risque, consultation d'experts indépendants ou de représentants des personnes affectées.
+
+ERREURS FRÉQUENTES :
+A. ÉVALUATION RÉTROACTIVE après le déploiement — viole l'esprit et la lettre de la loi.
+B. ÉVALUATION FORMELLE qui se contente de cocher des cases — la CAI a explicitement déclaré que cela ne suffit pas.
+C. ÉVALUATION SANS PARTICIPATION TECHNIQUE — l'analyse des risques techniques (biais, robustesse) doit être quantitative quand possible.
+D. ÉVALUATION SANS REVUE PÉRIODIQUE — un système qui évolue sans nouvelle évaluation devient progressivement non conforme.
+E. CONFUSION ENTRE EFVP et FRIA et DPIA — ces évaluations couvrent des dimensions partiellement distinctes; les ignorer mène à une couverture incomplète.
+
+UTILISATION D'OUTILS — plusieurs cadres fournissent des templates :
+A. CAI Québec — modèle d'EFVP publié.
+B. EDPB — lignes directrices DPIA et templates.
+C. Conseil du Trésor du Canada — outil d'AIA en ligne pour les institutions fédérales.
+D. ISO/IEC 42005 (en développement) — guide d'évaluation des impacts d'IA.
+
+DURÉE TYPIQUE — pour un système d'IA modéré, une évaluation rigoureuse demande 2 à 6 semaines de travail effectif (pas calendaire). Pour un système à haut risque déployé en Europe, 2 à 4 mois. C'est un investissement; bien fait, il évite des coûts beaucoup plus importants en aval.
+        """.strip(),
+    },
+
+    "m22_c28_documentation_tracabilite": {
+        "module": 22, "ordre": 28,
+        "titre": "Documentation et traçabilité (data sheets, model cards, system cards)",
+        "prereqs": ["m22_c26_cartographie_systemes_ia"],
+        "texte": """
+La documentation est la COLONNE VERTÉBRALE de la gouvernance d'IA. Sans documentation, on ne peut pas démontrer la conformité, on ne peut pas auditer, on ne peut pas répondre aux demandes des personnes, et on ne peut pas reproduire ou corriger un système. Trois artefacts standards émergent comme références : les data sheets, les model cards, les system cards.
+
+DATA SHEETS FOR DATASETS — proposées dans l'article fondateur de Gebru et al. (2018, mis à jour 2021). Documentation structurée pour les jeux de données utilisés à l'entraînement.
+
+CONTENU TYPIQUE D'UNE DATA SHEET (sept sections) :
+
+SECTION 1 — MOTIVATION. Pourquoi le dataset a-t-il été créé? Pour qui? Quels biais inhérents au choix des sources?
+
+SECTION 2 — COMPOSITION. De quoi se composent les instances? Quel est le volume? Y a-t-il des sous-populations identifiables? Quels labels?
+
+SECTION 3 — PROCESSUS DE COLLECTE. Comment les données ont-elles été acquises? Avec consentement? Quelles méthodes d'échantillonnage?
+
+SECTION 4 — PRÉTRAITEMENT, NETTOYAGE, ÉTIQUETAGE. Quelles transformations ont été appliquées? Qui a étiqueté?
+
+SECTION 5 — UTILISATIONS PRÉVUES. Pour quoi le dataset est-il conçu? Quels usages non recommandés?
+
+SECTION 6 — DISTRIBUTION. Qui peut accéder au dataset? Sous quelle licence?
+
+SECTION 7 — MAINTENANCE. Qui maintient le dataset? Politique de mise à jour?
+
+UTILITÉ — la data sheet permet à un utilisateur du dataset (équipe interne ou tiers) de comprendre la qualité, les biais et les limites avant de l'utiliser pour entraîner un modèle. Elle est exigée explicitement par l'EU AI Act (Art. 10) pour les systèmes à haut risque.
+
+MODEL CARDS — proposées par Mitchell et al. (Google, 2019). Documentation structurée pour un modèle d'IA spécifique, indépendamment du système qui le déploie.
+
+CONTENU TYPIQUE D'UNE MODEL CARD (neuf sections) :
+
+SECTION 1 — DÉTAILS DU MODÈLE. Type, version, développeur, date, licence.
+
+SECTION 2 — UTILISATION PRÉVUE. Cas d'usage primaires, hors champ, utilisateurs visés.
+
+SECTION 3 — FACTEURS. Variables démographiques, environnementales, instrumentales pertinentes.
+
+SECTION 4 — MÉTRIQUES. Métriques de performance, désagrégées par sous-groupe lorsque pertinent.
+
+SECTION 5 — ÉVALUATION DES DONNÉES. Sur quels jeux de données les performances ont-elles été mesurées?
+
+SECTION 6 — DONNÉES D'ENTRAÎNEMENT. Description (renvoie typiquement à une data sheet).
+
+SECTION 7 — ANALYSES QUANTITATIVES. Performances ventilées (par sous-groupe, par sous-condition).
+
+SECTION 8 — CONSIDÉRATIONS ÉTHIQUES. Risques identifiés, mitigations.
+
+SECTION 9 — AVERTISSEMENTS et RECOMMANDATIONS.
+
+EXEMPLES PUBLICS de model cards — Anthropic publie des « model cards » pour Claude (capacités, limites, évaluations). OpenAI publie des « system cards » pour GPT (plus détaillées). Google publie des model cards pour ses modèles open. Hugging Face exige une model card pour tout modèle hébergé sur sa plateforme.
+
+SYSTEM CARDS — extension naturelle des model cards au niveau du SYSTÈME complet (modèle + données + interface + processus métier). Documentation pour l'ENSEMBLE qui produit la décision finale.
+
+CONTENU TYPIQUE D'UNE SYSTEM CARD :
+
+A. Description du système, de sa finalité, de son contexte de déploiement.
+B. Architecture (incluant les modèles utilisés, leurs interactions).
+C. Données d'entrée et de sortie.
+D. Mécanismes de surveillance humaine.
+E. Limites connues et risques résiduels.
+F. Procédures opérationnelles, de maintenance, de retrait.
+
+LA SYSTEM CARD est ce que les régulateurs (CAI, EU AI Office, futur AIDA Commissioner) demanderont en cas d'enquête. Elle synthétise ce qu'une autorité doit savoir pour comprendre comment un système fonctionne et comment il a été gouverné.
+
+EXIGENCES SPÉCIFIQUES IMPOSÉES PAR L'EU AI ACT (Annexe IV) :
+A. Description générale du système.
+B. Description détaillée des éléments du système et de son processus de développement.
+C. Informations sur la surveillance, le fonctionnement et le contrôle.
+D. Description des changements apportés au système au cours de son cycle de vie.
+E. Liste des normes harmonisées appliquées.
+F. Copie de la déclaration UE de conformité.
+G. Description du système de gestion de la qualité.
+
+JOURNALISATION ET TRAÇABILITÉ — au-delà de la documentation statique, les systèmes d'IA à haut risque doivent JOURNALISER leur fonctionnement (EU AI Act Art. 12) :
+A. Type, durée, début et fin de chaque utilisation.
+B. Données de référence en entrée.
+C. Identification des personnes physiques qui ont vérifié les sorties (le cas échéant).
+D. Pour les systèmes biométriques : journal complet des correspondances et non-correspondances.
+
+DURÉE DE CONSERVATION — les déployeurs doivent conserver les journaux pendant au moins 6 mois (Art. 26 al. 6 EU AI Act). Pour des systèmes à enjeux supérieurs, durée plus longue recommandée.
+
+EXIGENCES DE LA LOI 25 — la loi exige la traçabilité suffisante pour répondre aux demandes des personnes (renseignements utilisés, principaux facteurs et paramètres ayant mené à la décision, possibilité de rectifier). Cela impose techniquement la conservation des entrées et la capacité de reconstruire la décision a posteriori.
+
+OUTILS PRATIQUES :
+A. Hugging Face — model cards intégrées à la plateforme.
+B. MLflow — suivi des expérimentations, des modèles, des versions.
+C. Weights & Biases — monitoring des entraînements.
+D. Outils de governance dédiés — Credo AI, Holistic AI, FairNow, Monitaur.
+
+PRINCIPES DE BONNE DOCUMENTATION :
+A. CONSISTANCE — formats standardisés à travers l'organisation.
+B. ACCESSIBILITÉ — disponible aux équipes pertinentes (technique, juridique, métier).
+C. VERSIONNAGE — chaque modification documentée.
+D. RÉVISION RÉGULIÈRE — au moins annuelle pour les systèmes en service.
+E. APPROPRIATION — chaque système a un PROPRIÉTAIRE responsable de sa documentation.
+
+ERREURS FRÉQUENTES :
+A. Documentation produite UNIQUEMENT pour l'audit, sans valeur opérationnelle.
+B. Documentation NON MISE À JOUR après le déploiement initial.
+C. Documentation EN SILO (isolée des outils MLOps).
+D. Documentation TROP TECHNIQUE pour les non-spécialistes (limite la transparence vis-à-vis des affectés).
+E. Absence de documentation des CHANGEMENTS et MAINTENANCE.
+
+POUR UNE PME QUÉBÉCOISE — démarrer simplement : pour chaque système d'IA en service, produire une fiche d'une page reprenant les éléments essentiels (model card simplifiée + system card simplifiée). Cela suffit pour la majorité des audits initiaux et améliore la maturité graduellement.
+        """.strip(),
+    },
+
+    "m22_c29_gouvernance_organisationnelle_raci": {
+        "module": 22, "ordre": 29,
+        "titre": "Gouvernance organisationnelle (rôles, comités, formation, RACI)",
+        "prereqs": ["m22_c26_cartographie_systemes_ia"],
+        "texte": """
+La gouvernance d'IA n'est pas un projet technique. C'est un dispositif ORGANISATIONNEL qui définit qui décide, qui exécute, qui contrôle. Sans architecture claire des rôles et responsabilités, les meilleures politiques restent lettre morte.
+
+QUATRE NIVEAUX DE GOUVERNANCE :
+
+NIVEAU 1 — STRATÉGIQUE (CONSEIL D'ADMINISTRATION). Approuve la politique d'IA de l'entreprise, alloue les ressources, supervise l'efficacité du programme. Reçoit un rapport annuel sur la gouvernance d'IA. Au moins un administrateur ayant une expertise IA ou avec un mandat explicite sur le sujet.
+
+NIVEAU 2 — TACTIQUE (DIRECTION GÉNÉRALE et COMITÉ IA). Définit les priorités, arbitre les décisions difficiles (déploiements à risque, conflits entre vitesse et conformité), valide les évaluations majeures. Le Comité IA se réunit typiquement mensuellement.
+
+NIVEAU 3 — OPÉRATIONNEL (PILOTE IA / RPRP / DPO). Met en œuvre les politiques au quotidien. Coordonne les évaluations, gère les incidents, supervise la formation, prépare les rapports.
+
+NIVEAU 4 — TERRAIN (ÉQUIPES PROJETS). Conçoivent, déploient, exploitent les systèmes d'IA en respectant les politiques.
+
+RÔLES TYPIQUES dans une PME québécoise :
+
+A. RPRP (RESPONSABLE DE LA PROTECTION DES RENSEIGNEMENTS PERSONNELS). Obligation Loi 25. Dans une PME, c'est souvent la même personne que le pilote IA — économies d'échelle.
+
+B. PILOTE IA / AI LEAD. Coordonne le programme de gouvernance d'IA. Peut être un cadre dédié (dans les grandes PME) ou un rôle ajouté à une fonction existante (CTO, Directeur Conformité, Directeur Sécurité, RPRP).
+
+C. PROPRIÉTAIRE D'UN SYSTÈME D'IA. Pour CHAQUE système, une personne nommément responsable (typiquement un cadre métier). Endosse les évaluations d'impact, valide la mise en service, est imputable des incidents.
+
+D. RESPONSABLE TECHNIQUE D'UN SYSTÈME D'IA. Cadre technique chargé du développement, de la maintenance, du monitoring opérationnel.
+
+E. AUDITEUR INTERNE IA. Réalise des audits indépendants, peut être un consultant externe pour les PME qui n'ont pas la masse critique.
+
+F. CHAMPION SECTORIEL. Dans chaque équipe métier qui utilise de l'IA, une personne de référence pour les questions de gouvernance.
+
+LE COMITÉ IA — composition recommandée :
+A. Sponsor exécutif (DG ou COO).
+B. Pilote IA (animateur).
+C. RPRP / DPO.
+D. Responsable juridique.
+E. Responsable sécurité de l'information.
+F. Représentant technique senior.
+G. Représentants métier (RH, marketing, opérations, selon les enjeux).
+H. Selon le sujet — éthicien, expert externe, représentant des personnes affectées.
+
+MANDATS DU COMITÉ IA :
+A. Approuver les déploiements à risque modéré ou élevé.
+B. Arbitrer les évaluations d'impact qui soulèvent des questions sensibles.
+C. Réviser les incidents et les leçons apprises.
+D. Valider les politiques et procédures internes.
+E. Suivre les indicateurs de gouvernance (nombre de systèmes inventoriés, évaluations à jour, incidents, formation).
+F. Préparer le rapport annuel au CA.
+
+MATRICE RACI POUR UN PROJET D'IA TYPIQUE :
+
+ACTION : Cartographie initiale.
+R (responsible) : Pilote IA. A (accountable) : DG. C (consulted) : RPRP, métiers. I (informed) : CA.
+
+ACTION : Évaluation d'impact (EFVP/FRIA).
+R : Propriétaire métier. A : Pilote IA. C : RPRP, juridique, technique. I : Comité IA.
+
+ACTION : Validation pré-déploiement.
+R : Propriétaire métier. A : Comité IA (pour systèmes à haut risque). C : RPRP, juridique. I : DG.
+
+ACTION : Monitoring opérationnel.
+R : Responsable technique. A : Propriétaire métier. C : Pilote IA. I : Comité IA.
+
+ACTION : Réponse à incident.
+R : Responsable technique. A : Pilote IA. C : RPRP, juridique, communications. I : DG, CA si majeur, autorités si requis.
+
+ACTION : Notification d'incident.
+R : RPRP. A : Pilote IA. C : Juridique. I : DG, CA.
+
+ACTION : Rapport annuel.
+R : Pilote IA. A : DG. C : Comité IA. I : CA.
+
+PROGRAMME DE FORMATION — quatre niveaux :
+
+NIVEAU A — Sensibilisation pour TOUS les employés (1-2 heures par an). Comprendre la politique d'IA de l'entreprise, les usages autorisés et interdits, les obligations de signalement.
+
+NIVEAU B — Formation pour les UTILISATEURS de systèmes d'IA en service (4-8 heures). Comprendre les capacités et limites, savoir interpréter les sorties, savoir quand intervenir, savoir signaler.
+
+NIVEAU C — Formation pour les DÉVELOPPEURS et CHEFS DE PROJET d'IA (16-40 heures). Méthodologie d'évaluation d'impact, gestion des risques, documentation, monitoring, frameworks (NIST RMF, ISO 42001).
+
+NIVEAU D — Formation AVANCÉE pour les rôles de gouvernance (Pilote IA, membres du Comité IA, auditeur interne) — typiquement par certifications externes (CIPP, CIPM, certifications ISO, formations universitaires).
+
+INDICATEURS DE GOUVERNANCE à suivre :
+A. Couverture de l'inventaire (% de systèmes formellement répertoriés).
+B. Couverture des évaluations d'impact (% de systèmes avec évaluation à jour).
+C. Délai moyen de réalisation des évaluations.
+D. Nombre d'incidents (par classe de gravité).
+E. Délai moyen de réponse aux demandes des personnes.
+F. Couverture de la formation (% d'employés formés selon leur niveau).
+G. Maturité ISO 42001 (% de contrôles implémentés).
+H. Audits internes réalisés / planifiés.
+
+CULTURE — au-delà des structures, la gouvernance d'IA exige une CULTURE qui :
+A. Récompense la transparence (signaler un problème ne doit pas pénaliser).
+B. Tolère la lenteur quand elle protège (pas de précipitation imprudente).
+C. Valorise les questions difficiles (un projet d'IA refusé n'est pas un échec).
+D. Apprend des incidents (post-mortems systématiques, sans recherche de coupables).
+
+POUR UNE TPE OU PME (< 50 employés) — version condensée :
+A. Le DG est sponsor.
+B. Une seule personne cumule RPRP + Pilote IA.
+C. Pas de comité formel — décisions prises en réunion mensuelle de direction avec point IA fixe.
+D. Auditeur interne externe (consultant) sur base annuelle.
+E. Formation Niveau A pour tous, Niveau B pour utilisateurs, Niveau C pour 1-2 personnes.
+F. Procédures simplifiées, mais NON ABSENTES.
+
+POUR UNE PME (50-250 employés) — version standard :
+A. Comité IA mensuel formel.
+B. Pilote IA dédié 50-100 % temps.
+C. RPRP distinct si volume de RP important.
+D. Audit interne annuel par tiers.
+E. Programme de formation structuré avec évaluations.
+F. Reporting trimestriel à la direction, annuel au CA.
+        """.strip(),
+    },
+
+})
+
+
+# ────────────── SECTION I — SYNTHÈSE COMPARATIVE ──────────────
+
+CURRICULUM.update({
+
+    "m22_c30_comparaison_transversale": {
+        "module": 22, "ordre": 30,
+        "titre": "Comparaison transversale des cadres",
+        "prereqs": ["m22_c5_loi25_vue_ensemble", "m22_c10_aida_contexte_c27", "m22_c13_eu_ai_act_vue_ensemble", "m22_c19_nist_rmf_origine_structure", "m22_c23_iso_42001_norme_certifiable", "m22_c4_principes_ocde"],
+        "texte": """
+Une vue comparative est essentielle pour comprendre où chaque cadre apporte une valeur unique et où ils se chevauchent. Cette comparaison se fait selon SIX DIMENSIONS : nature juridique, champ d'application, approche, exigences, sanctions, calendrier.
+
+DIMENSION 1 — NATURE JURIDIQUE.
+
+LOI 25 (Québec) : Hard law. Loi provinciale. En vigueur.
+AIDA (Canada) : Hard law projetée. Loi fédérale. NON adoptée.
+CODE VOLONTAIRE (Canada) : Soft law. Engagement public.
+EU AI ACT : Hard law. Règlement européen directement applicable. En vigueur.
+RGPD : Hard law. Règlement européen. En vigueur depuis 2018.
+NIST AI RMF : Cadre opérationnel volontaire. Aucune force juridique.
+ISO/IEC 42001 : Norme volontaire certifiable. Aucune force juridique mais certification opposable.
+PRINCIPES OCDE : Soft law. Recommandation intergouvernementale.
+
+DIMENSION 2 — CHAMP D'APPLICATION.
+
+LOI 25 : Tout traitement de RP de Québécois, où que soit l'organisation.
+AIDA : Activités commerciales internationales ou interprovinciales avec systèmes high-impact (proposé).
+EU AI ACT : Tout système d'IA mis sur le marché ou ayant des sorties utilisées dans l'UE.
+NIST RMF : Adoption volontaire mondiale, particulièrement aux États-Unis.
+ISO 42001 : Adoption volontaire mondiale.
+PRINCIPES OCDE : Soft law mondiale.
+
+DIMENSION 3 — APPROCHE RÉGLEMENTAIRE.
+
+LOI 25 : Fondée sur les principes (transparence, consentement, minimisation), focalisée sur les RP.
+AIDA : Fondée sur les risques (high-impact systems).
+EU AI ACT : Fondée sur les risques (4 niveaux + GPAI).
+NIST RMF : Fondée sur les fonctions (GOVERN, MAP, MEASURE, MANAGE).
+ISO 42001 : Fondée sur le management (PDCA, AIMS).
+PRINCIPES OCDE : Fondée sur les valeurs (5 principes + 5 recommandations).
+
+DIMENSION 4 — EXIGENCES PRINCIPALES.
+
+LOI 25 : RPRP, EFVP, consentement renforcé, droits des personnes (incluant Art. 8.1 et 12.1 sur les décisions automatisées), notification d'incidents, registres.
+
+AIDA : Évaluation d'impact, mesures d'atténuation, surveillance, registres, notification, transparence (proposés).
+
+EU AI ACT : Pour les systèmes à haut risque, neuf exigences techniques (gestion des risques, données, documentation, journalisation, transparence, surveillance humaine, exactitude/robustesse/cybersécurité, gestion qualité, surveillance post-commercialisation), plus enregistrement et marquage CE.
+
+NIST RMF : 19 catégories d'actions opérationnelles, 70+ sous-catégories, à appliquer selon le contexte.
+
+ISO 42001 : 38 contrôles répartis en 9 domaines, plus la conformité aux 10 chapitres HLS.
+
+PRINCIPES OCDE : 5 principes appliqués via le travail réglementaire des États adhérents.
+
+DIMENSION 5 — SANCTIONS.
+
+LOI 25 : SAP jusqu'à 10 M$ ou 2 % CA. Pénales jusqu'à 25 M$ ou 4 %.
+
+AIDA : SAP jusqu'à 10 M$ ou 3 %. Pénales jusqu'à 25 M$ ou 5 %. Infractions criminelles distinctes pour usage malveillant (proposé).
+
+EU AI ACT : Pratiques interdites (Art. 5) jusqu'à 35 M€ ou 7 %. Manquements haut risque/GPAI jusqu'à 15 M€ ou 3 %. Information trompeuse jusqu'à 7,5 M€ ou 1 %. PME : moins élevé des deux.
+
+NIST RMF : Aucune sanction directe. Risque réputationnel et exposition civile.
+
+ISO 42001 : Aucune sanction directe. Perte de la certification.
+
+PRINCIPES OCDE : Aucune sanction.
+
+DIMENSION 6 — CALENDRIER.
+
+LOI 25 : Phase 1 sept 2022, Phase 2 sept 2023, Phase 3 sept 2024. EN VIGUEUR.
+
+AIDA : Non adoptée au 25 avril 2026. Si adoptée, application avec délais à préciser.
+
+EU AI ACT : Entrée 1 août 2024. Pratiques interdites 2 février 2025. GPAI 2 août 2025. Haut risque (Annexe III) 2 août 2026. Plein 2 août 2027.
+
+NIST RMF : Disponible depuis 26 janvier 2023. GAI Profile depuis 26 juillet 2024.
+
+ISO 42001 : Publiée 18 décembre 2023. Certifiable immédiatement.
+
+PRINCIPES OCDE : 22 mai 2019, mis à jour 3 mai 2024.
+
+CHEVAUCHEMENTS et COMPLÉMENTARITÉS — synthèse pratique :
+
+ZONE A — RP traités par IA. Loi 25 + RGPD + EU AI Act + ISO 27701 + NIST RMF (vie privée).
+
+ZONE B — Système d'IA à haut risque déployé en Europe. EU AI Act + RGPD + ISO 42001 + NIST RMF.
+
+ZONE C — Système d'IA déployé au Québec sans clientèle européenne. Loi 25 + Code volontaire canadien + NIST RMF + (ISO 42001 si maturité justifiée).
+
+ZONE D — Modèle GPAI (modèle de fondation). EU AI Act (Art. 51-55) + NIST AI 600-1 + (selon usage) régimes amont.
+
+ZONE E — IA interne à l'organisation, sans données personnelles. NIST RMF + ISO 42001 + politiques internes.
+
+DIVERGENCES NOTABLES :
+
+A. LOI 25 vs RGPD — la Loi 25 PERMET les décisions automatisées moyennant transparence; le RGPD les INTERDIT par défaut sauf exceptions.
+
+B. EU AI ACT vs NIST RMF — EU AI Act est PRESCRIPTIF (obligations énumérées); NIST RMF est ADAPTATIF (méthode à appliquer selon le contexte).
+
+C. AIDA vs EU AI ACT — AIDA est plus minimaliste, l'EU AI Act très détaillé.
+
+D. ISO 42001 vs NIST RMF — ISO impose une structure auditée et certifiable; NIST laisse la liberté d'implémentation.
+
+CONVERGENCES STRUCTURELLES :
+
+A. TOUS les cadres exigent une forme d'ÉVALUATION D'IMPACT préalable.
+
+B. TOUS les cadres exigent une forme de GOUVERNANCE INTERNE (rôles, responsabilités).
+
+C. TOUS les cadres exigent une forme de TRANSPARENCE pour les personnes affectées.
+
+D. TOUS les cadres exigent une forme de SURVEILLANCE HUMAINE et de capacité à corriger.
+
+E. TOUS les cadres exigent une forme de DOCUMENTATION TRAÇABLE.
+
+CONCLUSION ANALYTIQUE — bien que les cadres divergent en force juridique et en détail, ils convergent fortement sur les FONCTIONS organisationnelles attendues. Une organisation qui implémente sérieusement le NIST AI RMF couvre simultanément 70-90 % des exigences de fond de tous les autres cadres. Ce qui change, c'est la FORME (documentation, certification, notification) et les SANCTIONS.
+
+POUR LE LECTEUR — exercice utile : prendre votre système d'IA et identifier dans cette matrice les zones applicables. La somme des zones définit votre programme de conformité minimal.
+        """.strip(),
+    },
+
+    "m22_c31_strategie_pme_quebecoise": {
+        "module": 22, "ordre": 31,
+        "titre": "Stratégie de conformité IA pour PME québécoise",
+        "prereqs": ["m22_c30_comparaison_transversale", "m22_c29_gouvernance_organisationnelle_raci"],
+        "texte": """
+Synthèse opérationnelle — comment une PME québécoise structure pratiquement son programme de gouvernance d'IA en tenant compte de tous les cadres étudiés. Cette stratégie repose sur QUATRE PRINCIPES et SEPT ÉTAPES.
+
+LES QUATRE PRINCIPES STRATÉGIQUES :
+
+PRINCIPE 1 — PROPORTIONNALITÉ. Le programme doit être proportionnel à l'exposition réelle. Une PME avec un chatbot interne ne doit pas appliquer le même dispositif qu'une PME qui vend de l'IA à des hôpitaux européens.
+
+PRINCIPE 2 — PRIMAUTÉ DU DROIT DUR. Les obligations LÉGALES (Loi 25) priment sur les normes volontaires (ISO, NIST). Une certification ISO 42001 sans conformité Loi 25 expose à des sanctions; l'inverse expose à perdre des contrats mais pas à des amendes immédiates.
+
+PRINCIPE 3 — INVESTIR DANS L'INFRASTRUCTURE COMMUNE. Plus de 70 % des exigences se chevauchent entre les cadres. Construire une infrastructure de gouvernance unique (politique, comité, inventaire, évaluations, formation) qui sert simultanément plusieurs cadres maximise l'effet de chaque dollar.
+
+PRINCIPE 4 — ITÉRER. Aucune PME ne devient mature en six mois. Le programme s'établit sur 24-36 mois avec des paliers réalistes.
+
+LES SEPT ÉTAPES — feuille de route 24 mois :
+
+ÉTAPE 1 — DIAGNOSTIC INITIAL (semaines 1-4).
+A. Cartographier les SYSTÈMES D'IA en service ou en projet (concept c26).
+B. Identifier les CLIENTS SOUMIS À DES RÉGIMES (européens? sectoriels? gouvernementaux?).
+C. Identifier les DONNÉES traitées (RP de Québécois? d'Européens? de mineurs? sensibles?).
+D. Évaluer la MATURITÉ ACTUELLE en gouvernance (si existante).
+E. Produire un RAPPORT DE DIAGNOSTIC qui identifie les écarts et chiffre l'effort.
+
+ÉTAPE 2 — CONFORMITÉ LOI 25 (mois 1-6).
+A. Désigner et FORMALISER le RPRP. Publier les coordonnées.
+B. Adopter une POLITIQUE DE CONFIDENTIALITÉ conforme et accessible.
+C. Mettre en place le PROCESSUS D'EFVP — pour les nouveaux projets ET, rétroactivement, pour les systèmes en service.
+D. Mettre en place les REGISTRES (incidents, communications hors Québec).
+E. Adapter les CONSENTEMENTS pour qu'ils soient manifestes, libres, éclairés, à des fins spécifiques.
+F. Pour les décisions exclusivement automatisées : préparer le mécanisme de notification (Art. 12.1) et de révision humaine.
+G. Former le PERSONNEL au minimum sur les bases.
+
+ÉTAPE 3 — ADOPTION DU NIST AI RMF (mois 4-12, en parallèle).
+A. POLITIQUE D'IA d'entreprise (1 page) approuvée par la direction.
+B. COMITÉ IA mensuel constitué.
+C. PILOTE IA désigné (peut être le RPRP).
+D. INVENTAIRE D'IA finalisé et mis sous gouvernance.
+E. ÉVALUATIONS D'IMPACT (MAP) sur les 3-5 systèmes les plus critiques.
+F. MESURES (MEASURE) opérationnelles : monitoring, tests de biais, journaux.
+G. PLAN DE TRAITEMENT (MANAGE) des risques identifiés.
+H. RAPPORT TRIMESTRIEL à la direction.
+
+ÉTAPE 4 — CODE VOLONTAIRE et COMMUNICATION (mois 6-12).
+A. Évaluer si la signature du Code de conduite volontaire canadien apporte une valeur (signal client, alignement stratégique).
+B. Si oui : signer et publier l'engagement.
+C. Communiquer la POLITIQUE D'IA aux clients, partenaires, employés.
+D. Mettre à jour le SITE WEB avec la politique de confidentialité, les coordonnées du RPRP, les principes IA suivis.
+
+ÉTAPE 5 — ADAPTATION EU AI ACT (mois 9-18, si exposition européenne).
+A. CARTOGRAPHIER les systèmes selon les niveaux de risque (Annexe III, GPAI, transparence, minimal).
+B. Pour systèmes à HAUT RISQUE : projet de mise en conformité distinct (gestion des risques, qualité des données, documentation Annexe IV, surveillance humaine, marquage CE).
+C. Pour systèmes intégrant des modèles GPAI : conserver les attestations des fournisseurs, intégrer dans la documentation système.
+D. Désigner un REPRÉSENTANT AUTORISÉ dans l'UE si fournisseur hors UE.
+E. ENREGISTRER les systèmes à haut risque dans la base européenne.
+F. ANTICIPER l'application aux systèmes à haut risque le 2 août 2026.
+
+ÉTAPE 6 — CERTIFICATION ISO 42001 (mois 12-24, si justifiée).
+A. Faire un GAP ANALYSIS contre les 38 contrôles (utiliser l'infrastructure NIST RMF déjà en place).
+B. Combler les écarts.
+C. Faire un AUDIT INTERNE.
+D. Sélectionner un ORGANISME CERTIFICATEUR.
+E. Audit Stage 1 (documentation), Audit Stage 2 (terrain).
+F. Obtenir et communiquer la certification.
+
+ÉTAPE 7 — VEILLE et AMÉLIORATION CONTINUE (mois 18+).
+A. SURVEILLER l'évolution d'AIDA, les actes délégués de l'EU AI Act, les nouveaux profils NIST.
+B. METTRE À JOUR les évaluations d'impact.
+C. AUDITER chaque année.
+D. RÉVISER la politique d'IA aux changements majeurs (nouveau modèle, nouveau marché, nouvelle clientèle).
+E. FORMER en continu (nouveautés réglementaires, nouveaux risques).
+
+BUDGETS INDICATIFS pour une PME (50-250 employés, 5-15 systèmes d'IA) :
+
+POSTE A — Conformité Loi 25 + NIST RMF + Code volontaire :
+A. Effort interne : 0,3-0,7 ETP × 12 mois.
+B. Conseil externe ponctuel : 30 000 $ - 80 000 $.
+C. Formation : 5 000 $ - 20 000 $.
+D. Outils : 10 000 $ - 30 000 $ par an.
+TOTAL Année 1 : 100 000 $ - 250 000 $. Récurrent : 50 000 $ - 100 000 $/an.
+
+POSTE B — Conformité EU AI Act (si exposition) :
+A. Effort interne additionnel : 0,3-0,5 ETP × 12 mois.
+B. Conseil juridique européen : 30 000 $ - 100 000 $.
+C. Documentation et contrôles techniques : 50 000 $ - 200 000 $.
+D. Représentant autorisé UE : 5 000 $ - 20 000 $/an.
+TOTAL incrémental : 100 000 $ - 350 000 $.
+
+POSTE C — Certification ISO 42001 :
+A. Gap analysis et conseil : 30 000 $ - 80 000 $.
+B. Audit Stage 1+2 : 15 000 $ - 40 000 $.
+C. Surveillance annuelle : 8 000 $ - 20 000 $.
+TOTAL : 50 000 $ - 140 000 $ d'entrée; 8 000 $ - 20 000 $/an récurrent.
+
+GRILLE DE PRIORITÉS — où investir d'abord :
+A. PME locale, sans IA décisionnelle : Loi 25 + politique d'IA simple.
+B. PME avec IA décisionnelle au Québec : Loi 25 (incluant Art. 8.1, 12.1) + NIST RMF.
+C. PME avec exposition européenne : ajouter EU AI Act.
+D. PME B2B avec exigences clients : ajouter ISO 42001.
+E. PME développant des GPAI : ajouter régime GPAI EU AI Act + profil NIST GAI.
+
+ERREURS STRATÉGIQUES À ÉVITER :
+
+A. ATTENDRE QU'AIDA SOIT ADOPTÉE pour démarrer — la Loi 25 est déjà en vigueur et l'EU AI Act aussi.
+
+B. PRENDRE UNE POSITION RÉACTIVE — répondre aux audits clients un par un est plus coûteux que mettre en place un programme structuré.
+
+C. CHERCHER LA CERTIFICATION AVANT LA MATURITÉ — un échec d'audit ISO est coûteux et publiquement embarrassant.
+
+D. CONFIER UNIQUEMENT À LA TECHNIQUE — la gouvernance d'IA n'est pas un projet IT, c'est un projet d'entreprise.
+
+E. NÉGLIGER LA FORMATION — une politique non comprise par les équipes ne sera pas appliquée.
+
+F. SOUS-ESTIMER LE TEMPS — les programmes mûrs prennent 24-36 mois à se mettre en place; la ligne directe est rare.
+
+CONCLUSION DU MODULE — la gouvernance d'IA n'est plus un sujet académique. Au 25 avril 2026, la Loi 25 est exécutoire au Québec, l'EU AI Act commence à s'appliquer aux systèmes à haut risque, et les attentes contractuelles entre entreprises se durcissent. Une PME qui démarre maintenant un programme structuré aura, dans 24 mois, un avantage compétitif important sur les concurrents qui auront tardé. La gouvernance bien faite n'est pas un coût; c'est un investissement dans la confiance — la ressource la plus rare dans un marché où l'IA s'industrialise plus vite que la confiance qu'elle inspire.
         """.strip(),
     },
 
