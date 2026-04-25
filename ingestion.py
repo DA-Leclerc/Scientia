@@ -74,15 +74,20 @@ décisions EDPB, jurisprudence, articles académiques sur la gouvernance
 de l'IA et l'audit.
 
 Chaque concept doit :
-- Cibler une SEULE idée claire, mémorable, testable par des questions
-  de niveau praticien.
-- Avoir un texte de référence de 200 à 400 mots, dense, opérationnel,
-  rédigé pour un PROFESSIONNEL avancé (pas pour un débutant).
+- Cibler une SEULE idée claire, mémorable, testable par des questions.
+- Avoir un texte de référence de 200 à 400 mots, dense mais ACCESSIBLE.
 - Porter un titre court et mémorable (3 à 8 mots).
 - Privilégier les éléments DIRECTEMENT UTILISABLES en mission client :
   articles précis, seuils de sanction, calendriers, échéances,
   obligations cumulatives, cas d'application, points de friction
   fréquents avec d'autres cadres.
+
+NIVEAU DE LANGUE — IMPORTANT :
+- Dominic a un SECONDAIRE 5, pas un doctorat. Écris en FRANÇAIS QUOTIDIEN.
+- Phrases COURTES. Vocabulaire COURANT.
+- Pas de jargon académique inutile, pas de nominalisations empilées.
+- Garde les noms techniques inévitables (Loi 25, ISO 42001, EU AI Act, RPRP, EFVP, etc.) — ils sont nécessaires pour ses missions. Mais EXPLIQUE-les en termes simples la première fois.
+- Tutoiement.
 
 Règles de découpage :
 - Un long document → plusieurs concepts atomiques (max 5).
