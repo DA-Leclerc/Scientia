@@ -1,0 +1,64 @@
+# Secrets
+.env
+.env.local
+.streamlit/secrets.toml
+
+# Données locales (DB SQLite, concepts ingérés)
+scientia.db
+scientia.db-journal
+scientia.db-wal
+scientia.db-shm
+dynamic_concepts.json
+
+# Documents personnels uploadés
+docs/*
+!docs/LISEZ_MOI.md
+!docs/test_challenge_point.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Streamlit
+.streamlit/cache/
+
+# Claude Code local settings (per-machine)
+.claude/settings.local.json
