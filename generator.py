@@ -63,7 +63,7 @@ Retourne un tableau JSON de {n} objets. Rien d'autre. Pas de markdown. Juste le 
 
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=2000,
+        max_tokens=6000,
         system=PROMPT_SYSTEME,
         messages=[{"role": "user", "content": prompt}],
     )
@@ -74,7 +74,19 @@ Retourne un tableau JSON de {n} objets. Rien d'autre. Pas de markdown. Juste le 
     contenu = re.sub(r"^```(?:json)?\n?", "", contenu)
     contenu = re.sub(r"\n?```$", "", contenu)
 
-    questions = json.loads(contenu)
+    # Sécurité : si le JSON est tronqué, tenter de couper proprement
+    # à la dernière question complète.
+    try:
+        questions = json.loads(contenu)
+    except json.JSONDecodeError:
+        # Cherche le dernier "}" suivi d'une virgule ou d'un crochet
+        # fermant pour récupérer un tableau partiel valide.
+        match = re.search(r"^(\[.*?\}),?\s*[^}]*$", contenu, re.DOTALL)
+        if match:
+            partial = match.group(1) + "]"
+            questions = json.loads(partial)
+        else:
+            raise
     return questions
 
 
