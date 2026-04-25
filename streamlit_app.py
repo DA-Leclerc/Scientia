@@ -464,15 +464,20 @@ def page_etudier():
                            "JAMAIS la réponse, il t'aide à comprendre la question.")
 
                 dialogue = st.session_state.q_soc_dialogues.get(cle_soc, [])
-                for m in dialogue:
-                    if m["role"] == "assistant":
-                        with st.chat_message("assistant", avatar="🎓"):
-                            st.markdown(m["content"])
-                    else:
-                        with st.chat_message("user", avatar="🧑"):
-                            st.markdown(m["content"])
 
-                # Champ de saisie dans l'expander
+                # Zone à hauteur fixe (scroll interne, auto-scroll vers le bas
+                # sur nouveau message — pas besoin de scroller la page).
+                with st.container(height=400):
+                    for m in dialogue:
+                        if m["role"] == "assistant":
+                            with st.chat_message("assistant", avatar="🎓"):
+                                st.markdown(m["content"])
+                        else:
+                            with st.chat_message("user", avatar="🧑"):
+                                st.markdown(m["content"])
+
+                # Le chat_input reste hors de la zone scrollable :
+                # il s'affiche toujours juste en dessous, visible.
                 user_msg = st.chat_input(
                     "Pose une question, partage ton intuition…",
                     key=f"soc_input_{cle}_{i}",
@@ -810,17 +815,18 @@ def page_socratique():
             st.rerun()
         return
 
-    # Affichage du dialogue
+    # Affichage du dialogue dans une zone à hauteur fixe avec scroll interne.
     st.markdown("---")
-    for m in st.session_state.soc_historique:
-        if m["role"] == "assistant":
-            with st.chat_message("assistant", avatar="🎓"):
-                st.markdown(m["content"])
-        else:
-            with st.chat_message("user", avatar="🧑"):
-                st.markdown(m["content"])
+    with st.container(height=500):
+        for m in st.session_state.soc_historique:
+            if m["role"] == "assistant":
+                with st.chat_message("assistant", avatar="🎓"):
+                    st.markdown(m["content"])
+            else:
+                with st.chat_message("user", avatar="🧑"):
+                    st.markdown(m["content"])
 
-    # Zone de saisie
+    # Zone de saisie en dehors de la zone scrollable, donc toujours visible.
     reponse = st.chat_input("Ta réponse à Claude…", key="soc_chat_input")
     if reponse:
         st.session_state.soc_historique.append(
