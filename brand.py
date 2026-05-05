@@ -505,31 +505,42 @@ header[data-testid="stHeader"] {{
     letter-spacing: -0.01em;
 }}
 
-/* Sidebar brand block */
+/* Sidebar brand block — centré en colonne */
 .np-sidebar-brand {{
-    display: flex; align-items: center; gap: 12px;
-    padding: 8px 0 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 0 28px;
     border-bottom: 1px solid {c['steel']}30;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    text-align: center;
 }}
 .np-shield {{
     flex-shrink: 0;
-    filter: drop-shadow(0 2px 8px {c['gold']}30);
-    transition: filter 0.3s ease;
+    filter: drop-shadow(0 4px 16px {c['gold']}40);
+    transition: filter 0.3s ease, transform 0.3s ease;
 }}
 .np-shield:hover {{
-    filter: drop-shadow(0 2px 12px {c['gold']}60);
+    filter: drop-shadow(0 4px 24px {c['gold']}70);
+    transform: translateY(-2px);
 }}
 .np-sidebar-brand-text {{
     font-family: 'Sora', sans-serif;
-    font-size: 17px; font-weight: 700;
-    color: {c['white']}; letter-spacing: -0.02em;
+    font-size: 28px;
+    font-weight: 700;
+    color: {c['white']};
+    letter-spacing: -0.03em;
+    line-height: 1.1;
 }}
 .np-sidebar-brand-sub {{
     font-family: 'DM Sans', sans-serif;
-    font-size: 11px; color: {c['gold']};
-    text-transform: uppercase; letter-spacing: 0.06em;
-    margin-top: -2px;
+    font-size: 12px;
+    color: {c['gold']};
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 500;
+    margin-top: 2px;
 }}
 
 /* Toggle FR/EN en position fixe top-right ─────────────────── */
@@ -628,7 +639,7 @@ def sidebar_brand_html() -> str:
     g = COLORS
     return f"""
 <div class="np-sidebar-brand">
-  <svg class="np-shield" width="34" height="40" viewBox="0 0 100 120"
+  <svg class="np-shield" width="84" height="100" viewBox="0 0 100 120"
        xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="np-shield-grad" x1="0" y1="0" x2="0" y2="1">
