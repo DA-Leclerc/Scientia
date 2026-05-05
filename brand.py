@@ -330,13 +330,14 @@ code, pre {{
 ::-webkit-scrollbar-thumb:hover {{ background: {c['gold']}; }}
 
 /* ── Cacher le « Made with Streamlit » et le menu hamburger
-       en mode déploiement ───────────────────────────────────── */
+       + le header natif Streamlit (qui cachait notre toggle FR/EN) ─ */
 #MainMenu {{ visibility: hidden; }}
 footer {{ visibility: hidden; }}
 header[data-testid="stHeader"] {{
-    background: {c['abyss']} !important;
-    border-bottom: 1px solid {c['steel']}30;
+    display: none !important;
 }}
+/* Ramène le contenu en haut puisqu'on a retiré le header */
+.stApp > header {{ display: none !important; }}
 
 /* ── Composants brandés (préfixe .np-) ────────────────────── */
 
@@ -534,9 +535,9 @@ header[data-testid="stHeader"] {{
 /* Toggle FR/EN en position fixe top-right ─────────────────── */
 .np-lang-fixed {{
     position: fixed;
-    top: 14px;
-    right: 24px;
-    z-index: 1000;
+    top: 16px;
+    right: 28px;
+    z-index: 999999;
     display: flex;
     gap: 4px;
     background: {c['deep']}e0;
@@ -682,6 +683,6 @@ def footer_html() -> str:
 <div class="np-footer">
   <span class="np-footer-brand">Nord Paradigm · Scientia</span><br/>
   Apprentissage espacé FSRS-4.5 · Évaluation Claude · v0.4
-  <br/><span style="opacity: 0.7;">© 2026 Dominic-André Leclerc — Military-grade discipline. AI governance that works.</span>
+  <br/><span style="opacity: 0.7;">© 2026 Dominic-André Leclerc — Engineered discipline. AI governance that works.</span>
 </div>
 """
