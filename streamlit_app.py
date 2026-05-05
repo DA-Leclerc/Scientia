@@ -38,11 +38,31 @@ from brand import (
     resume_card_html,
     reco_card_html,
     sidebar_brand_html,
+    lang_toggle_html,
     footer_html,
 )
 from i18n import t
 
 st.markdown(global_css(), unsafe_allow_html=True)
+
+# ── Toggle FR/EN en haut à droite (position fixe) ────────────────────────────
+# Lecture du query parameter (`?ui_lang=fr|en`) — clic sur le toggle modifie
+# l'URL, Streamlit re-run, on synchronise st.session_state.
+if "ui_lang" not in st.session_state:
+    st.session_state.ui_lang = "fr"
+
+_qp = st.query_params
+_qp_lang = _qp.get("ui_lang")
+if _qp_lang in ("fr", "en") and _qp_lang != st.session_state.ui_lang:
+    st.session_state.ui_lang = _qp_lang
+    # Nettoyer l'URL pour ne pas garder le paramètre après la sync
+    try:
+        del st.query_params["ui_lang"]
+    except Exception:
+        pass
+
+# Render le toggle (toujours visible, position fixed)
+st.markdown(lang_toggle_html(st.session_state.ui_lang), unsafe_allow_html=True)
 
 # ── Récupération de la clé API : .env → st.secrets → env ─────────────────────
 
@@ -200,8 +220,6 @@ def temps_relatif(iso_ts: str | None) -> str:
 
 # ── État de session ───────────────────────────────────────────────────────────
 
-if "ui_lang" not in st.session_state:
-    st.session_state.ui_lang = "fr"  # default UI language
 if "page" not in st.session_state:
     st.session_state.page = "accueil"
 if "concept_actuel" not in st.session_state:
@@ -318,23 +336,6 @@ tenter_reprise_si_demande()
 # ── Sidebar : navigation + statistiques rapides ───────────────────────────────
 
 with st.sidebar:
-    # ── Language toggle FR / EN (top of sidebar) ──────────────────────────
-    col_l1, col_l2 = st.columns(2)
-    if col_l1.button(
-            "FR",
-            key="lang_fr",
-            use_container_width=True,
-            type="primary" if st.session_state.ui_lang == "fr" else "secondary"):
-        st.session_state.ui_lang = "fr"
-        st.rerun()
-    if col_l2.button(
-            "EN",
-            key="lang_en",
-            use_container_width=True,
-            type="primary" if st.session_state.ui_lang == "en" else "secondary"):
-        st.session_state.ui_lang = "en"
-        st.rerun()
-
     st.markdown(sidebar_brand_html(), unsafe_allow_html=True)
 
     if st.button(t("sidebar.home"), use_container_width=True):

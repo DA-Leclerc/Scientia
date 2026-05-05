@@ -511,6 +511,14 @@ header[data-testid="stHeader"] {{
     border-bottom: 1px solid {c['steel']}30;
     margin-bottom: 16px;
 }}
+.np-shield {{
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 8px {c['gold']}30);
+    transition: filter 0.3s ease;
+}}
+.np-shield:hover {{
+    filter: drop-shadow(0 2px 12px {c['gold']}60);
+}}
 .np-sidebar-brand-text {{
     font-family: 'Sora', sans-serif;
     font-size: 17px; font-weight: 700;
@@ -521,6 +529,55 @@ header[data-testid="stHeader"] {{
     font-size: 11px; color: {c['gold']};
     text-transform: uppercase; letter-spacing: 0.06em;
     margin-top: -2px;
+}}
+
+/* Toggle FR/EN en position fixe top-right ─────────────────── */
+.np-lang-fixed {{
+    position: fixed;
+    top: 14px;
+    right: 24px;
+    z-index: 1000;
+    display: flex;
+    gap: 4px;
+    background: {c['deep']}e0;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 4px;
+    border-radius: 100px;
+    border: 1px solid {c['steel']}40;
+    box-shadow: 0 4px 16px {c['abyss']}60;
+}}
+.np-lang-pill {{
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-family: 'Sora', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: {c['mist']};
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}}
+.np-lang-pill:hover {{
+    color: {c['white']};
+    background: {c['slate']}60;
+}}
+.np-lang-pill.active {{
+    background: linear-gradient(135deg, {c['gold']}, {c['amber']});
+    color: {c['abyss']} !important;
+    box-shadow: 0 2px 8px {c['gold']}40;
+}}
+.np-lang-pill.active:hover {{
+    background: linear-gradient(135deg, {c['amber']}, {c['gold']});
+    color: {c['abyss']} !important;
+}}
+
+/* Décale le contenu principal pour ne pas être recouvert par le toggle */
+.main .block-container {{
+    padding-top: 4rem !important;
 }}
 </style>
 """
@@ -566,23 +623,56 @@ def reco_card_html(label: str, title: str, meta: str) -> str:
 
 
 def sidebar_brand_html() -> str:
-    """Bloc de marque en haut de la sidebar."""
+    """Bloc de marque en haut de la sidebar avec le bouclier Nord Paradigm."""
     g = COLORS
     return f"""
 <div class="np-sidebar-brand">
-  <div class="np-logo-mark">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-         stroke="{g['abyss']}" stroke-width="2.5"
-         stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-      <path d="M2 17l10 5 10-5"/>
-      <path d="M2 12l10 5 10-5"/>
-    </svg>
-  </div>
+  <svg class="np-shield" width="34" height="40" viewBox="0 0 100 120"
+       xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="np-shield-grad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="{g['gold']}"/>
+        <stop offset="100%" stop-color="{g['teal']}"/>
+      </linearGradient>
+      <linearGradient id="np-star-grad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="{g['gold']}"/>
+        <stop offset="100%" stop-color="{g['teal']}"/>
+      </linearGradient>
+    </defs>
+    <!-- Shield outline -->
+    <path d="M50 5 L90 22 L90 58 C90 90 72 110 50 118 C28 110 10 90 10 58 L10 22 Z"
+          fill="none"
+          stroke="url(#np-shield-grad)"
+          stroke-width="3"
+          stroke-linejoin="round"/>
+    <!-- 4-pointed compass star -->
+    <path d="M50 28 L55 56 L80 60 L55 64 L50 92 L45 64 L20 60 L45 56 Z"
+          fill="url(#np-star-grad)"/>
+    <!-- Center dot -->
+    <circle cx="50" cy="60" r="3.5" fill="{g['white']}"/>
+  </svg>
   <div>
     <div class="np-sidebar-brand-text">Scientia</div>
     <div class="np-sidebar-brand-sub">Nord Paradigm</div>
   </div>
+</div>
+"""
+
+
+def lang_toggle_html(current_lang: str) -> str:
+    """
+    Toggle FR/EN en position fixe top-right de l'application.
+
+    Utilise des liens avec query parameter (`?ui_lang=fr|en`) parce que
+    Streamlit re-render les boutons natifs avec des classes randomisées
+    qu'on ne peut pas cibler de façon stable depuis CSS.
+    """
+    fr_active = "active" if current_lang == "fr" else ""
+    en_active = "active" if current_lang == "en" else ""
+    return f"""
+<div class="np-lang-fixed">
+  <a href="?ui_lang=fr" target="_self" class="np-lang-pill {fr_active}">FR</a>
+  <a href="?ui_lang=en" target="_self" class="np-lang-pill {en_active}">EN</a>
 </div>
 """
 
