@@ -270,7 +270,37 @@ def init() -> None:
         );
         CREATE INDEX IF NOT EXISTS idx_tb_concept
           ON teach_back(concept_id, cree_le DESC);
+
+        -- Idea #1 — Mission Mode : scénarios clients multi-concepts.
+        CREATE TABLE IF NOT EXISTS missions (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            scenario        TEXT NOT NULL,
+            concept_ids_json TEXT NOT NULL,          -- list[str]
+            reponse         TEXT,
+            score_total     INTEGER,                  -- 0-12
+            feedback        TEXT,
+            score_json      TEXT,                     -- breakdown par dimension
+            statut          TEXT DEFAULT 'en_cours',  -- 'en_cours' | 'termine'
+            cree_le         TEXT DEFAULT (datetime('now'))
+        );
+
+        -- Idea #2 — cheat sheets générées par Claude pour usage client.
+        CREATE TABLE IF NOT EXISTS cheat_sheets (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            concept_id  TEXT NOT NULL,
+            contenu_md  TEXT NOT NULL,
+            cree_le     TEXT DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_cs_concept
+          ON cheat_sheets(concept_id, cree_le DESC);
         """)
+
+        # Idea #4 — calibration de confiance : nouvelle colonne sur revisions.
+        colonnes_rev2 = {
+            row[1] for row in c.execute("PRAGMA table_info(revisions)").fetchall()
+        }
+        if "confiance_predite" not in colonnes_rev2:
+            c.execute("ALTER TABLE revisions ADD COLUMN confiance_predite INTEGER")
 
         # Migration : ajouter les colonnes FSRS si elles n'existent pas encore
         colonnes_cartes = {
@@ -357,9 +387,13 @@ def sauvegarder_contenu(concept_id: str, contenu: dict) -> None:
 # ── Révisions avec FSRS ───────────────────────────────────────────────────────
 
 def sauvegarder_revision(carte_id: int, score: int,
-                         feedback: str, duree_sec: int = 0) -> None:
+                         feedback: str, duree_sec: int = 0,
+                         confiance_predite: int | None = None) -> None:
     """
     Enregistre une révision et met à jour l'état FSRS de la carte.
+
+    confiance_predite : 1-5, prédiction de l'apprenant avant de répondre
+    (Idea #4 — calibration). Optionnel.
     """
     grade = _score_to_grade(score)
 
@@ -405,9 +439,11 @@ def sauvegarder_revision(carte_id: int, score: int,
         # Enregistrer la révision
         c.execute(
             """INSERT INTO revisions
-               (carte_id, score, grade, retrievability, feedback, duree_sec, prochaine_rev)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (carte_id, score, grade, r_cur, feedback, duree_sec, prochaine)
+               (carte_id, score, grade, retrievability, feedback, duree_sec,
+                prochaine_rev, confiance_predite)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (carte_id, score, grade, r_cur, feedback, duree_sec, prochaine,
+             confiance_predite)
         )
 
         # Mettre à jour l'état FSRS de la carte
@@ -1208,6 +1244,287 @@ def export_progression_csv() -> str:
             r["nb_cartes"], r["nb_revisions"],
         ])
     return buf.getvalue()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #2 — Cheat sheets pour usage client
+# ══════════════════════════════════════════════════════════════════════════════
+
+def sauvegarder_cheat_sheet(concept_id: str, contenu_md: str) -> int:
+    with conn() as c:
+        cur = c.execute(
+            "INSERT INTO cheat_sheets (concept_id, contenu_md) VALUES (?, ?)",
+            (concept_id, contenu_md)
+        )
+        return cur.lastrowid
+
+
+def get_derniere_cheat_sheet(concept_id: str) -> dict | None:
+    with conn() as c:
+        row = c.execute(
+            "SELECT * FROM cheat_sheets WHERE concept_id = ? "
+            "ORDER BY cree_le DESC LIMIT 1",
+            (concept_id,)
+        ).fetchone()
+    return dict(row) if row else None
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #1 — Mission Mode
+# ══════════════════════════════════════════════════════════════════════════════
+
+def sauvegarder_mission(scenario: str, concept_ids: list[str]) -> int:
+    with conn() as c:
+        cur = c.execute(
+            "INSERT INTO missions (scenario, concept_ids_json) VALUES (?, ?)",
+            (scenario, json.dumps(concept_ids))
+        )
+        return cur.lastrowid
+
+
+def cloturer_mission(mission_id: int, reponse: str, score_total: int,
+                       feedback: str, score_breakdown: dict) -> None:
+    with conn() as c:
+        c.execute(
+            """UPDATE missions
+               SET reponse = ?, score_total = ?, feedback = ?,
+                   score_json = ?, statut = 'termine'
+               WHERE id = ?""",
+            (reponse, score_total, feedback,
+             json.dumps(score_breakdown), mission_id)
+        )
+
+
+def get_missions_recentes(limit: int = 10) -> list[dict]:
+    with conn() as c:
+        rows = c.execute(
+            "SELECT * FROM missions WHERE statut = 'termine' "
+            "ORDER BY cree_le DESC LIMIT ?", (limit,)
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #4 — Analytics de calibration (confiance vs score)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def calibration_stats() -> list[dict]:
+    """
+    Retourne la liste des paires (confiance_predite, score_obtenu) pour
+    toutes les révisions où la confiance a été enregistrée.
+    """
+    with conn() as c:
+        rows = c.execute(
+            """SELECT confiance_predite AS c, score, COUNT(*) AS n
+               FROM revisions
+               WHERE confiance_predite IS NOT NULL
+               GROUP BY confiance_predite, score
+               ORDER BY confiance_predite, score""",
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def calibration_resume() -> dict:
+    """
+    Calcule des indicateurs simples :
+      - écart moyen (confidence - score normalisé) : > 0 = surconfiance
+      - nombre total de prédictions
+    """
+    with conn() as c:
+        rows = c.execute(
+            "SELECT confiance_predite, score FROM revisions "
+            "WHERE confiance_predite IS NOT NULL",
+        ).fetchall()
+    if not rows:
+        return {"n": 0, "ecart_moyen": 0.0, "surconfiance_pct": 0.0}
+    n = len(rows)
+    surconf = 0
+    deltas = []
+    for r in rows:
+        # Normaliser sur la même échelle 1-5 :
+        # confiance ∈ [1,5]; score ∈ [0,4] → score_norm = score + 1 ∈ [1,5]
+        score_norm = (r["score"] or 0) + 1
+        delta = (r["confiance_predite"] or 0) - score_norm
+        deltas.append(delta)
+        if delta > 0.5:
+            surconf += 1
+    return {
+        "n": n,
+        "ecart_moyen": sum(deltas) / n,
+        "surconfiance_pct": (surconf / n) * 100,
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #8 — Prévision d'oubli (FSRS forecast)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def previsions_oubli(jours: int = 60, seuil_R: float = 0.7) -> dict[str, int]:
+    """
+    Pour chaque jour des `jours` à venir, retourne le NOMBRE DE CARTES
+    qui passent en zone à risque (R < seuil_R).
+
+    Une carte est en zone à risque le jour J si sa retrievability calculée
+    selon le modèle FSRS est < seuil_R à cette date.
+    """
+    today = datetime.now().date()
+    forecast: dict[str, int] = {}
+
+    with conn() as c:
+        # On prend toutes les cartes ayant déjà été révisées au moins une fois.
+        cartes = c.execute(
+            """SELECT c.id, c.stabilite, c.cree_le,
+                       MAX(r.revise_le) AS derniere_rev
+               FROM cartes c
+               LEFT JOIN revisions r ON r.carte_id = c.id
+               WHERE c.nb_revisions > 0
+               GROUP BY c.id"""
+        ).fetchall()
+
+    for j in range(jours + 1):
+        date_cible = today + timedelta(days=j)
+        n_risque = 0
+        for carte in cartes:
+            stab = carte["stabilite"] or 0.0
+            if stab <= 0:
+                continue
+            ref = carte["derniere_rev"] or carte["cree_le"]
+            try:
+                ref_dt = datetime.fromisoformat(ref[:19]).date()
+            except Exception:
+                continue
+            elapsed = (date_cible - ref_dt).days
+            if elapsed < 0:
+                continue
+            r = _fsrs_retrievability(stab, elapsed)
+            if r < seuil_R:
+                n_risque += 1
+        forecast[date_cible.isoformat()] = n_risque
+    return forecast
+
+
+def cartes_en_risque_aujourd(seuil_R: float = 0.7) -> list[dict]:
+    """
+    Cartes dont la retrievability AUJOURD'HUI est sous le seuil — donc
+    candidates immédiates à révision proactive.
+    """
+    today = datetime.now().date()
+    out = []
+    with conn() as c:
+        rows = c.execute(
+            """SELECT c.id, c.concept_id, c.enonce, c.stabilite, c.cree_le,
+                       MAX(r.revise_le) AS derniere_rev
+               FROM cartes c
+               LEFT JOIN revisions r ON r.carte_id = c.id
+               WHERE c.nb_revisions > 0
+               GROUP BY c.id"""
+        ).fetchall()
+    for r in rows:
+        stab = r["stabilite"] or 0.0
+        if stab <= 0:
+            continue
+        ref = r["derniere_rev"] or r["cree_le"]
+        try:
+            ref_dt = datetime.fromisoformat(ref[:19]).date()
+        except Exception:
+            continue
+        elapsed = (today - ref_dt).days
+        if elapsed < 0:
+            continue
+        retri = _fsrs_retrievability(stab, elapsed)
+        if retri < seuil_R:
+            out.append({
+                "carte_id": r["id"],
+                "concept_id": r["concept_id"],
+                "enonce": r["enonce"],
+                "retrievability": retri,
+                "stabilite": stab,
+            })
+    out.sort(key=lambda x: x["retrievability"])
+    return out
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #10 — Sync Obsidian
+# ══════════════════════════════════════════════════════════════════════════════
+
+import re as _re
+
+
+def _slugifier_pour_obsidian(texte: str) -> str:
+    import unicodedata
+    nfkd = unicodedata.normalize("NFKD", texte)
+    ascii_str = nfkd.encode("ascii", "ignore").decode("ascii")
+    slug = _re.sub(r"[^\w\s-]", "", ascii_str).strip().lower()
+    slug = _re.sub(r"[\s_-]+", "-", slug)
+    return slug[:80]
+
+
+def sync_obsidian(concept_id: str, concept: dict, vault_path: str | None = None,
+                    teach_back: dict | None = None,
+                    cheat_sheet: str | None = None) -> str | None:
+    """
+    Écrit un fichier Markdown dans la voûte Obsidian (si configurée).
+
+    vault_path : si None, lit OBSIDIAN_VAULT_PATH dans l'environnement.
+    Retourne le chemin écrit, ou None si pas de voûte configurée.
+
+    Le fichier va dans :
+        {vault}/governance-frameworks/wiki/concepts/scientia-mastered/{slug}.md
+    """
+    from pathlib import Path as _Path
+    if vault_path is None:
+        vault_path = os.getenv("OBSIDIAN_VAULT_PATH", "")
+    if not vault_path:
+        return None
+    vault = _Path(vault_path)
+    if not vault.exists():
+        return None
+
+    target_dir = vault / "governance-frameworks" / "wiki" / "concepts" / "scientia-mastered"
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    slug = _slugifier_pour_obsidian(concept_id) or "concept"
+    target = target_dir / f"{slug}.md"
+
+    titre = concept.get("titre", concept_id)
+    module = concept.get("module", "?")
+    langue = concept.get("langue", "fr")
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    # Frontmatter Obsidian
+    fm = (
+        "---\n"
+        "type: scientia-mastered\n"
+        f"concept_id: {concept_id}\n"
+        f"module: {module}\n"
+        f"langue: {langue}\n"
+        f"sync_le: {today}\n"
+        f"source: scientia\n"
+        "tags:\n"
+        f"  - scientia\n"
+        f"  - module-{module:02d}\n" if isinstance(module, int) else f"  - module-{module}\n"
+        "---\n\n"
+    )
+
+    body = [f"# {titre}\n"]
+    body.append(f"> Concept maîtrisé via [Scientia](https://github.com/DA-Leclerc/Scientia) le {today}.\n")
+    body.append(f"\n## Texte de référence\n\n{concept.get('texte', '')}\n")
+
+    if teach_back and teach_back.get("transcription"):
+        body.append(f"\n## Mon teach-back\n\n_{teach_back.get('score_total', 0)}/12_ — "
+                     f"clarté {teach_back.get('score_clarte', 0)}/4 · "
+                     f"précision {teach_back.get('score_precision', 0)}/4 · "
+                     f"exemple {teach_back.get('score_exemple', 0)}/4\n\n"
+                     f"{teach_back.get('transcription', '')}\n")
+        if teach_back.get("feedback"):
+            body.append(f"\n**Feedback Claude** : {teach_back['feedback']}\n")
+
+    if cheat_sheet:
+        body.append(f"\n## Cheat sheet client\n\n{cheat_sheet}\n")
+
+    target.write_text(fm + "\n".join(body), encoding="utf-8")
+    return str(target)
 
 
 # ── Alias pour compatibilité avec l'ancien scientia.py ────────────────────────

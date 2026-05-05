@@ -390,6 +390,114 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
                                   "en": "At-risk concepts (forgetting soon)"},
     "dash.no_risk":                {"fr": "Aucun concept en zone d'oubli pour l'instant.",
                                   "en": "No concepts in the forgetting zone yet."},
+
+    # ══════════════════════════════════════════════════════════════════════
+    # Round 2 — features supplémentaires
+    # ══════════════════════════════════════════════════════════════════════
+
+    # ── #2 Cheat sheet ────────────────────────────────────────────────────
+    "cheat.button":              {"fr": "📝 Générer une cheat sheet client",
+                                  "en": "📝 Generate a client cheat sheet"},
+    "cheat.regenerate":          {"fr": "🔁 Regénérer",                 "en": "🔁 Regenerate"},
+    "cheat.generating":          {"fr": "Claude rédige le livrable…",   "en": "Claude is drafting the deliverable…"},
+    "cheat.title":               {"fr": "Cheat sheet pour usage client", "en": "Client-facing cheat sheet"},
+    "cheat.download":            {"fr": "📥 Télécharger en .md",         "en": "📥 Download as .md"},
+    "cheat.copy_hint":           {"fr": "Sélectionne le bloc et copie. Tu peux le coller tel quel dans un livrable Brèche Pro.",
+                                  "en": "Select the block and copy. You can paste it as-is into a Brèche Pro deliverable."},
+
+    # ── #4 Calibration ───────────────────────────────────────────────────
+    "calib.label":               {"fr": "Confiance avant de répondre",   "en": "Confidence before answering"},
+    "calib.help":                {"fr": "1 = je devine · 5 = je suis certain. Aide-toi à voir tes biais.",
+                                  "en": "1 = I'm guessing · 5 = I'm certain. Helps you see your biases."},
+    "calib.summary_title":       {"fr": "🎯 Calibration",                "en": "🎯 Calibration"},
+    "calib.no_data":             {"fr": "Pas encore assez de prédictions pour calibrer. Continue.",
+                                  "en": "Not enough predictions yet to calibrate. Keep going."},
+    "calib.summary":             {"fr": "Sur {n} questions, écart moyen confiance−score : **{e:+.2f}**. Surconfiance : {s:.0f}%.",
+                                  "en": "Across {n} questions, average gap confidence−score: **{e:+.2f}**. Over-confidence: {s:.0f}%."},
+    "calib.tip_over":            {"fr": "💡 Tu es plus souvent sur-confiant qu'autre chose. En consulting, ça mène aux promesses qui blessent. Vérifie deux fois avant de répondre.",
+                                  "en": "💡 You skew over-confident. In consulting, that leads to over-promising. Double-check before answering."},
+    "calib.tip_under":            {"fr": "💡 Tu es plus prudent que ton vrai niveau. Tu sais plus que tu ne crois — fais-toi confiance.",
+                                  "en": "💡 You're more cautious than your actual level. You know more than you think — trust yourself."},
+    "calib.tip_balanced":         {"fr": "💡 Calibration excellente. Ton intuition de niveau est fiable.",
+                                  "en": "💡 Excellent calibration. Your level intuition is reliable."},
+
+    # ── #1 Mission Mode ───────────────────────────────────────────────────
+    "sidebar.mission":           {"fr": "🎯 Mission Mode",                "en": "🎯 Mission Mode"},
+    "mission.hero.title_main":   {"fr": "Un client. Un mandat.",          "en": "A client. A mission."},
+    "mission.hero.title_accent": {"fr": "Tu mobilises tout.",              "en": "You mobilize it all."},
+    "mission.hero.subtitle":     {
+        "fr": "Scénario fictif — TechCorp QC, GroupeSanté Boréal, Logifin Inc. — basé sur les concepts que tu as déjà étudiés. "
+              "Tu identifies les obligations, tu priorises, tu proposes Brèche / Brèche Pro / Prisme. C'est ton examen de synthèse.",
+        "en": "Fictional scenario — TechCorp QC, GroupeSanté Boréal, Logifin Inc. — based on the concepts you've already studied. "
+              "You identify obligations, prioritize, and pitch Brèche / Brèche Pro / Prisme. This is your synthesis exam."},
+    "mission.hero.tag":          {"fr": "🎯 Examen de synthèse",          "en": "🎯 Synthesis exam"},
+    "mission.choose_concepts":   {"fr": "Choisis 3-7 concepts (déjà étudiés) pour la mission",
+                                  "en": "Pick 3-7 (already studied) concepts for the mission"},
+    "mission.need_more":          {"fr": "Sélectionne 3-7 concepts.",     "en": "Pick 3-7 concepts."},
+    "mission.generate":          {"fr": "🎲 Générer le scénario",         "en": "🎲 Generate scenario"},
+    "mission.generating":        {"fr": "Claude écrit le mandat…",        "en": "Claude is drafting the mission…"},
+    "mission.scenario_label":    {"fr": "📋 Scénario",                    "en": "📋 Scenario"},
+    "mission.your_response":     {"fr": "Ta réponse stratégique",         "en": "Your strategic response"},
+    "mission.placeholder":       {"fr": "Identifie les obligations applicables, priorise, et propose un engagement Nord Paradigm. Réponds comme tu le ferais à un client.",
+                                  "en": "Identify applicable obligations, prioritize, and propose a Nord Paradigm engagement. Reply as you would to a client."},
+    "mission.submit":            {"fr": "✓ Soumettre la réponse",         "en": "✓ Submit response"},
+    "mission.evaluating":        {"fr": "Claude évalue ta réponse stratégique…",
+                                  "en": "Claude is evaluating your strategic response…"},
+    "mission.results":           {"fr": "📊 Évaluation de la mission",    "en": "📊 Mission assessment"},
+    "mission.score_exhaustivity": {"fr": "Exhaustivité",                   "en": "Exhaustiveness"},
+    "mission.score_prioritization": {"fr": "Priorisation",                 "en": "Prioritization"},
+    "mission.score_deliverability": {"fr": "Livrabilité",                  "en": "Deliverability"},
+    "mission.score_total":       {"fr": "Score total : {t}/12",            "en": "Total score: {t}/12"},
+    "mission.feedback":          {"fr": "**Feedback** — {f}",              "en": "**Feedback** — {f}"},
+    "mission.new":               {"fr": "🔁 Nouvelle mission",             "en": "🔁 New mission"},
+    "mission.history":           {"fr": "Missions passées",                "en": "Past missions"},
+
+    # ── #7 Constellation ──────────────────────────────────────────────────
+    "sidebar.constellation":     {"fr": "✨ Constellation",                 "en": "✨ Constellation"},
+    "const.hero.title_main":     {"fr": "Ta carte du savoir,",              "en": "Your map of knowledge,"},
+    "const.hero.title_accent":   {"fr": "elle s'illumine.",                  "en": "lighting up over time."},
+    "const.hero.subtitle":       {
+        "fr": "Chaque étoile = un concept. Les liens = les prérequis. Les étoiles dorées sont maîtrisées. "
+              "Au fil des semaines, ta constellation Nord Paradigm prend forme.",
+        "en": "Each star = a concept. Links = prerequisites. Golden stars are mastered. "
+              "Over the weeks, your Nord Paradigm constellation takes shape."},
+    "const.hero.tag":            {"fr": "✨ Vue d'ensemble",                 "en": "✨ Big picture"},
+    "const.legend":              {"fr": "🟢 Maîtrisé · 🟡 En cours · ⚪ Pas encore étudié",
+                                  "en": "🟢 Mastered · 🟡 In progress · ⚪ Not yet studied"},
+
+    # ── #8 Forgetting forecast ────────────────────────────────────────────
+    "sidebar.forecast":          {"fr": "🔮 Prévision d'oubli",            "en": "🔮 Forgetting forecast"},
+    "forecast.hero.title_main":  {"fr": "Ce que tu oublieras,",             "en": "What you'll forget,"},
+    "forecast.hero.title_accent": {"fr": "avant que ça ne devienne un trou.","en": "before it becomes a gap."},
+    "forecast.hero.subtitle":    {
+        "fr": "Le modèle FSRS-4.5 projette la probabilité de rappel pour chaque carte sur 60 jours. "
+              "Anticipe — bloque du temps maintenant pour les cartes qui rentreront en zone à risque.",
+        "en": "The FSRS-4.5 model projects recall probability for each card over 60 days. "
+              "Plan ahead — block time now for cards that will enter the risk zone."},
+    "forecast.hero.tag":         {"fr": "🔮 Anticipation FSRS",             "en": "🔮 FSRS anticipation"},
+    "forecast.chart_title":      {"fr": "Cartes à risque par jour (60 jours)",
+                                  "en": "Cards at risk per day (60 days)"},
+    "forecast.now_at_risk":      {"fr": "🚨 Cartes déjà en zone à risque",  "en": "🚨 Cards already at risk"},
+    "forecast.no_risk_now":       {"fr": "Aucune carte n'est en zone à risque aujourd'hui.",
+                                  "en": "No cards are in the risk zone today."},
+    "forecast.review_card":      {"fr": "Réviser →",                        "en": "Review →"},
+
+    # ── #10 Obsidian sync ─────────────────────────────────────────────────
+    "obs.button":                {"fr": "🔗 Sync vers Obsidian",            "en": "🔗 Sync to Obsidian"},
+    "obs.no_vault":              {"fr": "OBSIDIAN_VAULT_PATH non configurée. Ajoute-la dans tes secrets ou .env.",
+                                  "en": "OBSIDIAN_VAULT_PATH not configured. Add it to your secrets or .env."},
+    "obs.synced":                {"fr": "✓ Synchronisé : {p}",              "en": "✓ Synced: {p}"},
+    "obs.error":                 {"fr": "Erreur de sync : {e}",             "en": "Sync error: {e}"},
+
+    # ── #3 Vocal teach-back ───────────────────────────────────────────────
+    "teach.audio_label":         {"fr": "Enregistre ton explication (max 2 min).",
+                                  "en": "Record your explanation (max 2 min)."},
+    "teach.transcribing":        {"fr": "Transcription en cours…",           "en": "Transcribing…"},
+    "teach.transcription_label": {"fr": "Transcription :",                   "en": "Transcription:"},
+    "teach.no_openai":           {"fr": "Mode vocal indisponible : OPENAI_API_KEY non configurée. Tape ta réponse à la place.",
+                                  "en": "Voice mode unavailable: OPENAI_API_KEY not set. Type your answer instead."},
+    "teach.use_voice":           {"fr": "🎤 Mode vocal",                    "en": "🎤 Voice mode"},
+    "teach.use_text":            {"fr": "⌨️ Mode texte",                    "en": "⌨️ Text mode"},
 }
 
 

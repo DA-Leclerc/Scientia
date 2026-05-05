@@ -112,6 +112,17 @@ from db import (
     calculer_velocite,
     get_revisions_par_jour,
     get_concepts_a_risque,
+    # Round 2 — features supplémentaires
+    sauvegarder_cheat_sheet,
+    get_derniere_cheat_sheet,
+    sauvegarder_mission,
+    cloturer_mission,
+    get_missions_recentes,
+    calibration_stats,
+    calibration_resume,
+    previsions_oubli,
+    cartes_en_risque_aujourd,
+    sync_obsidian,
 )
 
 # ── Initialisation DB ─────────────────────────────────────────────────────────
@@ -145,6 +156,11 @@ from generator import (
     repondre_socratique,
     resumer_socratique,
     aide_socratique_question,
+    # Round 2
+    generer_cheat_sheet,
+    generer_mission,
+    evaluer_mission,
+    transcrire_audio_whisper,
 )
 
 # ── Utilitaires UI ────────────────────────────────────────────────────────────
@@ -333,11 +349,20 @@ with st.sidebar:
     if st.button(t("sidebar.sprint"), use_container_width=True):
         aller_a("sprint")
         st.rerun()
+    if st.button(t("sidebar.mission"), use_container_width=True):
+        aller_a("mission")
+        st.rerun()
     if st.button(t("sidebar.socratic"), use_container_width=True):
         aller_a("socratique")
         st.rerun()
     if st.button(t("teach.button"), use_container_width=True):
         aller_a("teach_back")
+        st.rerun()
+    if st.button(t("sidebar.constellation"), use_container_width=True):
+        aller_a("constellation")
+        st.rerun()
+    if st.button(t("sidebar.forecast"), use_container_width=True):
+        aller_a("forecast")
         st.rerun()
     if st.button(t("sidebar.dashboard"), use_container_width=True):
         aller_a("dashboard")
@@ -729,6 +754,65 @@ def page_etudier():
                 except Exception as e:
                     st.error(t("etudier.gen_error", e=e))
 
+        # ── Idea #2 + #10 : cheat sheet + sync Obsidian ─────────────────
+        # Visible si le concept est au moins étudié (a déjà des cartes)
+        if cartes_existantes:
+            st.markdown("---")
+            with st.expander(t("cheat.button")):
+                st.caption(t("cheat.copy_hint"))
+                cs = get_derniere_cheat_sheet(cle)
+                col_cs1, col_cs2 = st.columns([3, 1])
+                bouton_label_cs = (
+                    t("cheat.regenerate") if cs else t("cheat.button")
+                )
+                if col_cs1.button(bouton_label_cs,
+                                   key=f"cs_btn_{cle}",
+                                   use_container_width=True):
+                    with st.spinner(t("cheat.generating")):
+                        try:
+                            md = generer_cheat_sheet(concept)
+                            sauvegarder_cheat_sheet(cle, md)
+                            cs = {"contenu_md": md}
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+                if cs:
+                    st.markdown("---")
+                    st.markdown(cs["contenu_md"])
+                    st.download_button(
+                        t("cheat.download"),
+                        data=cs["contenu_md"],
+                        file_name=f"{cle}.md",
+                        mime="text/markdown",
+                        use_container_width=True,
+                        key=f"cs_dl_{cle}",
+                    )
+
+            # Sync Obsidian
+            with st.expander(t("obs.button")):
+                if not os.environ.get("OBSIDIAN_VAULT_PATH"):
+                    st.info(t("obs.no_vault"))
+                else:
+                    if st.button(t("obs.button"),
+                                 key=f"obs_btn_{cle}",
+                                 use_container_width=True):
+                        from db import (get_meilleur_teach_back as _g_tb,
+                                          get_derniere_cheat_sheet as _g_cs)
+                        tb = _g_tb(cle)
+                        cs_db = _g_cs(cle)
+                        try:
+                            path = sync_obsidian(
+                                cle, concept,
+                                teach_back=tb,
+                                cheat_sheet=(cs_db.get("contenu_md")
+                                             if cs_db else None),
+                            )
+                            if path:
+                                st.success(t("obs.synced", p=path))
+                            else:
+                                st.info(t("obs.no_vault"))
+                        except Exception as e:
+                            st.error(t("obs.error", e=e))
+
         # Bouton reset progression (Sprint D)
         st.markdown("---")
         with st.expander(t("etudier.reset.label")):
@@ -879,6 +963,7 @@ def page_etudier():
             st.info(f"💡 {indice_txt}")
 
     cle_zone = f"reponse_{cle}_{i}"
+    cle_conf = f"conf_{cle}_{i}"
     cle_soc = (cle, i)
     if st.session_state.evaluation_courante is None:
         reponse = st.text_area(
@@ -886,6 +971,14 @@ def page_etudier():
             key=cle_zone,
             height=150,
             placeholder=t("etudier.placeholder"),
+        )
+
+        # Idea #4 — slider de calibration de confiance
+        confiance = st.slider(
+            t("calib.label"),
+            min_value=1, max_value=5, value=3,
+            key=cle_conf,
+            help=t("calib.help"),
         )
 
         # ── Tuteur socratique sur la question (sous le champ de réponse) ──
@@ -979,6 +1072,7 @@ def page_etudier():
                 score=score,
                 feedback=evaluation.get("feedback", ""),
                 duree_sec=duree,
+                confiance_predite=int(st.session_state.get(cle_conf, 3) or 3),
             )
             st.session_state.evaluation_courante = evaluation
             # Mémoriser l'activité au passage
@@ -2117,6 +2211,24 @@ def page_dashboard():
             for r in rows_chart[-21:]:
                 st.write(f"`{r['date']}` · {r['n']} révisions")
 
+    # ── Calibration de confiance (Idea #4) ─────────────────────────────────
+    st.markdown("---")
+    st.markdown(f"### {t('calib.summary_title')}")
+    calib = calibration_resume()
+    if calib["n"] < 5:
+        st.info(t("calib.no_data"))
+    else:
+        st.markdown(t("calib.summary",
+                      n=calib["n"],
+                      e=calib["ecart_moyen"],
+                      s=calib["surconfiance_pct"]))
+        if calib["ecart_moyen"] > 0.5:
+            st.warning(t("calib.tip_over"))
+        elif calib["ecart_moyen"] < -0.5:
+            st.info(t("calib.tip_under"))
+        else:
+            st.success(t("calib.tip_balanced"))
+
     # ── Concepts à risque ──────────────────────────────────────────────────
     st.markdown("---")
     st.markdown(f"### {t('dash.at_risk')}")
@@ -2142,6 +2254,477 @@ def page_dashboard():
         st.info(t("dash.no_risk"))
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #1 — Mission Mode (scénarios clients multi-concepts)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def page_mission():
+    st.markdown(
+        hero_html(
+            title_main=t("mission.hero.title_main"),
+            title_accent=t("mission.hero.title_accent"),
+            subtitle=t("mission.hero.subtitle"),
+            tag_text=t("mission.hero.tag"),
+        ),
+        unsafe_allow_html=True,
+    )
+
+    if "mission_id" not in st.session_state:
+        st.session_state.mission_id = None
+    if "mission_scenario" not in st.session_state:
+        st.session_state.mission_scenario = None
+    if "mission_concept_ids" not in st.session_state:
+        st.session_state.mission_concept_ids = []
+    if "mission_resultat" not in st.session_state:
+        st.session_state.mission_resultat = None
+
+    progression = get_toute_progression()
+    eligibles = sorted(
+        [cid for cid, p in progression.items()
+         if p.get("statut") in ("en_cours", "maitrise")
+         and cid in CURRICULUM],
+        key=lambda k: (CURRICULUM[k]["module"], CURRICULUM[k]["ordre"])
+    )
+
+    if not eligibles:
+        st.info(t("modules.no_match"))
+        return
+
+    # Étape 1 : pas encore de scénario
+    if not st.session_state.mission_scenario:
+        choix = st.multiselect(
+            t("mission.choose_concepts"),
+            options=eligibles,
+            format_func=lambda k: (
+                f"[{ 'FR' if CURRICULUM[k].get('langue', 'fr') == 'fr' else 'EN' }] "
+                f"M{CURRICULUM[k]['module']:02d} — {CURRICULUM[k]['titre']}"
+            ),
+            max_selections=7,
+            key="mission_select",
+        )
+        if len(choix) < 3 or len(choix) > 7:
+            st.warning(t("mission.need_more"))
+            return
+        if st.button(t("mission.generate"),
+                     type="primary", use_container_width=True):
+            concepts_dicts = [CURRICULUM[k] for k in choix]
+            with st.spinner(t("mission.generating")):
+                try:
+                    scenario = generer_mission(concepts_dicts)
+                    mid = sauvegarder_mission(scenario, choix)
+                    st.session_state.mission_id = mid
+                    st.session_state.mission_scenario = scenario
+                    st.session_state.mission_concept_ids = choix
+                    st.session_state.mission_resultat = None
+                    st.rerun()
+                except Exception as e:
+                    st.error(t("etudier.gen_error", e=e))
+        return
+
+    # Étape 2 : scénario affiché, réponse à fournir
+    st.markdown(f"### {t('mission.scenario_label')}")
+    with st.container(border=True):
+        st.markdown(st.session_state.mission_scenario)
+
+    if st.session_state.mission_resultat is None:
+        reponse = st.text_area(
+            t("mission.your_response"),
+            key="mission_input",
+            height=320,
+            placeholder=t("mission.placeholder"),
+        )
+        if st.button(t("mission.submit"),
+                     type="primary", use_container_width=True,
+                     disabled=not reponse.strip()):
+            with st.spinner(t("mission.evaluating")):
+                try:
+                    concepts_dicts = [
+                        CURRICULUM[k] for k in
+                        st.session_state.mission_concept_ids
+                        if k in CURRICULUM
+                    ]
+                    eval_result = evaluer_mission(
+                        st.session_state.mission_scenario,
+                        reponse,
+                        concepts_dicts,
+                    )
+                except Exception as e:
+                    st.error(t("etudier.eval_error", e=e))
+                    return
+            scores = {
+                "exhaustivite": int(eval_result.get("exhaustivite", 0)),
+                "priorisation": int(eval_result.get("priorisation", 0)),
+                "livrabilite": int(eval_result.get("livrabilite", 0)),
+            }
+            total = sum(scores.values())
+            feedback = eval_result.get("feedback", "")
+            cloturer_mission(
+                st.session_state.mission_id,
+                reponse, total, feedback, scores
+            )
+            st.session_state.mission_resultat = {
+                **scores,
+                "total": total,
+                "feedback": feedback,
+                "reponse": reponse,
+            }
+            st.rerun()
+        return
+
+    # Étape 3 : résultats
+    res = st.session_state.mission_resultat
+    st.markdown("---")
+    st.markdown(f"### {t('mission.results')}")
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric(t("mission.score_exhaustivity"), f"{res['exhaustivite']}/4")
+    col2.metric(t("mission.score_prioritization"), f"{res['priorisation']}/4")
+    col3.metric(t("mission.score_deliverability"), f"{res['livrabilite']}/4")
+
+    st.progress(res["total"] / 12,
+                text=t("mission.score_total", t=res["total"]))
+    st.markdown(t("mission.feedback", f=res["feedback"]))
+
+    if st.button(t("mission.new"),
+                 type="primary", use_container_width=True):
+        st.session_state.mission_id = None
+        st.session_state.mission_scenario = None
+        st.session_state.mission_concept_ids = []
+        st.session_state.mission_resultat = None
+        st.rerun()
+
+    # Historique
+    historique = get_missions_recentes(limit=5)
+    if historique:
+        st.markdown("---")
+        st.markdown(f"### {t('mission.history')}")
+        for m in historique:
+            with st.expander(f"#{m['id']} · {m['cree_le'][:10]} · {m.get('score_total', '?')}/12"):
+                st.markdown("**Scénario**")
+                st.markdown(m["scenario"][:600] + ("…" if len(m["scenario"]) > 600 else ""))
+                if m.get("feedback"):
+                    st.markdown(f"**Feedback** — {m['feedback']}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #7 — Constellation des concepts
+# ══════════════════════════════════════════════════════════════════════════════
+
+def page_constellation():
+    st.markdown(
+        hero_html(
+            title_main=t("const.hero.title_main"),
+            title_accent=t("const.hero.title_accent"),
+            subtitle=t("const.hero.subtitle"),
+            tag_text=t("const.hero.tag"),
+        ),
+        unsafe_allow_html=True,
+    )
+
+    progression = get_toute_progression()
+
+    # Construction d'un graphe Graphviz par module (lisibilité)
+    try:
+        import graphviz
+    except ImportError:
+        st.error("Le paquet `graphviz` n'est pas installé. Lance : pip install graphviz")
+        return
+
+    # Filtre par module pour ne pas afficher 60 nœuds d'un coup
+    modules_choix = [m for m in ORDRE_AFFICHAGE_MODULES if m != 99]
+    m_sel = st.selectbox(
+        t("modules.label"),
+        options=[None] + modules_choix,
+        format_func=lambda x: (t("modules.filter_all") if x is None
+                                else nom_module_avec_drapeau(x)),
+        key="const_module",
+    )
+
+    st.caption(t("const.legend"))
+
+    g = graphviz.Digraph(graph_attr={
+        "rankdir": "LR",
+        "bgcolor": "#0a0f1e",
+        "color": "#2a4a6b",
+        "fontcolor": "#eaf2f8",
+        "splines": "spline",
+        "pad": "0.3",
+        "nodesep": "0.4",
+        "ranksep": "0.6",
+    })
+
+    concepts_a_afficher = []
+    if m_sel is not None:
+        concepts_a_afficher = get_concepts_par_module(m_sel)
+    else:
+        for m in modules_choix:
+            concepts_a_afficher.extend(get_concepts_par_module(m))
+
+    for cle in concepts_a_afficher:
+        c = CURRICULUM.get(cle)
+        if not c:
+            continue
+        statut = progression.get(cle, {}).get("statut", "nouveau")
+        if statut == "maitrise":
+            fill, font = "#d4a853", "#0a0f1e"
+        elif statut == "en_cours":
+            fill, font = "#f0c060", "#0a0f1e"
+        else:
+            fill, font = "#1a3050", "#c4d5e8"
+        # Label : titre court
+        label = c["titre"][:35] + ("…" if len(c["titre"]) > 35 else "")
+        g.node(cle, label=label,
+                shape="box",
+                style="rounded,filled",
+                fillcolor=fill,
+                fontcolor=font,
+                fontname="Helvetica",
+                fontsize="11")
+
+    # Arêtes : prereqs (seulement pour les concepts visibles)
+    set_visibles = set(concepts_a_afficher)
+    for cle in concepts_a_afficher:
+        c = CURRICULUM.get(cle)
+        if not c:
+            continue
+        for pr in c.get("prereqs", []):
+            if pr in set_visibles:
+                g.edge(pr, cle, color="#2a4a6b", arrowsize="0.6")
+
+    st.graphviz_chart(g, use_container_width=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #8 — Prévision d'oubli
+# ══════════════════════════════════════════════════════════════════════════════
+
+def page_forecast():
+    st.markdown(
+        hero_html(
+            title_main=t("forecast.hero.title_main"),
+            title_accent=t("forecast.hero.title_accent"),
+            subtitle=t("forecast.hero.subtitle"),
+            tag_text=t("forecast.hero.tag"),
+        ),
+        unsafe_allow_html=True,
+    )
+
+    # Cartes en risque AUJOURD'HUI
+    en_risque = cartes_en_risque_aujourd(seuil_R=0.7)
+    st.markdown(f"### {t('forecast.now_at_risk')}")
+    if not en_risque:
+        st.success(t("forecast.no_risk_now"))
+    else:
+        for r in en_risque[:10]:
+            cle_cpt = r["concept_id"]
+            titre = CURRICULUM.get(cle_cpt, {}).get("titre", cle_cpt)
+            with st.container(border=True):
+                st.markdown(f"**{titre}** — R = {r['retrievability']:.0%} "
+                              f"· stab. {r['stabilite']:.1f} j")
+                st.caption(r["enonce"][:120])
+                if st.button(t("forecast.review_card"),
+                             key=f"forecast_rev_{r['carte_id']}",
+                             use_container_width=True):
+                    aller_a("etudier", concept_actuel=cle_cpt)
+                    reset_quiz()
+                    st.session_state.session_chargee_de_db = False
+                    st.rerun()
+
+    # Chart 60 jours
+    st.markdown("---")
+    st.markdown(f"### {t('forecast.chart_title')}")
+    forecast = previsions_oubli(jours=60, seuil_R=0.7)
+    if forecast and any(v > 0 for v in forecast.values()):
+        try:
+            import altair as alt
+            import pandas as pd
+            rows = [{"date": d, "n": n} for d, n in forecast.items()]
+            df = pd.DataFrame(rows)
+            chart = alt.Chart(df).mark_area(
+                color="#d4a853",
+                opacity=0.7,
+                line={"color": "#f0c060"},
+            ).encode(
+                x=alt.X("date:T", title=None),
+                y=alt.Y("n:Q", title="Cartes à risque"),
+                tooltip=["date", "n"],
+            ).properties(height=200)
+            st.altair_chart(chart, use_container_width=True)
+        except Exception:
+            for d, n in list(forecast.items())[:30]:
+                if n > 0:
+                    st.write(f"`{d}` · {n} cartes")
+    else:
+        st.info(t("forecast.no_risk_now"))
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #3 — Vocal teach-back (mise à jour de la page existante)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Note : je remplace la fonction page_teach_back existante par une version
+# qui supporte un toggle texte / vocal.
+
+def page_teach_back():
+    st.markdown(
+        hero_html(
+            title_main=t("teach.hero.title_main"),
+            title_accent=t("teach.hero.title_accent"),
+            subtitle=t("teach.hero.subtitle"),
+            tag_text=t("teach.hero.tag"),
+        ),
+        unsafe_allow_html=True,
+    )
+
+    progression = get_toute_progression()
+    maitrises = sorted(
+        [cid for cid, p in progression.items()
+         if p.get("statut") == "maitrise" and cid in CURRICULUM],
+        key=lambda k: (CURRICULUM[k]["module"], CURRICULUM[k]["ordre"])
+    )
+
+    if not maitrises:
+        st.info(t("teach.locked"))
+        return
+
+    if "teach_concept" not in st.session_state:
+        st.session_state.teach_concept = None
+    if "teach_resultat" not in st.session_state:
+        st.session_state.teach_resultat = None
+    if "teach_mode" not in st.session_state:
+        st.session_state.teach_mode = "text"
+    if "teach_transcription" not in st.session_state:
+        st.session_state.teach_transcription = ""
+
+    cle = st.selectbox(
+        t("socratique.concept"),
+        options=maitrises,
+        format_func=lambda k: (
+            f"[{'FR' if CURRICULUM[k].get('langue','fr') == 'fr' else 'EN'}] "
+            f"M{CURRICULUM[k]['module']:02d} — {CURRICULUM[k]['titre']}"
+        ),
+        key="teach_concept_select",
+    )
+    concept = CURRICULUM[cle]
+    st.session_state.teach_concept = cle
+
+    best = get_meilleur_teach_back(cle)
+    if best:
+        st.caption(t("teach.best", t=best["score_total"]))
+
+    st.markdown(f"### {concept['titre']}")
+    st.caption(t("teach.scenario"))
+
+    if st.session_state.teach_resultat is None:
+        # Toggle mode texte / vocal
+        col_m1, col_m2 = st.columns(2)
+        if col_m1.button(t("teach.use_text"), use_container_width=True,
+                          type="primary" if st.session_state.teach_mode == "text" else "secondary"):
+            st.session_state.teach_mode = "text"
+            st.rerun()
+        if col_m2.button(t("teach.use_voice"), use_container_width=True,
+                          type="primary" if st.session_state.teach_mode == "voice" else "secondary"):
+            st.session_state.teach_mode = "voice"
+            st.rerun()
+
+        explication = ""
+        if st.session_state.teach_mode == "voice":
+            if not os.environ.get("OPENAI_API_KEY"):
+                st.warning(t("teach.no_openai"))
+            else:
+                st.caption(t("teach.audio_label"))
+                try:
+                    audio_bytes = st.audio_input(t("teach.audio_label"),
+                                                   key=f"teach_audio_{cle}")
+                except AttributeError:
+                    st.error("st.audio_input requires Streamlit ≥ 1.41.")
+                    audio_bytes = None
+                if audio_bytes is not None:
+                    if st.button(t("teach.transcribing").rstrip("…"),
+                                 key=f"teach_transcribe_{cle}",
+                                 use_container_width=True):
+                        with st.spinner(t("teach.transcribing")):
+                            try:
+                                txt = transcrire_audio_whisper(
+                                    audio_bytes.read(),
+                                    langue=concept.get("langue", "fr"),
+                                )
+                                st.session_state.teach_transcription = txt
+                            except Exception as e:
+                                st.error(f"Whisper: {e}")
+
+                if st.session_state.teach_transcription:
+                    st.markdown(f"**{t('teach.transcription_label')}**")
+                    explication = st.text_area(
+                        t("teach.transcription_label"),
+                        value=st.session_state.teach_transcription,
+                        key=f"teach_transcribed_text_{cle}",
+                        height=200,
+                        label_visibility="collapsed",
+                    )
+        else:
+            explication = st.text_area(
+                t("teach.input_label"),
+                key=f"teach_input_{cle}",
+                height=240,
+                placeholder=t("teach.input_placeholder"),
+            )
+
+        if st.button(t("teach.submit"),
+                     type="primary", use_container_width=True,
+                     disabled=not (explication or "").strip()):
+            with st.spinner(t("teach.evaluating")):
+                try:
+                    res = evaluer_teach_back(concept, explication)
+                except Exception as e:
+                    st.error(t("teach.error", e=e))
+                    return
+            scores = {
+                "clarte": int(res.get("score_clarte", 0)),
+                "precision": int(res.get("score_precision", 0)),
+                "exemple": int(res.get("score_exemple", 0)),
+            }
+            feedback = res.get("feedback", "")
+            tb_id = enregistrer_teach_back(cle, explication, scores, feedback)
+            st.session_state.teach_resultat = {
+                **scores,
+                "feedback": feedback,
+                "tb_id": tb_id,
+            }
+            st.session_state.teach_transcription = ""
+            st.rerun()
+        return
+
+    # Affichage du résultat
+    res = st.session_state.teach_resultat
+    total = res["clarte"] + res["precision"] + res["exemple"]
+    st.markdown(f"### {t('teach.results')}")
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric(t("teach.score_clarity"), f"{res['clarte']}/4")
+    col2.metric(t("teach.score_precision"), f"{res['precision']}/4")
+    col3.metric(t("teach.score_example"), f"{res['exemple']}/4")
+
+    st.progress(total / 12, text=t("teach.score_total", t=total))
+
+    if total >= 9:
+        st.success(t("teach.ready"))
+    else:
+        st.warning(t("teach.not_ready"))
+
+    st.markdown(t("teach.feedback", f=res["feedback"]))
+
+    col_a, col_b = st.columns(2)
+    if col_a.button(t("teach.retry"), use_container_width=True):
+        st.session_state.teach_resultat = None
+        st.rerun()
+    if col_b.button(t("etudier.other"),
+                    type="primary", use_container_width=True):
+        st.session_state.teach_concept = None
+        st.session_state.teach_resultat = None
+        st.rerun()
+
+
 # ── Routeur principal ─────────────────────────────────────────────────────────
 
 PAGES = {
@@ -2156,6 +2739,9 @@ PAGES = {
     "diagnostic": page_diagnostic,
     "teach_back": page_teach_back,
     "dashboard": page_dashboard,
+    "mission": page_mission,
+    "constellation": page_constellation,
+    "forecast": page_forecast,
 }
 
 PAGES.get(st.session_state.page, page_accueil)()

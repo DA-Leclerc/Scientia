@@ -317,6 +317,211 @@ Retourne UNIQUEMENT un objet JSON :
 """
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #2 — Cheat sheet client
+# ══════════════════════════════════════════════════════════════════════════════
+
+PROMPT_CHEAT_SHEET = """Tu produis une CHEAT SHEET CLIENT — une page de Markdown qui peut être collée TELLE QUELLE dans un livrable Brèche Pro de Nord Paradigm.
+
+PROFIL DU LECTEUR : un client moyen-grande entreprise au Canada, niveau directeur ou C-level. Pas un juriste. Veut comprendre vite et agir.
+
+LONGUEUR : strictement 250-400 mots de corps. Pas une thèse.
+
+STRUCTURE OBLIGATOIRE :
+1. Un titre H2 court (`## Titre du concept`).
+2. Une phrase d'accroche (« Pourquoi ce concept compte pour toi maintenant »).
+3. **3-5 points clés** en liste à puces, chacun max 2 lignes.
+4. Une section `### Articles ou références citées` (Loi 25 art X, EU AI Act art Y, ISO 42001 contrôle Z, etc.).
+5. Une section `### Cas concret` : 3-4 lignes d'application réelle au profil canadien (PME, OBNL, organisme public, etc.).
+6. Une section `### Action recommandée` : 1-3 puces actionnables ce trimestre.
+
+TON :
+- Direct, professionnel, pas de bullshit corporate.
+- Tutoie ou vouvoie selon la langue du concept.
+- En français → registre courant québécois pro. En anglais → straight North American business English.
+
+CRITÈRE DE QUALITÉ : un consultant Nord Paradigm doit pouvoir l'envoyer à un prospect dès demain matin sans modification. Pas de placeholders [INSÉRER ICI]. Pas de questions ouvertes au lecteur.
+
+Retourne UNIQUEMENT le Markdown. Pas de fences ```. Pas de commentaire."""
+
+
+def generer_cheat_sheet(concept: dict) -> str:
+    """
+    Idea #2 — Génère une cheat sheet Markdown utilisable directement en
+    livrable Brèche Pro.
+    """
+    langue = concept.get("langue", "fr")
+    prompt = f"""Concept à transformer en cheat sheet client : {concept['titre']}
+
+Texte de référence (source) :
+{concept['texte']}
+
+Langue : {langue}
+
+Produis la cheat sheet selon les règles du système."""
+
+    return _appel_claude(
+        model="claude-sonnet-4-6",
+        max_tokens=1500,
+        system=PROMPT_CHEAT_SHEET,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #1 — Mission Mode
+# ══════════════════════════════════════════════════════════════════════════════
+
+PROMPT_MISSION_GEN = """Tu génères un SCÉNARIO CLIENT FICTIF pour tester la capacité de Dominic à mobiliser plusieurs concepts simultanément, comme dans un vrai mandat Nord Paradigm (Brèche, Brèche Pro, Prisme).
+
+PROFIL DU CLIENT : invente une PME québécoise ou canadienne plausible (50-500 employés). Donne-lui :
+- un nom fictif réaliste (genre « TechCorp QC », « GroupeSanté Boréal », « Logifin Inc. »),
+- un secteur (santé, finance, RH, services-conseils, manufacture, etc.),
+- une situation actuelle qui DÉCLENCHE le besoin de gouvernance d'IA (déploiement d'outil RH, scoring de crédit, chatbot service client, etc.),
+- une exposition juridique pertinente (uniquement Québec? Canada + UE? Sectoriel?).
+
+LE SCÉNARIO doit FORCER l'utilisation des concepts suivants en synthèse. Pas une liste à cocher, mais un cas qui les exige.
+
+LIVRABLE attendu de Dominic dans la mission :
+1. Identification des cadres et obligations applicables (Loi 25, EU AI Act, sectoriel).
+2. Priorisation : qu'est-ce qui doit être fait en premier ?
+3. Proposition d'engagement Nord Paradigm (lequel des 3 services : Brèche / Brèche Pro / Prisme).
+
+LONGUEUR DU SCÉNARIO : 200-350 mots. Pas plus. Pas de question explicite — Dominic sait quoi faire.
+
+LANGUE : si la majorité des concepts ciblés sont en français, écris en français québécois. Sinon en anglais.
+
+Retourne UNIQUEMENT le scénario en Markdown léger. Pas de fences ```."""
+
+
+def generer_mission(concepts: list[dict]) -> str:
+    """
+    Idea #1 — Génère un scénario client multi-concepts.
+    """
+    if not concepts:
+        return ""
+    langues = [c.get("langue", "fr") for c in concepts]
+    lang_majoritaire = "en" if langues.count("en") > langues.count("fr") else "fr"
+
+    bloc_concepts = "\n".join(
+        f"- {c['titre']} (langue: {c.get('langue', 'fr')})\n  Résumé : {c['texte'][:300]}…"
+        for c in concepts
+    )
+
+    prompt = f"""Concepts à mobiliser dans le scénario :
+{bloc_concepts}
+
+Langue cible majoritaire : {lang_majoritaire}
+
+Génère le scénario selon les règles du système."""
+
+    return _appel_claude(
+        model="claude-sonnet-4-6",
+        max_tokens=1500,
+        system=PROMPT_MISSION_GEN,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+
+PROMPT_MISSION_EVAL = """Tu évalues la RÉPONSE de Dominic à un scénario de mission Brèche Pro de Nord Paradigm. Score sur 3 dimensions, 0-4 chacune (total /12).
+
+DIMENSION 1 — EXHAUSTIVITÉ.
+A-t-il identifié TOUS les cadres applicables (Loi 25, EU AI Act, ISO 42001, sectoriel) sans en oublier de pertinents ? A-t-il vu les obligations transversales (consentement, EFVP, transparence, etc.) ?
+0 = lacunes majeures, oublie un cadre central.
+4 = liste complète et bien hiérarchisée.
+
+DIMENSION 2 — PRIORISATION.
+A-t-il distingué l'urgent du long-terme ? Le déploiement bloquant du strategic ? A-t-il proposé un séquencement réaliste (par exemple : EFVP avant déploiement, ISO 42001 dans 12-18 mois) ?
+0 = liste à plat, sans hiérarchie.
+4 = séquençage clair, justifications stratégiques.
+
+DIMENSION 3 — LIVRABILITÉ NORD PARADIGM.
+A-t-il proposé le BON service Brèche / Brèche Pro / Prisme pour ce client ? Avec un périmètre, un horizon, un livrable ? Sa proposition est-elle vendable demain matin ?
+0 = pas de proposition d'engagement, ou hors-marque.
+4 = proposition concrète, périmètre + horizon + livrable + valeur client.
+
+PÉNALISE : erreurs factuelles (mauvais article, mauvais cadre, mauvaise juridiction), confusions Loi 25 art 8.1 vs 12.1, EU AI Act haut risque vs GPAI, etc.
+
+VALORISE : nuances québécoises, articulation inter-cadres, cas concrets cités.
+
+Retourne UNIQUEMENT un objet JSON :
+{
+  "exhaustivite": 0-4,
+  "priorisation": 0-4,
+  "livrabilite": 0-4,
+  "feedback": "3-5 phrases — points forts + écart le plus important. Dans la même langue que la réponse."
+}
+"""
+
+
+def evaluer_mission(scenario: str, reponse: str, concepts: list[dict]) -> dict:
+    """
+    Idea #1 — Évalue la réponse à un scénario de mission.
+    """
+    bloc_concepts = "\n".join(
+        f"- {c['titre']}: {c['texte'][:200]}…" for c in concepts
+    )
+    prompt = f"""Scénario donné à Dominic :
+{scenario}
+
+Concepts qui devaient être mobilisés (référence interne) :
+{bloc_concepts}
+
+Réponse de Dominic :
+{reponse}
+
+Évalue selon la grille."""
+
+    contenu = _appel_claude(
+        model="claude-sonnet-4-6",
+        max_tokens=800,
+        system=PROMPT_MISSION_EVAL,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    contenu = re.sub(r"^```(?:json)?\n?", "", contenu)
+    contenu = re.sub(r"\n?```$", "", contenu)
+    return json.loads(contenu)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #3 — Whisper transcription pour teach-back vocal
+# ══════════════════════════════════════════════════════════════════════════════
+
+def transcrire_audio_whisper(audio_bytes: bytes, langue: str = "fr") -> str:
+    """
+    Transcrit un blob audio (mp3/wav/webm) via OpenAI Whisper.
+    Nécessite OPENAI_API_KEY dans l'environnement.
+
+    Retourne le texte transcrit. Lève RuntimeError si la clé n'est pas
+    configurée ou si l'API échoue.
+    """
+    import os as _os
+    api_key = _os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "OPENAI_API_KEY non configurée. Pour le mode vocal, ajoute "
+            "OPENAI_API_KEY=sk-... dans ton .env ou les secrets Streamlit Cloud."
+        )
+
+    try:
+        from openai import OpenAI
+    except ImportError:
+        raise RuntimeError(
+            "Le paquet `openai` n'est pas installé. Lance : pip install openai"
+        )
+
+    import io as _io
+    client_oai = OpenAI(api_key=api_key)
+    audio_file = _io.BytesIO(audio_bytes)
+    audio_file.name = "audio.webm"  # OpenAI a besoin d'une extension
+    transcript = client_oai.audio.transcriptions.create(
+        model="whisper-1",
+        file=audio_file,
+        language=langue if langue in ("fr", "en") else None,
+    )
+    return transcript.text
+
+
 def evaluer_teach_back(concept: dict, transcription: str) -> dict:
     """
     Alpha School #4 — évalue un teach-back sur 3 critères.
