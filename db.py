@@ -1527,6 +1527,262 @@ def sync_obsidian(concept_id: str, concept: dict, vault_path: str | None = None,
     return str(target)
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #6 — Niveaux Bronze / Argent / Or par module
+# ══════════════════════════════════════════════════════════════════════════════
+
+def get_niveau_module(module: int, concepts_du_module: list[str]) -> dict:
+    """
+    Calcule le niveau de maîtrise d'un module :
+    - 🥉 BRONZE : ≥50 % des concepts maîtrisés
+    - 🥈 ARGENT : 100 % des concepts maîtrisés
+    - 🥇 OR     : 100 % maîtrisés + ≥50 % avec teach-back ≥ 9/12
+                  + au moins 1 mission complétée incluant un concept du module
+
+    Retourne un dict avec : niveau, progression, requirements_breakdown.
+    """
+    if not concepts_du_module:
+        return {
+            "niveau": None,
+            "nb_concepts": 0,
+            "nb_maitrises": 0,
+            "nb_teach_back_excellents": 0,
+            "nb_missions": 0,
+            "pct_maitrise": 0.0,
+            "pct_teach_back": 0.0,
+            "vers_bronze": 0.0,
+            "vers_argent": 0.0,
+            "vers_or": 0.0,
+        }
+
+    total = len(concepts_du_module)
+    placeholders = ",".join("?" * total)
+
+    with conn() as c:
+        # Concepts maîtrisés
+        nb_maitrises = c.execute(
+            f"""SELECT COUNT(*) AS n FROM progression
+                WHERE concept_id IN ({placeholders})
+                AND statut = 'maitrise'""",
+            tuple(concepts_du_module)
+        ).fetchone()["n"]
+
+        # Concepts avec teach-back excellent (≥9/12)
+        nb_tb = c.execute(
+            f"""SELECT COUNT(DISTINCT concept_id) AS n FROM teach_back
+                WHERE concept_id IN ({placeholders})
+                AND score_total >= 9""",
+            tuple(concepts_du_module)
+        ).fetchone()["n"]
+
+        # Missions complétées qui incluent un concept du module
+        missions_rows = c.execute(
+            "SELECT concept_ids_json FROM missions WHERE statut = 'termine'"
+        ).fetchall()
+        nb_missions = 0
+        set_module = set(concepts_du_module)
+        for r in missions_rows:
+            try:
+                ids = json.loads(r["concept_ids_json"] or "[]")
+            except Exception:
+                continue
+            if set(ids) & set_module:
+                nb_missions += 1
+
+    pct_maitrise = nb_maitrises / total
+    pct_tb = nb_tb / total if total else 0.0
+
+    # Détermination du niveau
+    niveau = None
+    if pct_maitrise >= 1.0 and pct_tb >= 0.5 and nb_missions >= 1:
+        niveau = "or"
+    elif pct_maitrise >= 1.0:
+        niveau = "argent"
+    elif pct_maitrise >= 0.5:
+        niveau = "bronze"
+
+    # Progression vers les paliers (0.0-1.0)
+    vers_bronze = min(1.0, pct_maitrise / 0.5) if pct_maitrise < 0.5 else 1.0
+    vers_argent = pct_maitrise
+    vers_or = (pct_maitrise * 0.5
+                + min(1.0, pct_tb / 0.5) * 0.3
+                + min(1.0, nb_missions / 1.0) * 0.2)
+
+    return {
+        "niveau": niveau,
+        "nb_concepts": total,
+        "nb_maitrises": nb_maitrises,
+        "nb_teach_back_excellents": nb_tb,
+        "nb_missions": nb_missions,
+        "pct_maitrise": pct_maitrise,
+        "pct_teach_back": pct_tb,
+        "vers_bronze": vers_bronze,
+        "vers_argent": vers_argent,
+        "vers_or": vers_or,
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #8 — AIGP-readiness (mapping concepts → 6 domaines IAPP AIGP BoK)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Mapping des 59 concepts du curriculum vers les 6 domaines de l'AIGP
+# Body of Knowledge (IAPP, version avril 2026).
+# Un concept peut compter dans plusieurs domaines.
+
+AIGP_DOMAINS: dict[int, dict] = {
+    1: {
+        "name_fr": "Gestion des risques IA",
+        "name_en": "AI Risk Management",
+        "concept_keys": [
+            "m5_c1_nist_rmf_origin_structure",
+            "m5_c2_nist_rmf_trustworthy_characteristics",
+            "m5_c3_nist_rmf_govern_map_measure_manage",
+            "m5_c4_nist_genai_profile",
+            "m5_c5_nist_extensions_2026",
+            "m6_c2_iso42001_annexe_a_controles",
+            "m10_c2_evaluation_incidence_integree",
+            "m4_c4_eu_ai_act_high_risk_obligations",
+        ],
+    },
+    2: {
+        "name_fr": "Cadres de gouvernance",
+        "name_en": "Governance Frameworks",
+        "concept_keys": [
+            "m1_c1_pourquoi_gouverner_ia",
+            "m1_c2_typologie_outils",
+            "m1_c3_approches_reglementaires",
+            "m1_c4_principes_ocde",
+            "m1_c5_unesco_ethique",
+            "m4_c1_eu_ai_act_overview",
+            "m6_c1_iso42001_norme_certifiable",
+            "m6_c3_iso42001_articulation",
+            "m8_c1_singapore_internal_governance",
+            "m8_c4_singapore_stakeholder",
+            "m9_c1_uk_duaa_2025",
+            "m9_c2_uk_ico_strategy",
+        ],
+    },
+    3: {
+        "name_fr": "Cas d'usage et implémentation",
+        "name_en": "Use Cases and Implementation",
+        "concept_keys": [
+            "m10_c1_cartographie_systemes_ia",
+            "m10_c3_documentation_tracabilite",
+            "m10_c4_gouvernance_organisationnelle_raci",
+            "m11_c1_agent_inventory_classification",
+            "m11_c2_agent_iam_governance",
+            "m11_c3_agent_lifecycle_governance",
+            "m11_c4_multi_agent_systems",
+            "m4_c3_eu_ai_act_high_risk_typology",
+            "m4_c5_eu_ai_act_gpai",
+            "m9_c3_uk_ico_risk_toolkit",
+            "m8_c3_singapore_operations",
+        ],
+    },
+    4: {
+        "name_fr": "Politique et réglementation",
+        "name_en": "Policy and Regulation",
+        "concept_keys": [
+            "m2_c1_loi25_vue_ensemble",
+            "m2_c2_loi25_rprp_efvp",
+            "m2_c3_loi25_consentement_droits",
+            "m2_c4_loi25_decisions_automatisees",
+            "m2_c5_loi25_incidents_sanctions",
+            "m2_c6_cai_principes_ia_generative",
+            "m2_c7_cai_application_2026",
+            "m3_c1_canada_paysage_federal",
+            "m3_c2_directive_adm_aia",
+            "m3_c3_code_volontaire_canada",
+            "m3_c4_strategie_ia_federale",
+            "m3_c5_provinces_fragmentation",
+            "m3_c6_jurisprudence_zhang_opc",
+            "m4_c2_eu_ai_act_prohibited",
+            "m4_c6_eu_ai_act_sanctions_omnibus",
+        ],
+    },
+    5: {
+        "name_fr": "Éthique et confiance",
+        "name_en": "Ethics and Trust",
+        "concept_keys": [
+            "m1_c5_unesco_ethique",
+            "m5_c2_nist_rmf_trustworthy_characteristics",
+            "m7_c1_cnil_avant_deploiement",
+            "m7_c5_cnil_droits_personnes",
+            "m8_c2_singapore_human_involvement",
+            "m11_c3_agent_lifecycle_governance",
+            "m12_c2_enforcement_shift_2026",
+        ],
+    },
+    6: {
+        "name_fr": "Opérations de gouvernance",
+        "name_en": "Governance Operations",
+        "concept_keys": [
+            "m6_c2_iso42001_annexe_a_controles",
+            "m7_c2_cnil_collecte_donnees",
+            "m7_c3_cnil_developpement_algorithme",
+            "m7_c4_cnil_production",
+            "m7_c6_cnil_securite",
+            "m7_c7_cnil_conformite_incidents",
+            "m10_c1_cartographie_systemes_ia",
+            "m10_c2_evaluation_incidence_integree",
+            "m10_c3_documentation_tracabilite",
+            "m10_c4_gouvernance_organisationnelle_raci",
+            "m12_c1_aigp_body_of_knowledge",
+            "m12_c2_enforcement_shift_2026",
+            "m12_c3_ai_roi_measurement",
+            "m13_c1_comparaison_transversale",
+            "m13_c2_strategie_pme_quebecoise",
+        ],
+    },
+}
+
+
+def aigp_readiness() -> dict:
+    """
+    Calcule la readiness AIGP par domaine et globalement.
+
+    Retourne :
+      {
+        'domains': {
+           1: {nom, total, mastered, pct, missing: [concept_ids non maîtrisés]},
+           ...
+        },
+        'global_pct': float (moyenne pondérée),
+      }
+    """
+    progression = get_toute_progression()
+    out_domains = {}
+    pcts = []
+
+    for dom_id, dom in AIGP_DOMAINS.items():
+        keys = dom["concept_keys"]
+        total = len(keys)
+        if total == 0:
+            continue
+        mastered = [k for k in keys
+                     if progression.get(k, {}).get("statut") == "maitrise"]
+        nb_mastered = len(mastered)
+        pct = nb_mastered / total if total else 0.0
+        missing = [k for k in keys if k not in mastered]
+        out_domains[dom_id] = {
+            "name_fr": dom["name_fr"],
+            "name_en": dom["name_en"],
+            "total": total,
+            "mastered": nb_mastered,
+            "pct": pct,
+            "missing": missing[:5],   # limiter à 5 pour l'affichage
+        }
+        pcts.append(pct)
+
+    global_pct = sum(pcts) / len(pcts) if pcts else 0.0
+
+    return {
+        "domains": out_domains,
+        "global_pct": global_pct,
+    }
+
+
 # ── Alias pour compatibilité avec l'ancien scientia.py ────────────────────────
 
 initialiser_db = init

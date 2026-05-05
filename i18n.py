@@ -489,6 +489,54 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "obs.synced":                {"fr": "✓ Synchronisé : {p}",              "en": "✓ Synced: {p}"},
     "obs.error":                 {"fr": "Erreur de sync : {e}",             "en": "Sync error: {e}"},
 
+    # ── #6 Niveaux Bronze/Argent/Or ───────────────────────────────────────
+    "sidebar.levels":            {"fr": "🏆 Niveaux des modules",         "en": "🏆 Module levels"},
+    "levels.hero.title_main":    {"fr": "Tes médailles,",                 "en": "Your medals,"},
+    "levels.hero.title_accent":  {"fr": "module par module.",              "en": "module by module."},
+    "levels.hero.subtitle":      {
+        "fr": "Bronze : la moitié des concepts maîtrisés. Argent : tout le module maîtrisé. "
+              "Or : tout maîtrisé + la moitié avec teach-back ≥9/12 + au moins 1 mission complétée. "
+              "C'est ce qui sépare « j'ai appris » de « je peux livrer ça à un client ».",
+        "en": "Bronze: half the concepts mastered. Silver: full module mastered. "
+              "Gold: all mastered + half with teach-back ≥9/12 + at least 1 mission completed. "
+              "That's what separates « I learned this » from « I can deliver this to a client »."},
+    "levels.hero.tag":           {"fr": "🏆 Cap par cap",                  "en": "🏆 Step by step"},
+    "levels.bronze":             {"fr": "Bronze",                          "en": "Bronze"},
+    "levels.silver":             {"fr": "Argent",                          "en": "Silver"},
+    "levels.gold":               {"fr": "Or",                              "en": "Gold"},
+    "levels.none":               {"fr": "Pas encore",                      "en": "Not yet"},
+    "levels.req_bronze":         {"fr": "Bronze : {p:.0%} des concepts maîtrisés (≥50 % requis)",
+                                  "en": "Bronze: {p:.0%} of concepts mastered (≥50% required)"},
+    "levels.req_silver":         {"fr": "Argent : {n}/{t} maîtrisés ({p:.0%})",
+                                  "en": "Silver: {n}/{t} mastered ({p:.0%})"},
+    "levels.req_gold_tb":        {"fr": "Or : {n}/{t} avec teach-back ≥9/12 (≥50 % requis)",
+                                  "en": "Gold: {n}/{t} with teach-back ≥9/12 (≥50% required)"},
+    "levels.req_gold_mission":   {"fr": "Or : {n} mission(s) du module complétée(s) (≥1 requise)",
+                                  "en": "Gold: {n} mission(s) for this module completed (≥1 required)"},
+    "levels.summary":            {"fr": "{or}× 🥇 · {ar}× 🥈 · {br}× 🥉",
+                                  "en": "{or}× 🥇 · {ar}× 🥈 · {br}× 🥉"},
+
+    # ── #8 AIGP-readiness ─────────────────────────────────────────────────
+    "sidebar.aigp":              {"fr": "🎓 Readiness AIGP",                "en": "🎓 AIGP readiness"},
+    "aigp.hero.title_main":      {"fr": "Cap sur l'AIGP.",                  "en": "Sights on AIGP."},
+    "aigp.hero.title_accent":    {"fr": "Tu es à {p:.0%}.",                 "en": "You're at {p:.0%}."},
+    "aigp.hero.subtitle":        {
+        "fr": "L'AIGP (AI Governance Professional, IAPP) couvre 6 domaines de compétences. "
+              "Chaque concept de Scientia est mappé sur un ou plusieurs domaines. "
+              "Vois ta couverture actuelle et identifie où concentrer tes prochaines sessions.",
+        "en": "The AIGP (AI Governance Professional, IAPP) covers 6 competency domains. "
+              "Each Scientia concept is mapped to one or more domains. "
+              "See your current coverage and spot where to focus next."},
+    "aigp.hero.tag":             {"fr": "🎓 Certification professionnelle", "en": "🎓 Professional certification"},
+    "aigp.global_label":         {"fr": "Readiness globale",                 "en": "Overall readiness"},
+    "aigp.by_domain":            {"fr": "Par domaine",                       "en": "By domain"},
+    "aigp.domain":               {"fr": "Domaine {n}",                        "en": "Domain {n}"},
+    "aigp.coverage":             {"fr": "{m}/{t} concepts maîtrisés",         "en": "{m}/{t} concepts mastered"},
+    "aigp.next_concepts":        {"fr": "Prochains à maîtriser dans ce domaine",
+                                  "en": "Next to master in this domain"},
+    "aigp.weakest":              {"fr": "🎯 Domaine le plus faible : {n} ({p:.0%}). Voici les concepts à viser :",
+                                  "en": "🎯 Weakest domain: {n} ({p:.0%}). Concepts to target:"},
+
     # ── #3 Vocal teach-back ───────────────────────────────────────────────
     "teach.audio_label":         {"fr": "Enregistre ton explication (max 2 min).",
                                   "en": "Record your explanation (max 2 min)."},

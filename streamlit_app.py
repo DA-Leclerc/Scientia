@@ -143,6 +143,10 @@ from db import (
     previsions_oubli,
     cartes_en_risque_aujourd,
     sync_obsidian,
+    # Round 3 — niveaux + AIGP
+    get_niveau_module,
+    aigp_readiness,
+    AIGP_DOMAINS,
 )
 
 # ── Initialisation DB ─────────────────────────────────────────────────────────
@@ -367,6 +371,12 @@ with st.sidebar:
         st.rerun()
     if st.button(t("sidebar.dashboard"), use_container_width=True):
         aller_a("dashboard")
+        st.rerun()
+    if st.button(t("sidebar.levels"), use_container_width=True):
+        aller_a("levels")
+        st.rerun()
+    if st.button(t("sidebar.aigp"), use_container_width=True):
+        aller_a("aigp")
         st.rerun()
     if st.button(t("sidebar.progress"), use_container_width=True):
         aller_a("progression")
@@ -610,7 +620,13 @@ def page_modules():
     concepts = get_concepts_par_module(nom_choisi)
     progression = get_toute_progression()
 
-    st.markdown(f"### {nom_module_avec_drapeau(nom_choisi)}")
+    # Idea #6 : médaille du module
+    niveau = get_niveau_module(nom_choisi, concepts)
+    medaille = {"or": "🥇", "argent": "🥈", "bronze": "🥉"}.get(niveau["niveau"], "")
+    titre_module = nom_module_avec_drapeau(nom_choisi)
+    if medaille:
+        titre_module = f"{medaille} {titre_module}"
+    st.markdown(f"### {titre_module}")
     st.caption(t("modules.concepts_count", n=len(concepts)))
 
     # Alpha #3 : bouton diagnostic si aucun concept du module n'a été étudié
@@ -2726,6 +2742,182 @@ def page_teach_back():
         st.rerun()
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #6 — Page Niveaux des modules
+# ══════════════════════════════════════════════════════════════════════════════
+
+def medaille_html(niveau: str | None) -> str:
+    """Retourne l'emoji de médaille pour un niveau."""
+    return {"or": "🥇", "argent": "🥈", "bronze": "🥉"}.get(niveau, "")
+
+
+def page_levels():
+    st.markdown(
+        hero_html(
+            title_main=t("levels.hero.title_main"),
+            title_accent=t("levels.hero.title_accent"),
+            subtitle=t("levels.hero.subtitle"),
+            tag_text=t("levels.hero.tag"),
+        ),
+        unsafe_allow_html=True,
+    )
+
+    # Calcul pour chaque module
+    rows = []
+    for m in ORDRE_AFFICHAGE_MODULES:
+        if m == 99:
+            continue
+        concepts = get_concepts_par_module(m)
+        if not concepts:
+            continue
+        niv = get_niveau_module(m, concepts)
+        rows.append((m, niv))
+
+    # Résumé
+    nb_or = sum(1 for _, n in rows if n["niveau"] == "or")
+    nb_ar = sum(1 for _, n in rows if n["niveau"] == "argent")
+    nb_br = sum(1 for _, n in rows if n["niveau"] == "bronze")
+    st.markdown(f"### {t('levels.summary', **{'or': nb_or, 'ar': nb_ar, 'br': nb_br})}")
+
+    # Liste des modules avec médaille + barres de progression
+    for m, niv in rows:
+        nom = NOMS_MODULES.get(m, "?")
+        med = medaille_html(niv["niveau"]) or "○"
+        col_a, col_b = st.columns([4, 1])
+        col_a.markdown(f"### {med} {nom_module_avec_drapeau(m)}")
+
+        # Barres
+        if niv["niveau"] == "or":
+            col_b.success(t("levels.gold"))
+        elif niv["niveau"] == "argent":
+            col_b.info(t("levels.silver"))
+        elif niv["niveau"] == "bronze":
+            col_b.warning(t("levels.bronze"))
+        else:
+            col_b.caption(t("levels.none"))
+
+        # Détails des paliers
+        with st.container(border=True):
+            # Bronze
+            st.progress(niv["vers_bronze"],
+                         text=t("levels.req_bronze", p=niv["pct_maitrise"]))
+            # Argent
+            st.progress(niv["vers_argent"],
+                         text=t("levels.req_silver",
+                                  n=niv["nb_maitrises"],
+                                  t=niv["nb_concepts"],
+                                  p=niv["pct_maitrise"]))
+            # Or — 2 sous-conditions
+            st.progress(min(1.0, niv["pct_teach_back"] / 0.5),
+                         text=t("levels.req_gold_tb",
+                                  n=niv["nb_teach_back_excellents"],
+                                  t=niv["nb_concepts"]))
+            st.progress(min(1.0, niv["nb_missions"] / 1.0),
+                         text=t("levels.req_gold_mission",
+                                  n=niv["nb_missions"]))
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IDEA #8 — Page AIGP Readiness
+# ══════════════════════════════════════════════════════════════════════════════
+
+def page_aigp():
+    readiness = aigp_readiness()
+    global_pct = readiness["global_pct"]
+
+    st.markdown(
+        hero_html(
+            title_main=t("aigp.hero.title_main"),
+            title_accent=t("aigp.hero.title_accent", p=global_pct),
+            subtitle=t("aigp.hero.subtitle"),
+            tag_text=t("aigp.hero.tag"),
+        ),
+        unsafe_allow_html=True,
+    )
+
+    # Global pct
+    st.markdown(f"### {t('aigp.global_label')}")
+    st.progress(global_pct,
+                text=f"{global_pct:.0%}")
+
+    # Radar chart
+    st.markdown("---")
+    st.markdown(f"### {t('aigp.by_domain')}")
+
+    try:
+        import altair as alt
+        import pandas as pd
+        domain_lang = st.session_state.ui_lang
+        rows = []
+        for dom_id, dom in readiness["domains"].items():
+            nom = dom["name_fr"] if domain_lang == "fr" else dom["name_en"]
+            rows.append({
+                "Domaine": f"D{dom_id} · {nom}",
+                "Pct": dom["pct"] * 100,
+                "Couverture": f"{dom['mastered']}/{dom['total']}",
+            })
+        df = pd.DataFrame(rows)
+
+        # Bar chart horizontal (radar serait plus joli mais Altair a une syntaxe lourde)
+        chart = alt.Chart(df).mark_bar(
+            color="#d4a853",
+            cornerRadiusTopRight=4,
+            cornerRadiusBottomRight=4,
+        ).encode(
+            x=alt.X("Pct:Q", title="% maîtrisé",
+                    scale=alt.Scale(domain=[0, 100])),
+            y=alt.Y("Domaine:N", title=None, sort="-x"),
+            tooltip=["Domaine", "Pct", "Couverture"],
+        ).properties(height=240)
+        st.altair_chart(chart, use_container_width=True)
+    except Exception as e:
+        st.caption(f"Chart unavailable: {e}")
+
+    # Domaine le plus faible
+    weakest = min(readiness["domains"].items(),
+                  key=lambda kv: kv[1]["pct"])
+    dom_id, weakest_data = weakest
+    nom_w = (weakest_data["name_fr"] if st.session_state.ui_lang == "fr"
+             else weakest_data["name_en"])
+    if weakest_data["pct"] < 1.0 and weakest_data["missing"]:
+        st.markdown("---")
+        st.warning(t("aigp.weakest", n=nom_w, p=weakest_data["pct"]))
+        for cle in weakest_data["missing"][:5]:
+            c = CURRICULUM.get(cle)
+            if not c:
+                continue
+            with st.container(border=True):
+                tag = "FR" if c.get("langue", "fr") == "fr" else "EN"
+                st.markdown(f"`[{tag}]` **{c['titre']}**")
+                if st.button(t("modules.study"),
+                             key=f"aigp_etu_{cle}",
+                             use_container_width=True):
+                    aller_a("etudier", concept_actuel=cle)
+                    reset_quiz()
+                    st.session_state.session_chargee_de_db = False
+                    st.rerun()
+
+    # Détail par domaine
+    st.markdown("---")
+    for dom_id, dom in readiness["domains"].items():
+        nom = (dom["name_fr"] if st.session_state.ui_lang == "fr"
+               else dom["name_en"])
+        with st.expander(
+            f"D{dom_id} · {nom} — {dom['mastered']}/{dom['total']} ({dom['pct']:.0%})"
+        ):
+            st.progress(dom["pct"],
+                         text=t("aigp.coverage",
+                                  m=dom["mastered"], t=dom["total"]))
+            if dom["missing"]:
+                st.markdown(f"**{t('aigp.next_concepts')}**")
+                for cle in dom["missing"][:5]:
+                    c = CURRICULUM.get(cle)
+                    if not c:
+                        continue
+                    tag = "FR" if c.get("langue", "fr") == "fr" else "EN"
+                    st.markdown(f"- `[{tag}]` {c['titre']}")
+
+
 # ── Routeur principal ─────────────────────────────────────────────────────────
 
 PAGES = {
@@ -2743,6 +2935,8 @@ PAGES = {
     "mission": page_mission,
     "constellation": page_constellation,
     "forecast": page_forecast,
+    "levels": page_levels,
+    "aigp": page_aigp,
 }
 
 PAGES.get(st.session_state.page, page_accueil)()
