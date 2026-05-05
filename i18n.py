@@ -1,0 +1,279 @@
+"""
+i18n — système de traduction FR/EN pour Scientia.
+
+Toggle dans la sidebar (composant st.session_state.ui_lang).
+Default : français.
+
+Usage :
+    from i18n import t
+    st.title(t("home.hero.title_main"))
+
+Clés organisées par hiérarchie :
+    nav.*, home.*, modules.*, etudier.*, socratique.*, progression.*,
+    documents.*, revision.*, sidebar.*, common.*
+"""
+from __future__ import annotations
+
+TRANSLATIONS: dict[str, dict[str, str]] = {
+
+    # ── Navigation sidebar ────────────────────────────────────────────────
+    "sidebar.home":              {"fr": "🏠 Accueil",                "en": "🏠 Home"},
+    "sidebar.modules":           {"fr": "📚 Modules",                "en": "📚 Modules"},
+    "sidebar.quick_review":      {"fr": "🔁 Révision rapide",        "en": "🔁 Quick review"},
+    "sidebar.socratic":          {"fr": "🗣️ Dialogue socratique",    "en": "🗣️ Socratic dialogue"},
+    "sidebar.progress":          {"fr": "📈 Ma progression",         "en": "📈 My progress"},
+    "sidebar.documents":         {"fr": "📥 Documents personnels",   "en": "📥 Personal documents"},
+    "sidebar.due":               {"fr": "Dues",                      "en": "Due"},
+    "sidebar.uptodate":          {"fr": "À jour",                    "en": "Up to date"},
+    "sidebar.streak":            {"fr": "Streak",                    "en": "Streak"},
+    "sidebar.concepts_total":    {"fr": "{n} concepts · {m} modules", "en": "{n} concepts · {m} modules"},
+    "sidebar.lang_label":        {"fr": "Langue de l'interface",     "en": "Interface language"},
+
+    # ── Hero accueil ──────────────────────────────────────────────────────
+    "home.hero.title_main":      {"fr": "Une discipline militaire.", "en": "Military-grade discipline."},
+    "home.hero.title_accent":    {"fr": "Une gouvernance d'IA qui marche.", "en": "AI governance that works."},
+    "home.hero.subtitle":        {
+        "fr": "Apprentissage espacé pour la pratique de gouvernance d'IA. "
+              "Quiz adaptatifs, évaluation par Claude, planification FSRS-4.5. "
+              "13 modules · 59 concepts · français et anglais.",
+        "en": "Spaced-repetition training for AI governance practice. "
+              "Adaptive quizzes, Claude-evaluated answers, FSRS-4.5 scheduling. "
+              "13 modules · 59 concepts · French and English."},
+    "home.hero.tag":             {"fr": "Scientia · Nord Paradigm",  "en": "Scientia · Nord Paradigm"},
+
+    # ── Métriques accueil ─────────────────────────────────────────────────
+    "home.metric.studied":       {"fr": "Étudiés",                   "en": "Studied"},
+    "home.metric.mastered":      {"fr": "Maîtrisés",                 "en": "Mastered"},
+    "home.metric.due":           {"fr": "À réviser",                 "en": "To review"},
+    "home.metric.streak":        {"fr": "🔥 Streak",                 "en": "🔥 Streak"},
+
+    # ── Bandeau reprise ───────────────────────────────────────────────────
+    "home.resume.label":         {"fr": "▶ Reprendre où tu étais",  "en": "▶ Resume where you were"},
+    "home.resume.button":        {"fr": "▶️ Reprendre",              "en": "▶️ Resume"},
+    "home.resume.abandon":       {"fr": "✕ Abandonner",              "en": "✕ Abandon"},
+    "home.resume.question_meta": {"fr": "Question {i}/{total}",      "en": "Question {i}/{total}"},
+    "home.resume.socratic_meta": {"fr": "Dialogue socratique",        "en": "Socratic dialogue"},
+
+    # ── Reco ──────────────────────────────────────────────────────────────
+    "home.reco.label":           {"fr": "💡 Recommandé pour toi",   "en": "💡 Recommended for you"},
+    "home.reco.button":          {"fr": "Étudier ce concept →",     "en": "Study this concept →"},
+    "home.reco.reason_in_progress": {
+        "fr": "Concept que tu as déjà commencé sans encore maîtriser.",
+        "en": "Concept you've started but not yet mastered."},
+    "home.reco.reason_first":    {
+        "fr": "Premier concept non étudié du module M{m:02d}.",
+        "en": "First unstudied concept of module M{m:02d}."},
+
+    # ── Cartes dues + démarrage ───────────────────────────────────────────
+    "home.due.title":            {"fr": "🔁 Révisions dues",         "en": "🔁 Reviews due"},
+    "home.due.caption":          {"fr": "Cartes dont la prochaine révision est aujourd'hui ou passée.",
+                                  "en": "Cards whose next review is today or overdue."},
+    "home.due.start_review":     {"fr": "⚡ Lancer une session de révision rapide",
+                                  "en": "⚡ Start a quick review session"},
+    "home.due.review_one":       {"fr": "Réviser →",                 "en": "Review →"},
+    "home.due.more":             {"fr": "+ {n} autres cartes dues",  "en": "+ {n} more cards due"},
+    "home.start_quick":          {"fr": "Démarrer rapidement",       "en": "Quick start"},
+    "home.start_choose":         {"fr": "📚 Choisir un concept à étudier",
+                                  "en": "📚 Choose a concept to study"},
+    "home.planning":             {"fr": "📆 Planning des 14 prochains jours",
+                                  "en": "📆 Schedule for the next 14 days"},
+
+    # ── Page Modules ──────────────────────────────────────────────────────
+    "modules.hero.title_main":   {"fr": "Choisis un module,",         "en": "Pick a module,"},
+    "modules.hero.title_accent": {"fr": "apprends à ton rythme.",     "en": "learn at your pace."},
+    "modules.hero.subtitle":     {
+        "fr": "13 modules de gouvernance d'IA · 59 concepts · français + anglais. "
+              "Filtre par langue, étudie au fil des prérequis, "
+              "ou laisse FSRS planifier tes révisions.",
+        "en": "13 AI governance modules · 59 concepts · French + English. "
+              "Filter by language, study following prerequisites, "
+              "or let FSRS schedule your reviews."},
+    "modules.hero.tag":          {"fr": "Curriculum · 13 modules",    "en": "Curriculum · 13 modules"},
+    "modules.filter_all":        {"fr": "🌐 Tous",                    "en": "🌐 All"},
+    "modules.filter_fr":         {"fr": "FR · Français",              "en": "FR · French"},
+    "modules.filter_en":         {"fr": "EN · English",               "en": "EN · English"},
+    "modules.no_match":          {"fr": "Aucun module ne correspond à ce filtre.",
+                                  "en": "No module matches this filter."},
+    "modules.label":             {"fr": "Module",                     "en": "Module"},
+    "modules.concepts_count":    {"fr": "{n} concepts dans ce module", "en": "{n} concepts in this module"},
+    "modules.study":             {"fr": "Étudier",                    "en": "Study"},
+
+    # ── Page Étudier ──────────────────────────────────────────────────────
+    "etudier.no_concept":        {"fr": "Aucun concept sélectionné.", "en": "No concept selected."},
+    "etudier.back":              {"fr": "← Retour aux modules",       "en": "← Back to modules"},
+    "etudier.source":            {"fr": "📖 Texte source",             "en": "📖 Source text"},
+    "etudier.source_open":       {"fr": "📖 Texte source (livre ouvert)",
+                                  "en": "📖 Source text (open book)"},
+    "etudier.q_count":           {"fr": "Nombre de questions",        "en": "Number of questions"},
+    "etudier.cards_saved":       {"fr": "Questions sauvegardées",     "en": "Saved questions"},
+    "etudier.start_quiz":        {"fr": "▶️  Démarrer le quiz",       "en": "▶️  Start the quiz"},
+    "etudier.regenerate":        {"fr": "🔄 Régénérer {n} questions", "en": "🔄 Regenerate {n} questions"},
+    "etudier.generate":          {"fr": "✨ Générer {n} questions avec Claude",
+                                  "en": "✨ Generate {n} questions with Claude"},
+    "etudier.generating":        {"fr": "Génération en cours…",       "en": "Generating…"},
+    "etudier.gen_error":         {"fr": "Erreur de génération : {e}", "en": "Generation error: {e}"},
+    "etudier.reset.label":       {"fr": "⚠️ Réinitialiser la progression de ce concept",
+                                  "en": "⚠️ Reset progress for this concept"},
+    "etudier.reset.help":        {
+        "fr": "Supprime les cartes sauvegardées, les révisions et la progression FSRS pour ce concept. Action irréversible.",
+        "en": "Deletes saved cards, revisions, and FSRS progress for this concept. Cannot be undone."},
+    "etudier.reset.button":      {"fr": "🗑 Reset complet",            "en": "🗑 Full reset"},
+    "etudier.reset.done":        {"fr": "Progression réinitialisée.", "en": "Progress reset."},
+    "etudier.notes":             {"fr": "📝 Mes notes sur ce concept", "en": "📝 My notes on this concept"},
+    "etudier.notes_label":       {"fr": "Notes",                      "en": "Notes"},
+    "etudier.notes_save":        {"fr": "💾 Sauvegarder la note",     "en": "💾 Save note"},
+    "etudier.notes_saved":       {"fr": "Note sauvegardée.",          "en": "Note saved."},
+    "etudier.session_done":      {"fr": "🎯 Session terminée",         "en": "🎯 Session complete"},
+    "etudier.questions":         {"fr": "Questions",                  "en": "Questions"},
+    "etudier.avg_score":         {"fr": "Score moyen",                "en": "Average score"},
+    "etudier.mastery":           {"fr": "Maîtrise",                   "en": "Mastery"},
+    "etudier.score_text":        {"fr": "Score : {s:.1f}/4",          "en": "Score: {s:.1f}/4"},
+    "etudier.excellent":         {"fr": "🎉 Excellent — concept solidement maîtrisé.",
+                                  "en": "🎉 Excellent — concept solidly mastered."},
+    "etudier.good":              {"fr": "📚 Bon travail. Revois les points faibles.",
+                                  "en": "📚 Good work. Review the weak points."},
+    "etudier.redo":              {"fr": "🔁 Concept à retravailler. Relis le texte source.",
+                                  "en": "🔁 Concept to revisit. Re-read the source text."},
+    "etudier.retake":            {"fr": "🔁 Refaire un quiz",         "en": "🔁 Retake quiz"},
+    "etudier.other":             {"fr": "📚 Autre concept",            "en": "📚 Other concept"},
+    "etudier.progress":          {"fr": "Question {i} / {total}",     "en": "Question {i} / {total}"},
+    "etudier.resume_at":         {"fr": "📖 Reprise — tu en étais à la question {n}.",
+                                  "en": "📖 Resumed — you were on question {n}."},
+    "etudier.q_type":            {"fr": "Type : {t}",                 "en": "Type: {t}"},
+    "etudier.hint_show":         {"fr": "💡 Voir un indice",          "en": "💡 Show a hint"},
+    "etudier.your_answer":       {"fr": "Ta réponse",                 "en": "Your answer"},
+    "etudier.placeholder":       {"fr": "Réponds librement…",         "en": "Answer freely…"},
+    "etudier.tutor_open":        {"fr": "🎓 Discuter avec Claude pour mieux comprendre la question",
+                                  "en": "🎓 Chat with Claude to better understand the question"},
+    "etudier.tutor_caption":     {
+        "fr": "🎓 Mini-tuteur socratique — Claude ne donnera JAMAIS la réponse, il t'aide à comprendre la question.",
+        "en": "🎓 Socratic mini-tutor — Claude will NEVER give you the answer, only help you understand the question."},
+    "etudier.tutor_thinking":    {"fr": "Claude réfléchit…",          "en": "Claude is thinking…"},
+    "etudier.tutor_opening":     {"fr": "Claude prépare une ouverture…", "en": "Claude is preparing an opening…"},
+    "etudier.tutor_input":       {"fr": "Pose une question, partage ton intuition…",
+                                  "en": "Ask a question, share your intuition…"},
+    "etudier.tutor_close":       {"fr": "Fermer le tuteur",            "en": "Close tutor"},
+    "etudier.tutor_error":       {"fr": "Erreur Socratique : {e}",    "en": "Socratic error: {e}"},
+    "etudier.submit":            {"fr": "✓ Soumettre",                 "en": "✓ Submit"},
+    "etudier.skip":              {"fr": "Passer",                     "en": "Skip"},
+    "etudier.evaluating":        {"fr": "Évaluation par Claude…",     "en": "Claude is evaluating…"},
+    "etudier.eval_error":        {"fr": "Erreur d'évaluation : {e}",  "en": "Evaluation error: {e}"},
+    "etudier.correct":           {"fr": "✓ Correct ({s}/4)",          "en": "✓ Correct ({s}/4)"},
+    "etudier.partial":           {"fr": "Partiel ({s}/4)",            "en": "Partial ({s}/4)"},
+    "etudier.review":            {"fr": "À revoir ({s}/4)",            "en": "To review ({s}/4)"},
+    "etudier.feedback":          {"fr": "**Feedback** — {f}",         "en": "**Feedback** — {f}"},
+    "etudier.see_ref":           {"fr": "📖 Voir la réponse de référence",
+                                  "en": "📖 See reference answer"},
+    "etudier.next":              {"fr": "Question suivante →",         "en": "Next question →"},
+
+    # ── Page Socratique ──────────────────────────────────────────────────
+    "socratique.title":          {"fr": "🗣️ Dialogue socratique",     "en": "🗣️ Socratic dialogue"},
+    "socratique.caption":        {
+        "fr": "Mode tuteur : Claude te guide par questions plutôt que de te tester. "
+              "Le dialogue n'est pas noté pendant l'échange — un bilan apparaît à la fin.",
+        "en": "Tutor mode: Claude guides you with questions rather than testing you. "
+              "The dialogue isn't graded during the exchange — a debrief appears at the end."},
+    "socratique.choose":         {"fr": "Choisis un concept à explorer", "en": "Pick a concept to explore"},
+    "socratique.lang":           {"fr": "Langue",                     "en": "Language"},
+    "socratique.module":         {"fr": "Module",                     "en": "Module"},
+    "socratique.concept":        {"fr": "Concept",                    "en": "Concept"},
+    "socratique.has_active":     {"fr": "📖 Tu as un dialogue en cours sur ce concept ({n} échanges).",
+                                  "en": "📖 You have a dialogue in progress on this concept ({n} exchanges)."},
+    "socratique.resume":         {"fr": "▶️ Reprendre le dialogue",   "en": "▶️ Resume dialogue"},
+    "socratique.new":            {"fr": "🆕 Nouveau dialogue",         "en": "🆕 New dialogue"},
+    "socratique.start":          {"fr": "▶️ Démarrer le dialogue",    "en": "▶️ Start dialogue"},
+    "socratique.preparing":      {"fr": "Claude prépare une question d'ouverture…",
+                                  "en": "Claude is preparing an opening question…"},
+    "socratique.error":          {"fr": "Erreur : {e}",               "en": "Error: {e}"},
+    "socratique.concept_label":  {"fr": "**Concept : `[{tag}]` {titre}**",
+                                  "en": "**Concept: `[{tag}]` {titre}**"},
+    "socratique.new_concept":    {"fr": "🔄 Nouveau concept",          "en": "🔄 New concept"},
+    "socratique.finish":         {"fr": "✓ Terminer et obtenir un bilan",
+                                  "en": "✓ Finish and get a debrief"},
+    "socratique.summary":        {"fr": "Claude rédige ton bilan…",   "en": "Claude is drafting your debrief…"},
+    "socratique.bilan":          {"fr": "📋 Bilan du dialogue",        "en": "📋 Dialogue debrief"},
+    "socratique.score_good":     {"fr": "Score : {s}/4 — bonne maîtrise",
+                                  "en": "Score: {s}/4 — good mastery"},
+    "socratique.score_partial":  {"fr": "Score : {s}/4 — partielle",   "en": "Score: {s}/4 — partial"},
+    "socratique.score_redo":     {"fr": "Score : {s}/4 — à retravailler",
+                                  "en": "Score: {s}/4 — to revisit"},
+    "socratique.strengths":      {"fr": "**Points forts** — {x}",     "en": "**Strengths** — {x}"},
+    "socratique.deepen":         {"fr": "**À approfondir** — {x}",    "en": "**To deepen** — {x}"},
+    "socratique.synthesis":      {"fr": "📖 Synthèse du concept",     "en": "📖 Concept synthesis"},
+    "socratique.relaunch":       {"fr": "🔁 Relancer un dialogue sur ce concept",
+                                  "en": "🔁 Restart a dialogue on this concept"},
+    "socratique.input":          {"fr": "Ta réponse à Claude…",       "en": "Your reply to Claude…"},
+
+    # ── Page Progression ──────────────────────────────────────────────────
+    "progress.hero.title_main":  {"fr": "Ta progression,",             "en": "Your progress,"},
+    "progress.hero.title_accent": {"fr": "mois après mois.",            "en": "month after month."},
+    "progress.hero.subtitle":    {
+        "fr": "Tu as étudié {n} concepts, maîtrisé {m}, et tiens un streak de {s} jour{p}. "
+              "Exporte ta progression en CSV pour archive personnelle.",
+        "en": "You've studied {n} concepts, mastered {m}, and hold a streak of {s} day{p}. "
+              "Export your progress to CSV for personal archive."},
+    "progress.empty":            {"fr": "Aucune session enregistrée pour l'instant. Lance un quiz pour démarrer ta progression.",
+                                  "en": "No sessions recorded yet. Launch a quiz to start your progress."},
+    "progress.metric.curriculum": {"fr": "Concepts du curriculum",     "en": "Curriculum concepts"},
+    "progress.global":           {"fr": "Maîtrise globale : {m}/{t}",  "en": "Overall mastery: {m}/{t}"},
+    "progress.export":           {"fr": "📥 Exporter ma progression (CSV)",
+                                  "en": "📥 Export my progress (CSV)"},
+    "progress.detail":           {"fr": "Détail par concept",          "en": "Detail by concept"},
+    "progress.session_count":    {"fr": "sur {n} session(s)",          "en": "across {n} session(s)"},
+
+    # ── Page Documents ────────────────────────────────────────────────────
+    "documents.title":           {"fr": "📥 Documents personnels",     "en": "📥 Personal documents"},
+    "documents.caption":         {
+        "fr": "Charge un PDF, MD ou TXT. Claude extrait 1 à 5 concepts qui rejoignent le bucket d'ingestion (M99).",
+        "en": "Upload a PDF, MD or TXT. Claude extracts 1-5 concepts into the ingestion bucket (M99)."},
+    "documents.choose":          {"fr": "Choisis un fichier",          "en": "Choose a file"},
+    "documents.extract":         {"fr": "✨ Extraire les concepts",    "en": "✨ Extract concepts"},
+    "documents.extracting":      {"fr": "Lecture et extraction par Claude…",
+                                  "en": "Reading and extracting via Claude…"},
+    "documents.added":           {"fr": "✓ {n} concept(s) ajouté(s) au module 99 (Documents ingérés). Va dans Modules pour les étudier.",
+                                  "en": "✓ {n} concept(s) added to module 99 (Ingested documents). Go to Modules to study them."},
+    "documents.ingested":        {"fr": "Concepts ingérés ({n})",      "en": "Ingested concepts ({n})"},
+    "documents.source_meta":     {"fr": "Source : {s} · {d}",          "en": "Source: {s} · {d}"},
+    "documents.study":           {"fr": "Étudier →",                   "en": "Study →"},
+    "documents.empty":           {"fr": "Aucun document ingéré pour l'instant.",
+                                  "en": "No documents ingested yet."},
+    "documents.error":           {"fr": "Erreur : {e}",                "en": "Error: {e}"},
+
+    # ── Page Révision rapide ──────────────────────────────────────────────
+    "revision.title":            {"fr": "🔁 Révision rapide",           "en": "🔁 Quick review"},
+    "revision.caption":          {"fr": "Cartes dues triées du plus en retard au plus récent, tous concepts confondus.",
+                                  "en": "Due cards sorted from most overdue to most recent, all concepts."},
+    "revision.back":             {"fr": "← Accueil",                   "en": "← Home"},
+    "revision.empty":            {"fr": "✓ Aucune carte due. Tu es à jour.",
+                                  "en": "✓ No cards due. You're up to date."},
+    "revision.metric":           {"fr": "Cartes à réviser",            "en": "Cards to review"},
+    "revision.concept_due":      {"fr": "{n} carte(s)",                "en": "{n} card(s)"},
+    "revision.review_concept":   {"fr": "Réviser ce concept →",        "en": "Review this concept →"},
+
+    # ── Footer ────────────────────────────────────────────────────────────
+    "footer.tagline":            {"fr": "Une discipline militaire. Une gouvernance d'IA qui marche.",
+                                  "en": "Military-grade discipline. AI governance that works."},
+}
+
+
+def t(key: str, lang: str | None = None, **kwargs) -> str:
+    """
+    Retourne la traduction de `key` dans la langue `lang` (par défaut depuis
+    st.session_state.ui_lang ou 'fr'). Format avec `kwargs` si fournis.
+    """
+    if lang is None:
+        try:
+            import streamlit as st
+            lang = st.session_state.get("ui_lang", "fr")
+        except Exception:
+            lang = "fr"
+    entry = TRANSLATIONS.get(key)
+    if not entry:
+        return key  # fallback : afficher la clé pour repérage
+    txt = entry.get(lang) or entry.get("fr") or key
+    if kwargs:
+        try:
+            return txt.format(**kwargs)
+        except (KeyError, IndexError):
+            return txt
+    return txt

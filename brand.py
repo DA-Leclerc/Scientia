@@ -114,17 +114,45 @@ small, .stCaption, [data-testid="stCaptionContainer"] {{
     transform: translateY(-1px);
 }}
 
-/* Primary button — gold gradient */
-.stButton button[kind="primary"], .stButton button[data-testid="baseButton-primary"] {{
+/* Primary button — gold gradient with FORCED dark text on children */
+.stButton button[kind="primary"],
+.stButton button[data-testid="baseButton-primary"],
+button[kind="primary"],
+[data-testid="stBaseButton-primary"] {{
     background: linear-gradient(135deg, {c['gold']}, {c['amber']}) !important;
     color: {c['abyss']} !important;
     border: none !important;
     font-weight: 600 !important;
     box-shadow: 0 4px 20px {c['gold']}30 !important;
 }}
-.stButton button[kind="primary"]:hover, .stButton button[data-testid="baseButton-primary"]:hover {{
+/* Override the global `p { color: cloud }` rule for every descendant
+   of a primary button — including <p>, <div>, <span>, icon SVGs. */
+.stButton button[kind="primary"] *,
+.stButton button[data-testid="baseButton-primary"] *,
+button[kind="primary"] *,
+[data-testid="stBaseButton-primary"] *,
+.stButton button[kind="primary"] p,
+.stButton button[kind="primary"] div,
+.stButton button[kind="primary"] span {{
+    color: {c['abyss']} !important;
+    fill: {c['abyss']} !important;
+}}
+.stButton button[kind="primary"]:hover,
+.stButton button[data-testid="baseButton-primary"]:hover {{
     box-shadow: 0 6px 28px {c['gold']}50 !important;
     transform: translateY(-2px);
+}}
+/* Download button (st.download_button) — same gold treatment */
+.stDownloadButton button {{
+    background: linear-gradient(135deg, {c['gold']}, {c['amber']}) !important;
+    color: {c['abyss']} !important;
+    border: none !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 20px {c['gold']}30 !important;
+}}
+.stDownloadButton button * {{
+    color: {c['abyss']} !important;
+    fill: {c['abyss']} !important;
 }}
 
 /* ── Métriques ─────────────────────────────────────────────── */

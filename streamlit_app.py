@@ -40,6 +40,8 @@ from brand import (
     sidebar_brand_html,
     footer_html,
 )
+from i18n import t
+
 st.markdown(global_css(), unsafe_allow_html=True)
 
 # ── Récupération de la clé API : .env → st.secrets → env ─────────────────────
@@ -163,6 +165,8 @@ def temps_relatif(iso_ts: str | None) -> str:
 
 # ── État de session ───────────────────────────────────────────────────────────
 
+if "ui_lang" not in st.session_state:
+    st.session_state.ui_lang = "fr"  # default UI language
 if "page" not in st.session_state:
     st.session_state.page = "accueil"
 if "concept_actuel" not in st.session_state:
@@ -271,24 +275,41 @@ tenter_reprise_si_demande()
 # ── Sidebar : navigation + statistiques rapides ───────────────────────────────
 
 with st.sidebar:
+    # ── Language toggle FR / EN (top of sidebar) ──────────────────────────
+    col_l1, col_l2 = st.columns(2)
+    if col_l1.button(
+            "FR",
+            key="lang_fr",
+            use_container_width=True,
+            type="primary" if st.session_state.ui_lang == "fr" else "secondary"):
+        st.session_state.ui_lang = "fr"
+        st.rerun()
+    if col_l2.button(
+            "EN",
+            key="lang_en",
+            use_container_width=True,
+            type="primary" if st.session_state.ui_lang == "en" else "secondary"):
+        st.session_state.ui_lang = "en"
+        st.rerun()
+
     st.markdown(sidebar_brand_html(), unsafe_allow_html=True)
 
-    if st.button("🏠 Accueil", use_container_width=True):
+    if st.button(t("sidebar.home"), use_container_width=True):
         aller_a("accueil")
         st.rerun()
-    if st.button("📚 Modules", use_container_width=True):
+    if st.button(t("sidebar.modules"), use_container_width=True):
         aller_a("modules")
         st.rerun()
-    if st.button("🔁 Révision rapide", use_container_width=True):
+    if st.button(t("sidebar.quick_review"), use_container_width=True):
         aller_a("revision_rapide")
         st.rerun()
-    if st.button("🗣️ Dialogue socratique", use_container_width=True):
+    if st.button(t("sidebar.socratic"), use_container_width=True):
         aller_a("socratique")
         st.rerun()
-    if st.button("📈 Ma progression", use_container_width=True):
+    if st.button(t("sidebar.progress"), use_container_width=True):
         aller_a("progression")
         st.rerun()
-    if st.button("📥 Documents personnels", use_container_width=True):
+    if st.button(t("sidebar.documents"), use_container_width=True):
         aller_a("documents")
         st.rerun()
 
@@ -298,13 +319,14 @@ with st.sidebar:
 
     col_a, col_b = st.columns(2)
     if cartes_dues:
-        col_a.metric("📅 Dues", cartes_dues)
+        col_a.metric(t("sidebar.due"), cartes_dues)
     else:
-        col_a.success("✓ À jour")
+        col_a.success(t("sidebar.uptodate"))
     if streak > 0:
-        col_b.metric("🔥 Streak", f"{streak} j")
+        col_b.metric(t("sidebar.streak"), f"{streak} j")
 
-    st.caption(f"{len(CURRICULUM)} concepts · {len(ORDRE_AFFICHAGE_MODULES)} modules")
+    st.caption(t("sidebar.concepts_total",
+                 n=len(CURRICULUM), m=len(ORDRE_AFFICHAGE_MODULES)))
 
 
 # ── Page : ACCUEIL ────────────────────────────────────────────────────────────
@@ -313,14 +335,10 @@ def page_accueil():
     # Hero brandé Nord Paradigm
     st.markdown(
         hero_html(
-            title_main="Military-grade discipline.",
-            title_accent="AI governance that works.",
-            subtitle=(
-                "Apprentissage espacé pour la pratique de gouvernance d'IA. "
-                "Quiz adaptatifs, évaluation par Claude, planification FSRS-4.5. "
-                "13 modules · 59 concepts · français et anglais."
-            ),
-            tag_text="Scientia · Nord Paradigm",
+            title_main=t("home.hero.title_main"),
+            title_accent=t("home.hero.title_accent"),
+            subtitle=t("home.hero.subtitle"),
+            tag_text=t("home.hero.tag"),
         ),
         unsafe_allow_html=True,
     )
@@ -331,10 +349,10 @@ def page_accueil():
     streak = get_streak_jours()
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Étudiés", nb_concepts_etudies)
-    col2.metric("Maîtrisés", nb_maitrises)
-    col3.metric("À réviser", nb_cartes_dues())
-    col4.metric("🔥 Streak", f"{streak} j" if streak > 0 else "—")
+    col1.metric(t("home.metric.studied"), nb_concepts_etudies)
+    col2.metric(t("home.metric.mastered"), nb_maitrises)
+    col3.metric(t("home.metric.due"), nb_cartes_dues())
+    col4.metric(t("home.metric.streak"), f"{streak} j" if streak > 0 else "—")
 
     st.markdown("")
 
@@ -351,12 +369,12 @@ def page_accueil():
             quand = temps_relatif(derniere.get("derniere_activite"))
             if action == "quiz" and total:
                 meta = (
-                    f"Question {min(idx + 1, total)}/{total} · "
+                    f"{t('home.resume.question_meta', i=min(idx+1, total), total=total)} · "
                     f"{nom_module_avec_drapeau(concept['module'])} · {quand}"
                 )
             elif action == "socratique":
                 meta = (
-                    f"Dialogue socratique · "
+                    f"{t('home.resume.socratic_meta')} · "
                     f"{nom_module_avec_drapeau(concept['module'])} · {quand}"
                 )
             else:
@@ -364,14 +382,14 @@ def page_accueil():
 
             st.markdown(
                 resume_card_html(
-                    label="▶ Reprendre où tu étais",
+                    label=t("home.resume.label"),
                     title=concept["titre"],
                     meta=meta,
                 ),
                 unsafe_allow_html=True,
             )
             col_a, col_b = st.columns([3, 1])
-            if col_a.button("▶️ Reprendre",
+            if col_a.button(t("home.resume.button"),
                             type="primary",
                             use_container_width=True):
                 if action == "socratique":
@@ -380,7 +398,7 @@ def page_accueil():
                     aller_a("etudier", concept_actuel=cle)
                     st.session_state.session_chargee_de_db = False
                 st.rerun()
-            if col_b.button("✕ Abandonner",
+            if col_b.button(t("home.resume.abandon"),
                             use_container_width=True):
                 effacer_derniere_activite()
                 st.rerun()
@@ -392,13 +410,13 @@ def page_accueil():
         c = CURRICULUM[cle]
         st.markdown(
             reco_card_html(
-                label="💡 Recommandé pour toi",
+                label=t("home.reco.label"),
                 title=c["titre"],
                 meta=f"{nom_module_avec_drapeau(c['module'])} · {raison}",
             ),
             unsafe_allow_html=True,
         )
-        if st.button("Étudier ce concept →",
+        if st.button(t("home.reco.button"),
                      key="reco_btn",
                      type="primary", use_container_width=True):
             aller_a("etudier", concept_actuel=cle)
@@ -409,10 +427,10 @@ def page_accueil():
     # ── Cartes dues ──────────────────────────────────────────────────────────
     cartes_dues = get_cartes_dues()
     if cartes_dues:
-        st.markdown("### 🔁 Révisions dues")
-        st.caption("Cartes dont la prochaine révision est aujourd'hui ou passée.")
+        st.markdown(f"### {t('home.due.title')}")
+        st.caption(t("home.due.caption"))
         if len(cartes_dues) >= 3:
-            if st.button("⚡ Lancer une session de révision rapide",
+            if st.button(t("home.due.start_review"),
                          use_container_width=True):
                 aller_a("revision_rapide")
                 st.rerun()
@@ -422,25 +440,25 @@ def page_accueil():
             with st.container(border=True):
                 st.markdown(f"**{titre_cpt}**")
                 st.caption(c["enonce"][:150])
-                if st.button("Réviser →", key=f"rev_{c['id']}",
+                if st.button(t("home.due.review_one"), key=f"rev_{c['id']}",
                              use_container_width=True):
                     aller_a("etudier", concept_actuel=cle_cpt)
                     reset_quiz()
                     st.session_state.session_chargee_de_db = False
                     st.rerun()
         if len(cartes_dues) > 5:
-            st.caption(f"+ {len(cartes_dues) - 5} autres cartes dues")
+            st.caption(t("home.due.more", n=len(cartes_dues) - 5))
     else:
         # Pas de révisions dues → bouton démarrer
-        st.markdown("### Démarrer rapidement")
-        if st.button("📚 Choisir un concept à étudier",
+        st.markdown(f"### {t('home.start_quick')}")
+        if st.button(t("home.start_choose"),
                      type="primary", use_container_width=True):
             aller_a("modules")
             st.rerun()
 
     planning = get_planning_14j()
     if planning:
-        with st.expander("📆 Planning des 14 prochains jours"):
+        with st.expander(t("home.planning")):
             for r in planning[:30]:
                 st.write(f"`{r['prochaine_rev']}` · {r['enonce'][:80]}")
 
@@ -461,7 +479,7 @@ def recommander_concept(progression: dict) -> tuple[str, str] | None:
         and cid in CURRICULUM
     ]
     if en_cours:
-        return en_cours[0], "Concept que tu as déjà commencé sans encore maîtriser."
+        return en_cours[0], t("home.reco.reason_in_progress")
 
     # 2. Concept jamais étudié, en respectant l'ordre des modules
     deja_vus = set(progression.keys())
@@ -471,7 +489,7 @@ def recommander_concept(progression: dict) -> tuple[str, str] | None:
         for cle in get_concepts_par_module(m):
             if cle in deja_vus:
                 continue
-            return cle, f"Premier concept non étudié du module M{m:02d}."
+            return cle, t("home.reco.reason_first", m=m)
     return None
 
 
@@ -480,14 +498,10 @@ def recommander_concept(progression: dict) -> tuple[str, str] | None:
 def page_modules():
     st.markdown(
         hero_html(
-            title_main="Choisis un module",
-            title_accent="apprends à ton rythme.",
-            subtitle=(
-                "13 modules de gouvernance d'IA · 59 concepts · français + anglais. "
-                "Filtre par langue, étudie au fil des prérequis, "
-                "ou laisse FSRS planifier tes révisions."
-            ),
-            tag_text="Curriculum · 13 modules",
+            title_main=t("modules.hero.title_main"),
+            title_accent=t("modules.hero.title_accent"),
+            subtitle=t("modules.hero.subtitle"),
+            tag_text=t("modules.hero.tag"),
         ),
         unsafe_allow_html=True,
     )
@@ -495,17 +509,17 @@ def page_modules():
     # Filtre langue
     col_f1, col_f2, col_f3 = st.columns(3)
     if col_f1.button(
-            "🌐 Tous", use_container_width=True,
+            t("modules.filter_all"), use_container_width=True,
             type="primary" if st.session_state.filtre_langue is None else "secondary"):
         st.session_state.filtre_langue = None
         st.rerun()
     if col_f2.button(
-            "FR · Français", use_container_width=True,
+            t("modules.filter_fr"), use_container_width=True,
             type="primary" if st.session_state.filtre_langue == "fr" else "secondary"):
         st.session_state.filtre_langue = "fr"
         st.rerun()
     if col_f3.button(
-            "EN · English", use_container_width=True,
+            t("modules.filter_en"), use_container_width=True,
             type="primary" if st.session_state.filtre_langue == "en" else "secondary"):
         st.session_state.filtre_langue = "en"
         st.rerun()
@@ -521,11 +535,11 @@ def page_modules():
             modules_avec_concepts.append((m, concepts))
 
     if not modules_avec_concepts:
-        st.info("Aucun module ne correspond à ce filtre.")
+        st.info(t("modules.no_match"))
         return
 
     nom_choisi = st.selectbox(
-        "Module",
+        t("modules.label"),
         options=[m for m, _ in modules_avec_concepts],
         format_func=nom_module_avec_drapeau,
         key="select_module",
@@ -535,7 +549,7 @@ def page_modules():
     progression = get_toute_progression()
 
     st.markdown(f"### {nom_module_avec_drapeau(nom_choisi)}")
-    st.caption(f"{len(concepts)} concepts dans ce module")
+    st.caption(t("modules.concepts_count", n=len(concepts)))
 
     # Vue compacte : un bloc par concept, sans expander de texte par défaut.
     for cle in concepts:
@@ -548,7 +562,7 @@ def page_modules():
         score_txt = f"  ·  {moyenne:.1f}/4" if moyenne else ""
         col_a, col_b = st.columns([4, 1])
         col_a.markdown(f"{emoji} **{c['titre']}**{score_txt}")
-        if col_b.button("Étudier",
+        if col_b.button(t("modules.study"),
                         key=f"etu_{cle}",
                         use_container_width=True,
                         type="primary"):
@@ -571,8 +585,8 @@ def page_modules():
 def page_etudier():
     cle = st.session_state.concept_actuel
     if not cle or cle not in CURRICULUM:
-        st.warning("Aucun concept sélectionné.")
-        if st.button("← Retour aux modules", use_container_width=True):
+        st.warning(t("etudier.no_concept"))
+        if st.button(t("etudier.back"), use_container_width=True):
             aller_a("modules")
             st.rerun()
         return
@@ -590,7 +604,7 @@ def page_etudier():
                           quiz_scores=[], quiz_carte_ids=[],
                           termine=False)
 
-    if st.button("← Retour aux modules", use_container_width=False):
+    if st.button(t("etudier.back"), use_container_width=False):
         aller_a("modules")
         reset_quiz()
         st.rerun()
@@ -598,13 +612,13 @@ def page_etudier():
     # ── Étape 1 : pas de questions chargées → générer ou recharger ───────────
 
     if not st.session_state.questions:
-        with st.expander("📖 Texte source", expanded=False):
+        with st.expander(t("etudier.source"), expanded=False):
             st.markdown(concept["texte"])
 
         cartes_existantes = get_cartes_concept(cle)
 
         n_q = st.slider(
-            "Nombre de questions",
+            t("etudier.q_count"),
             min_value=3, max_value=10,
             value=st.session_state.n_questions,
             key=f"n_q_{cle}",
@@ -613,8 +627,8 @@ def page_etudier():
 
         col1, col2 = st.columns(2)
         if cartes_existantes:
-            col1.metric("Questions sauvegardées", len(cartes_existantes))
-            if col1.button("▶️  Démarrer le quiz",
+            col1.metric(t("etudier.cards_saved"), len(cartes_existantes))
+            if col1.button(t("etudier.start_quiz"),
                            type="primary", use_container_width=True):
                 st.session_state.questions = [
                     {
@@ -642,11 +656,11 @@ def page_etudier():
                 st.rerun()
 
         bouton_label = (
-            f"🔄 Régénérer {n_q} questions" if cartes_existantes
-            else f"✨ Générer {n_q} questions avec Claude"
+            t("etudier.regenerate", n=n_q) if cartes_existantes
+            else t("etudier.generate", n=n_q)
         )
         if col2.button(bouton_label, use_container_width=True):
-            with st.spinner("Génération en cours…"):
+            with st.spinner(t("etudier.generating")):
                 try:
                     qs = generer_questions(concept, n=n_q)
                     ids = sauvegarder_cartes(cle, qs,
@@ -664,34 +678,31 @@ def page_etudier():
                     )
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Erreur de génération : {e}")
+                    st.error(t("etudier.gen_error", e=e))
 
         # Bouton reset progression (Sprint D)
         st.markdown("---")
-        with st.expander("⚠️ Réinitialiser la progression de ce concept"):
-            st.caption(
-                "Supprime les cartes sauvegardées, les révisions et la "
-                "progression FSRS pour ce concept. Action irréversible."
-            )
-            if st.button("🗑 Reset complet",
+        with st.expander(t("etudier.reset.label")):
+            st.caption(t("etudier.reset.help"))
+            if st.button(t("etudier.reset.button"),
                          key=f"reset_{cle}",
                          use_container_width=True):
                 reset_progression_concept(cle)
-                st.success("Progression réinitialisée.")
+                st.success(t("etudier.reset.done"))
                 st.rerun()
 
         # Notes personnelles persistantes
         st.markdown("---")
-        with st.expander("📝 Mes notes sur ce concept"):
+        with st.expander(t("etudier.notes")):
             note = st.text_area(
-                "Notes",
+                t("etudier.notes_label"),
                 value=get_note(cle),
                 height=150,
                 label_visibility="collapsed",
             )
-            if st.button("💾 Sauvegarder la note", use_container_width=True):
+            if st.button(t("etudier.notes_save"), use_container_width=True):
                 save_note(cle, note)
-                st.success("Note sauvegardée.")
+                st.success(t("etudier.notes_saved"))
         return
 
     # ── Étape 2 : quiz en cours ──────────────────────────────────────────────
@@ -701,33 +712,33 @@ def page_etudier():
 
     if i >= total:
         # Fin de session
-        st.success("🎯 Session terminée")
+        st.success(t("etudier.session_done"))
         scores = st.session_state.scores_session
         moyenne = sum(scores) / len(scores) if scores else 0
         col1, col2, col3 = st.columns(3)
-        col1.metric("Questions", total)
-        col2.metric("Score moyen", f"{moyenne:.2f}/4")
-        col3.metric("Maîtrise", "✓" if moyenne >= 3 else "↻")
+        col1.metric(t("etudier.questions"), total)
+        col2.metric(t("etudier.avg_score"), f"{moyenne:.2f}/4")
+        col3.metric(t("etudier.mastery"), "✓" if moyenne >= 3 else "↻")
 
-        st.progress(min(1.0, moyenne / 4), text=f"Score : {moyenne:.1f}/4")
+        st.progress(min(1.0, moyenne / 4),
+                    text=t("etudier.score_text", s=moyenne))
 
         if moyenne >= 3.5:
             st.balloons()
-            st.markdown("### 🎉 Excellent — concept solidement maîtrisé.")
+            st.markdown(f"### {t('etudier.excellent')}")
         elif moyenne >= 2.5:
-            st.markdown("### 📚 Bon travail. Revois les points faibles.")
+            st.markdown(f"### {t('etudier.good')}")
         else:
-            st.markdown("### 🔁 Concept à retravailler. Relis le texte source.")
+            st.markdown(f"### {t('etudier.redo')}")
 
         maj_progression(cle, scores)
-        # On marque la session comme terminée (rien à reprendre)
         effacer_derniere_activite()
 
         col_a, col_b = st.columns(2)
-        if col_a.button("🔁 Refaire un quiz", use_container_width=True):
+        if col_a.button(t("etudier.retake"), use_container_width=True):
             reset_quiz()
             st.rerun()
-        if col_b.button("📚 Autre concept",
+        if col_b.button(t("etudier.other"),
                         type="primary", use_container_width=True):
             aller_a("modules")
             reset_quiz()
@@ -737,19 +748,18 @@ def page_etudier():
     # Question courante
     question = st.session_state.questions[i]
     progress = (i) / total
-    st.progress(progress, text=f"Question {i + 1} / {total}")
+    st.progress(progress, text=t("etudier.progress", i=i+1, total=total))
 
     if st.session_state.session_chargee_de_db and i > 0:
-        st.info(f"📖 Reprise — tu en étais à la question {i + 1}.")
-        # Réinitialiser le drapeau pour ne plus afficher le badge.
+        st.info(t("etudier.resume_at", n=i+1))
         st.session_state.session_chargee_de_db = False
 
     # Texte source disponible pendant tout le quiz (livre ouvert)
-    with st.expander("📖 Texte source (livre ouvert)", expanded=False):
+    with st.expander(t("etudier.source_open"), expanded=False):
         st.markdown(concept["texte"])
 
     type_q = question.get("type", "?").replace("_", " ").title()
-    st.caption(f"Type : {type_q}")
+    st.caption(t("etudier.q_type", t=type_q))
     st.markdown(f"### {question['question']}")
 
     # Bouton indice (n'apparaît que si la question en a un)
@@ -758,7 +768,7 @@ def page_etudier():
         cle_indice = f"indice_{cle}_{i}"
         deja_visible = st.session_state.indice_visible.get(cle_indice, False)
         if not deja_visible:
-            if st.button("💡 Voir un indice", key=f"btn_{cle_indice}",
+            if st.button(t("etudier.hint_show"), key=f"btn_{cle_indice}",
                          use_container_width=False):
                 st.session_state.indice_visible[cle_indice] = True
                 st.rerun()
@@ -769,21 +779,21 @@ def page_etudier():
     cle_soc = (cle, i)
     if st.session_state.evaluation_courante is None:
         reponse = st.text_area(
-            "Ta réponse",
+            t("etudier.your_answer"),
             key=cle_zone,
             height=150,
-            placeholder="Réponds librement…",
+            placeholder=t("etudier.placeholder"),
         )
 
         # ── Tuteur socratique sur la question (sous le champ de réponse) ──
         soc_ouvert = cle_soc in st.session_state.q_soc_ouverts
         if not soc_ouvert:
-            if st.button("🎓 Discuter avec Claude pour mieux comprendre la question",
+            if st.button(t("etudier.tutor_open"),
                          key=f"open_soc_{cle}_{i}",
                          use_container_width=True):
                 st.session_state.q_soc_ouverts.add(cle_soc)
                 if cle_soc not in st.session_state.q_soc_dialogues:
-                    with st.spinner("Claude prépare une ouverture…"):
+                    with st.spinner(t("etudier.tutor_opening")):
                         try:
                             ouverture = aide_socratique_question(
                                 concept, question, []
@@ -792,13 +802,12 @@ def page_etudier():
                                 {"role": "assistant", "content": ouverture}
                             ]
                         except Exception as e:
-                            st.error(f"Erreur Socratique : {e}")
+                            st.error(t("etudier.tutor_error", e=e))
                             st.session_state.q_soc_dialogues[cle_soc] = []
                 st.rerun()
         else:
             with st.container(border=True):
-                st.caption("🎓 Mini-tuteur socratique — Claude ne donnera "
-                           "JAMAIS la réponse, il t'aide à comprendre la question.")
+                st.caption(t("etudier.tutor_caption"))
 
                 dialogue = st.session_state.q_soc_dialogues.get(cle_soc, [])
 
@@ -812,12 +821,12 @@ def page_etudier():
                                 st.markdown(m["content"])
 
                 user_msg = st.chat_input(
-                    "Pose une question, partage ton intuition…",
+                    t("etudier.tutor_input"),
                     key=f"soc_input_{cle}_{i}",
                 )
                 if user_msg:
                     dialogue.append({"role": "user", "content": user_msg})
-                    with st.spinner("Claude réfléchit…"):
+                    with st.spinner(t("etudier.tutor_thinking")):
                         try:
                             relance = aide_socratique_question(
                                 concept, question, dialogue
@@ -826,18 +835,18 @@ def page_etudier():
                                 {"role": "assistant", "content": relance}
                             )
                         except Exception as e:
-                            st.error(f"Erreur : {e}")
+                            st.error(t("socratique.error", e=e))
                     st.session_state.q_soc_dialogues[cle_soc] = dialogue
                     st.rerun()
 
-                if st.button("Fermer le tuteur",
+                if st.button(t("etudier.tutor_close"),
                              key=f"close_soc_{cle}_{i}",
                              use_container_width=False):
                     st.session_state.q_soc_ouverts.discard(cle_soc)
                     st.rerun()
 
         col_a, col_b = st.columns([1, 1])
-        if col_a.button("✓ Soumettre",
+        if col_a.button(t("etudier.submit"),
                         type="primary",
                         use_container_width=True,
                         disabled=not reponse.strip()):
@@ -845,11 +854,11 @@ def page_etudier():
             question_for_eval = dict(question)
             if "langue" not in question_for_eval:
                 question_for_eval["langue"] = concept.get("langue", "fr")
-            with st.spinner("Évaluation par Claude…"):
+            with st.spinner(t("etudier.evaluating")):
                 try:
                     evaluation = evaluer_reponse(question_for_eval, reponse)
                 except Exception as e:
-                    st.error(f"Erreur d'évaluation : {e}")
+                    st.error(t("etudier.eval_error", e=e))
                     return
 
             score = int(evaluation.get("score", 0))
@@ -872,7 +881,7 @@ def page_etudier():
             )
             st.rerun()
 
-        if col_b.button("Passer", use_container_width=True):
+        if col_b.button(t("etudier.skip"), use_container_width=True):
             st.session_state.scores_session.append(0)
             carte_id = st.session_state.carte_ids[i]
             sauvegarder_revision(
@@ -896,19 +905,19 @@ def page_etudier():
     correct = bool(evaluation.get("correct", False))
 
     if correct:
-        st.success(f"✓ Correct ({score}/4)")
+        st.success(t("etudier.correct", s=score))
     elif score >= 2:
-        st.warning(f"Partiel ({score}/4)")
+        st.warning(t("etudier.partial", s=score))
     else:
-        st.error(f"À revoir ({score}/4)")
+        st.error(t("etudier.review", s=score))
 
-    st.markdown(f"**Feedback** — {evaluation.get('feedback', '')}")
+    st.markdown(t("etudier.feedback", f=evaluation.get('feedback', '')))
 
     if not correct:
-        with st.expander("📖 Voir la réponse de référence"):
+        with st.expander(t("etudier.see_ref")):
             st.markdown(question.get("reponse_ref", ""))
 
-    if st.button("Question suivante →",
+    if st.button(t("etudier.next"),
                  type="primary", use_container_width=True):
         st.session_state.index_question += 1
         st.session_state.evaluation_courante = None
@@ -926,21 +935,18 @@ def page_etudier():
 # ── Page : RÉVISION RAPIDE (toutes cartes dues, multi-concepts) ──────────────
 
 def page_revision_rapide():
-    st.title("🔁 Révision rapide")
-    st.caption(
-        "Cartes dues triées du plus en retard au plus récent, "
-        "tous concepts confondus."
-    )
-    if st.button("← Accueil", use_container_width=False):
+    st.title(t("revision.title"))
+    st.caption(t("revision.caption"))
+    if st.button(t("revision.back"), use_container_width=False):
         aller_a("accueil")
         st.rerun()
 
     cartes = get_cartes_dues()
     if not cartes:
-        st.success("✓ Aucune carte due. Tu es à jour.")
+        st.success(t("revision.empty"))
         return
 
-    st.metric("Cartes à réviser", len(cartes))
+    st.metric(t("revision.metric"), len(cartes))
 
     # Regrouper par concept pour offrir un click direct.
     par_concept: dict = {}
@@ -953,11 +959,12 @@ def page_revision_rapide():
             continue
         with st.container(border=True):
             tag = "FR" if c.get("langue", "fr") == "fr" else "EN"
-            st.markdown(f"`[{tag}]` **{c['titre']}** — {len(lot)} carte(s)")
+            st.markdown(f"`[{tag}]` **{c['titre']}** — "
+                         + t("revision.concept_due", n=len(lot)))
             st.caption(
                 f"Module {c['module']} — {NOMS_MODULES.get(c['module'], '?')}"
             )
-            if st.button("Réviser ce concept →",
+            if st.button(t("revision.review_concept"),
                          key=f"rapid_{cle}",
                          type="primary",
                          use_container_width=True):
@@ -976,44 +983,44 @@ def page_progression():
                         if p.get("statut") == "maitrise") if progression else 0
     st.markdown(
         hero_html(
-            title_main="Ta progression,",
-            title_accent="mois après mois.",
-            subtitle=(
-                f"Tu as étudié {len(progression)} concepts, "
-                f"maîtrisé {nb_maitrises}, et tiens un streak de {streak} jour"
-                f"{'s' if streak != 1 else ''}. "
-                "Exporte ta progression en CSV pour archive personnelle."
+            title_main=t("progress.hero.title_main"),
+            title_accent=t("progress.hero.title_accent"),
+            subtitle=t(
+                "progress.hero.subtitle",
+                n=len(progression),
+                m=nb_maitrises,
+                s=streak,
+                p="s" if streak != 1 else "",
             ),
-            tag_text=f"📈 Streak {streak} j" if streak else "📈 Progression",
+            tag_text=f"📈 Streak {streak} j" if streak else "📈 Progress",
         ),
         unsafe_allow_html=True,
     )
 
     if not progression:
-        st.info("Aucune session enregistrée pour l'instant. "
-                "Lance un quiz pour démarrer ta progression.")
+        st.info(t("progress.empty"))
         return
 
     nb_total = len(CURRICULUM)
     nb_etudies = len(progression)
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Concepts du curriculum", nb_total)
-    col2.metric("Étudiés", nb_etudies)
-    col3.metric("Maîtrisés", nb_maitrises)
-    col4.metric("🔥 Streak", f"{streak} j" if streak > 0 else "—")
+    col1.metric(t("progress.metric.curriculum"), nb_total)
+    col2.metric(t("home.metric.studied"), nb_etudies)
+    col3.metric(t("home.metric.mastered"), nb_maitrises)
+    col4.metric(t("home.metric.streak"), f"{streak} j" if streak > 0 else "—")
 
     st.progress(
         nb_maitrises / nb_total if nb_total else 0,
-        text=f"Maîtrise globale : {nb_maitrises}/{nb_total}",
+        text=t("progress.global", m=nb_maitrises, t=nb_total),
     )
 
     st.markdown("---")
 
-    # Export CSV (Sprint D)
+    # Export CSV
     csv_data = export_progression_csv()
     st.download_button(
-        "📥 Exporter ma progression (CSV)",
+        t("progress.export"),
         data=csv_data,
         file_name="scientia_progression.csv",
         mime="text/csv",
@@ -1021,7 +1028,7 @@ def page_progression():
     )
 
     st.markdown("---")
-    st.subheader("Détail par concept")
+    st.subheader(t("progress.detail"))
 
     par_module: dict[int, list[tuple[str, dict]]] = {}
     for cid, p in progression.items():
@@ -1041,62 +1048,54 @@ def page_progression():
                          "nouveau": "○"}.get(statut, "○")
                 st.markdown(
                     f"{emoji} **{titre}** — "
-                    f"`{moyenne:.2f}/4` sur {nb} session(s)"
+                    f"`{moyenne:.2f}/4` " + t("progress.session_count", n=nb)
                 )
 
 
 # ── Page : DOCUMENTS ─────────────────────────────────────────────────────────
 
 def page_documents():
-    st.title("📥 Documents personnels")
-    st.caption(
-        "Charge un PDF, MD ou TXT. Claude extrait 1 à 5 concepts "
-        "qui rejoignent le bucket d'ingestion (M99)."
-    )
+    st.title(t("documents.title"))
+    st.caption(t("documents.caption"))
 
     DOCS_DIR = Path(__file__).parent / "docs"
     DOCS_DIR.mkdir(exist_ok=True)
 
     fichier = st.file_uploader(
-        "Choisis un fichier",
+        t("documents.choose"),
         type=["pdf", "md", "txt"],
         accept_multiple_files=False,
     )
 
     if fichier:
         st.write(f"**{fichier.name}** — {fichier.size // 1024} Ko")
-        if st.button("✨ Extraire les concepts",
+        if st.button(t("documents.extract"),
                      type="primary", use_container_width=True):
             from ingestion import ingerer_fichier
             chemin = DOCS_DIR / fichier.name
             chemin.write_bytes(fichier.getvalue())
-            with st.spinner("Lecture et extraction par Claude…"):
+            with st.spinner(t("documents.extracting")):
                 try:
                     nouvelles_cles = ingerer_fichier(chemin)
                     from curriculum import _charger_concepts_dynamiques
                     _charger_concepts_dynamiques()
-                    st.success(
-                        f"✓ {len(nouvelles_cles)} concept(s) ajouté(s) "
-                        "au module 99 (Documents ingérés). Va dans Modules pour "
-                        "les étudier."
-                    )
+                    st.success(t("documents.added", n=len(nouvelles_cles)))
                 except Exception as e:
-                    st.error(f"Erreur : {e}")
+                    st.error(t("documents.error", e=e))
 
     st.markdown("---")
     from ingestion import charger_concepts_dynamiques, supprimer_concept
     concepts_dyn = charger_concepts_dynamiques()
     if concepts_dyn:
-        st.subheader(f"Concepts ingérés ({len(concepts_dyn)})")
+        st.subheader(t("documents.ingested", n=len(concepts_dyn)))
         for cle, c in concepts_dyn.items():
             with st.container(border=True):
                 st.markdown(f"**{c['titre']}**")
-                st.caption(
-                    f"Source : {c.get('source', '?')} · "
-                    f"{c.get('date_ingestion', '?')}"
-                )
+                st.caption(t("documents.source_meta",
+                              s=c.get('source', '?'),
+                              d=c.get('date_ingestion', '?')))
                 col1, col2 = st.columns([3, 1])
-                if col1.button("Étudier →", key=f"etu_dyn_{cle}",
+                if col1.button(t("documents.study"), key=f"etu_dyn_{cle}",
                                use_container_width=True):
                     aller_a("etudier", concept_actuel=cle)
                     reset_quiz()
@@ -1107,31 +1106,31 @@ def page_documents():
                     supprimer_concept(cle)
                     st.rerun()
     else:
-        st.info("Aucun document ingéré pour l'instant.")
+        st.info(t("documents.empty"))
 
 
 # ── Page : DIALOGUE SOCRATIQUE ───────────────────────────────────────────────
 
 def page_socratique():
-    st.title("🗣️ Dialogue socratique")
-    st.caption(
-        "Mode tuteur : Claude te guide par questions plutôt que de te tester. "
-        "Le dialogue n'est pas noté pendant l'échange — un bilan apparaît à la fin."
-    )
+    st.title(t("socratique.title"))
+    st.caption(t("socratique.caption"))
 
     # Étape 1 : sélection du concept
     if not st.session_state.soc_concept:
-        st.subheader("Choisis un concept à explorer")
+        st.subheader(t("socratique.choose"))
 
         # Filtre langue
+        opt_all = "Toutes" if st.session_state.ui_lang == "fr" else "All"
+        opt_fr = t("modules.filter_fr")
+        opt_en = t("modules.filter_en")
         langue = st.radio(
-            "Langue",
-            options=["Toutes", "FR · Français", "EN · English"],
+            t("socratique.lang"),
+            options=[opt_all, opt_fr, opt_en],
             horizontal=True,
             key="soc_filtre_langue",
         )
-        filtre = "fr" if langue == "FR · Français" else (
-            "en" if langue == "EN · English" else None
+        filtre = "fr" if langue == opt_fr else (
+            "en" if langue == opt_en else None
         )
 
         modules_avec_concepts = []
@@ -1143,11 +1142,11 @@ def page_socratique():
                 modules_avec_concepts.append((m, cs))
 
         if not modules_avec_concepts:
-            st.info("Aucun module ne correspond à ce filtre.")
+            st.info(t("modules.no_match"))
             return
 
         m_choisi = st.selectbox(
-            "Module",
+            t("socratique.module"),
             options=[m for m, _ in modules_avec_concepts],
             format_func=nom_module_avec_drapeau,
             key="soc_module_select",
@@ -1155,21 +1154,18 @@ def page_socratique():
         concepts = get_concepts_par_module(m_choisi)
 
         cle_choisie = st.selectbox(
-            "Concept",
+            t("socratique.concept"),
             options=concepts,
             format_func=lambda k: CURRICULUM[k]["titre"],
             key="soc_concept_select",
         )
 
-        # Vérifier s'il existe un dialogue actif pour ce concept (Sprint B)
         dialogue_actif = get_dialogue_socratique_actif(cle_choisie)
         if dialogue_actif and dialogue_actif.get("historique"):
-            st.info(
-                f"📖 Tu as un dialogue en cours sur ce concept "
-                f"({len(dialogue_actif['historique'])} échanges)."
-            )
+            st.info(t("socratique.has_active",
+                      n=len(dialogue_actif['historique'])))
             col_r1, col_r2 = st.columns(2)
-            if col_r1.button("▶️ Reprendre le dialogue",
+            if col_r1.button(t("socratique.resume"),
                               type="primary", use_container_width=True):
                 st.session_state.soc_concept = cle_choisie
                 st.session_state.soc_dialogue_id = dialogue_actif["id"]
@@ -1177,9 +1173,8 @@ def page_socratique():
                 st.session_state.soc_resume = None
                 set_derniere_activite("socratique", cle_choisie)
                 st.rerun()
-            if col_r2.button("🆕 Nouveau dialogue",
+            if col_r2.button(t("socratique.new"),
                               use_container_width=True):
-                # Marquer l'ancien comme terminé pour ne plus le proposer
                 terminer_dialogue_socratique(
                     dialogue_actif["id"],
                     {"score": 0, "synthese": "(dialogue abandonné)"}
@@ -1187,7 +1182,7 @@ def page_socratique():
                 _demarrer_dialogue(cle_choisie)
             return
 
-        if st.button("▶️ Démarrer le dialogue",
+        if st.button(t("socratique.start"),
                      type="primary", use_container_width=True):
             _demarrer_dialogue(cle_choisie)
         return
@@ -1201,7 +1196,7 @@ def page_socratique():
         return
 
     tag = "FR" if concept.get("langue", "fr") == "fr" else "EN"
-    st.markdown(f"**Concept : `[{tag}]` {concept['titre']}**")
+    st.markdown(t("socratique.concept_label", tag=tag, titre=concept['titre']))
     st.caption(
         f"Module {concept['module']} — "
         f"{NOMS_MODULES.get(concept['module'], '?')}"
@@ -1210,24 +1205,21 @@ def page_socratique():
     set_derniere_activite("socratique", cle)
 
     col_a, col_b = st.columns([1, 1])
-    if col_a.button("🔄 Nouveau concept", use_container_width=True):
-        # Sauvegarder l'état actuel comme dialogue 'en_cours' (déjà fait au fil
-        # de l'eau), puis basculer vers la sélection.
+    if col_a.button(t("socratique.new_concept"), use_container_width=True):
         st.session_state.soc_concept = None
         st.session_state.soc_dialogue_id = None
         st.session_state.soc_historique = []
         st.session_state.soc_resume = None
         st.rerun()
     termine = col_b.button(
-        "✓ Terminer et obtenir un bilan",
+        t("socratique.finish"),
         type="primary",
         use_container_width=True,
         disabled=len(st.session_state.soc_historique) < 3,
     )
 
-    # Si bilan demandé : génère et affiche
     if termine and not st.session_state.soc_resume:
-        with st.spinner("Claude rédige ton bilan…"):
+        with st.spinner(t("socratique.summary")):
             try:
                 resume = resumer_socratique(
                     concept, st.session_state.soc_historique
@@ -1240,33 +1232,33 @@ def page_socratique():
                     )
                 effacer_derniere_activite()
             except Exception as e:
-                st.error(f"Erreur : {e}")
+                st.error(t("socratique.error", e=e))
 
     # Affichage du bilan si présent
     if st.session_state.soc_resume:
         r = st.session_state.soc_resume
         score = int(r.get("score", 0))
         st.markdown("---")
-        st.subheader("📋 Bilan du dialogue")
+        st.subheader(t("socratique.bilan"))
 
         if score >= 3:
-            st.success(f"Score : {score}/4 — bonne maîtrise")
+            st.success(t("socratique.score_good", s=score))
         elif score >= 2:
-            st.warning(f"Score : {score}/4 — partielle")
+            st.warning(t("socratique.score_partial", s=score))
         else:
-            st.error(f"Score : {score}/4 — à retravailler")
+            st.error(t("socratique.score_redo", s=score))
 
-        st.markdown(f"**Points forts** — {r.get('points_forts', '')}")
-        st.markdown(f"**À approfondir** — {r.get('a_approfondir', '')}")
+        st.markdown(t("socratique.strengths", x=r.get('points_forts', '')))
+        st.markdown(t("socratique.deepen", x=r.get('a_approfondir', '')))
 
-        with st.expander("📖 Synthèse du concept"):
+        with st.expander(t("socratique.synthesis")):
             st.markdown(r.get("synthese", ""))
 
         col_c, col_d = st.columns(2)
-        if col_c.button("🔁 Relancer un dialogue sur ce concept",
+        if col_c.button(t("socratique.relaunch"),
                         use_container_width=True):
             _demarrer_dialogue(cle, force_nouveau=True)
-        if col_d.button("📚 Autre concept",
+        if col_d.button(t("etudier.other"),
                         type="primary", use_container_width=True):
             st.session_state.soc_concept = None
             st.session_state.soc_dialogue_id = None
@@ -1286,12 +1278,12 @@ def page_socratique():
                 with st.chat_message("user", avatar="🧑"):
                     st.markdown(m["content"])
 
-    reponse = st.chat_input("Ta réponse à Claude…", key="soc_chat_input")
+    reponse = st.chat_input(t("socratique.input"), key="soc_chat_input")
     if reponse:
         st.session_state.soc_historique.append(
             {"role": "user", "content": reponse}
         )
-        with st.spinner("Claude réfléchit…"):
+        with st.spinner(t("etudier.tutor_thinking")):
             try:
                 relance = repondre_socratique(
                     concept, st.session_state.soc_historique
@@ -1300,7 +1292,7 @@ def page_socratique():
                     {"role": "assistant", "content": relance}
                 )
             except Exception as e:
-                st.error(f"Erreur : {e}")
+                st.error(t("socratique.error", e=e))
         # Persister en DB (Sprint B)
         st.session_state.soc_dialogue_id = sauvegarder_dialogue_socratique(
             cle, st.session_state.soc_historique,
@@ -1319,7 +1311,7 @@ def _demarrer_dialogue(cle: str, force_nouveau: bool = False) -> None:
     st.session_state.soc_historique = []
     st.session_state.soc_resume = None
     st.session_state.soc_pending_user = ""
-    with st.spinner("Claude prépare une question d'ouverture…"):
+    with st.spinner(t("socratique.preparing")):
         try:
             ouverture = repondre_socratique(concept, [])
             st.session_state.soc_historique.append(
@@ -1330,7 +1322,7 @@ def _demarrer_dialogue(cle: str, force_nouveau: bool = False) -> None:
             )
             set_derniere_activite("socratique", cle)
         except Exception as e:
-            st.error(f"Erreur : {e}")
+            st.error(t("socratique.error", e=e))
             st.session_state.soc_concept = None
             return
     st.rerun()
