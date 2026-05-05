@@ -572,9 +572,6 @@ INDICATEUR À SURVEILLER — la première grande décision publique de la CAI sa
 })
 
 
->
-
-
 # ══════════════════════════════════════════════════════════════════════════════
 # MODULE 3 — CADRE FÉDÉRAL CANADIEN ET PROVINCES  (6 concepts, FR)
 # ══════════════════════════════════════════════════════════════════════════════
