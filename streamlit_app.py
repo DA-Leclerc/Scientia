@@ -9,7 +9,6 @@ Variable d'environnement requise :
 
 Variables optionnelles :
     DATA_DIR           dossier persistant pour scientia.db (Railway/Render)
-    CURRICULUM_USER    "conjointe" pour charger curriculum_conjointe.py
 """
 from __future__ import annotations
 
@@ -513,9 +512,15 @@ def page_etudier():
                         use_container_width=True,
                         disabled=not reponse.strip()):
             duree = int(time.time() - st.session_state.debut_question)
+            # Injecter la langue du concept si la question vient de la DB
+            # (les questions générées fraîches l'ont déjà; les chargées depuis
+            # SQLite n'ont pas le champ langue car la table cartes ne le stocke pas).
+            question_for_eval = dict(question)
+            if "langue" not in question_for_eval:
+                question_for_eval["langue"] = concept.get("langue", "fr")
             with st.spinner("Évaluation par Claude…"):
                 try:
-                    evaluation = evaluer_reponse(question, reponse)
+                    evaluation = evaluer_reponse(question_for_eval, reponse)
                 except Exception as e:
                     st.error(f"Erreur d'évaluation : {e}")
                     return

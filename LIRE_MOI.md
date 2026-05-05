@@ -1,56 +1,68 @@
-# SCIENTIA — Instructions de démarrage
+# Scientia — Démarrage rapide
 
-## Installation (une seule fois)
+**Apprentissage espacé pour la pratique de gouvernance d'IA chez Nord Paradigm.**
 
-Ouvre le Terminal et entre ces deux commandes :
+13 modules, 59 concepts, alternant français et anglais selon la langue native du cadre étudié.
 
-```
-pip install anthropic
-export ANTHROPIC_API_KEY="ta-clé-ici"
-```
+## Installation (une fois)
 
-Pour trouver ta clé API : https://console.anthropic.com/keys
-
-Pour que la clé persiste après redémarrage :
-```
-echo 'export ANTHROPIC_API_KEY="ta-clé-ici"' >> ~/.zshrc
+```bash
+pip install -r requirements.txt
 ```
 
-## Lancer SCIENTIA
+## Configuration de la clé API
 
-Dans le Terminal, navigue vers ce dossier :
+Va sur https://console.anthropic.com/keys récupérer ta clé.
+
+**Option recommandée — fichier `.env`** :
 ```
-cd ~/Claude/Projets/scientia
-python scientia.py
+ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-## Ce que ça fait
+**Ou via PowerShell** :
+```powershell
+$env:ANTHROPIC_API_KEY = "sk-ant-..."
+```
 
-1. Tu choisis un concept statistique (ex. : "Moyenne et médiane")
-2. Claude génère 5 questions adaptées à ton niveau
-3. Tu réponds en texte libre
-4. Claude évalue ta réponse et t'explique ce qui manque
-5. Tes scores sont sauvegardés automatiquement
+## Lancer
 
-## Curriculum : 4 mois
+```bash
+streamlit run streamlit_app.py
+```
 
-- **Mois 1** : Fondations (population, variables, moyenne, écart-type, distribution normale, z-scores)
-- **Mois 2** : Inférence (hypothèses, p-value, taille d'effet)
-- **Mois 3** : Relations (corrélation, régression, R²)
-- **Mois 4** : Psychométrie (analyse factorielle, héritabilité)
+L'app s'ouvre sur http://localhost:8501
 
-## Ingérer tes propres documents (Module 5)
+## Les 13 modules
 
-Tu peux ajouter n'importe quel PDF, Markdown ou TXT au curriculum.
-Scientia en extrait les concepts clés et les transforme en cartes de révision.
+| # | Titre | Lang |
+|---:|---|:---:|
+| 1 | Fondations de la gouvernance d'IA | 🇫🇷 |
+| 2 | Loi 25 et la CAI | 🇫🇷 |
+| 3 | Cadre fédéral canadien et provinces | 🇫🇷 |
+| 4 | EU AI Act | 🇬🇧 |
+| 5 | NIST AI Risk Management Framework | 🇬🇧 |
+| 6 | ISO/IEC 42001 | 🇫🇷 |
+| 7 | CNIL — guide opérationnel | 🇫🇷 |
+| 8 | Singapore Model AI Governance Framework | 🇬🇧 |
+| 9 | UK ICO et Data (Use & Access) Act 2025 | 🇬🇧 |
+| 10 | Mise en œuvre pratique | 🇫🇷 |
+| 11 | Agentic AI Governance | 🇬🇧 |
+| 12 | AI Governance Profession (AIGP) | 🇬🇧 |
+| 13 | Synthèse stratégique PME québécoise | 🇫🇷 |
+| 99 | Documents ingérés (dynamique) | — |
 
-**Étapes :**
-1. Installe pypdf si pas encore fait : `pip install pypdf`
-2. Glisse ton fichier dans le dossier `docs/`
-3. Lance Scientia → option **[3] Ingérer un document**
-4. Sélectionne le fichier — Claude extrait 1 à 5 concepts automatiquement
-5. Les nouveaux concepts apparaissent dans **[1] Étudier un concept → Module 5 "Documents personnels"**
+## Comment utiliser
 
-Pour supprimer un concept ingéré : option **[4] Gérer les documents ingérés**.
+1. Choisis un concept dans un module.
+2. Claude génère 5 questions adaptées (intuition, application, contre-exemple, connexion, erreur fréquente).
+3. Tu réponds en texte libre. Le texte source reste visible (open-book).
+4. Claude évalue avec une grille indulgente sur la forme, exigeante sur le fond.
+5. Tes scores sont sauvegardés. FSRS-4.5 planifie tes prochaines révisions pour cibler 90 % de rétention.
 
-Il y a un fichier `docs/test_challenge_point.md` (Challenge Point Framework) qui peut servir de premier test.
+## Ingérer un document
+
+Glisse un PDF, Markdown ou TXT dans `docs/`. Dans l'app, choisis « Ingérer un document » : Claude extrait 1-5 concepts. Ils apparaissent dans le module 99.
+
+## Tuteur socratique
+
+Bouton « Discuter avec Claude » sous chaque question : aide à décortiquer la question sans révéler la réponse, ou à explorer le concept en dialogue.

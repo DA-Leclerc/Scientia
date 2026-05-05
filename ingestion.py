@@ -68,10 +68,11 @@ CONTEXTE D'USAGE — Dominic-André Leclerc, fondateur de Nord Paradigm
 (Québec), cabinet de conseil en gouvernance d'IA. 21+ ans RCAF, auditeur
 AF9000+ sur systèmes aéronautiques. Il alimente Scientia avec des textes
 qu'il rencontre dans sa pratique : décisions de la CAI, articles de
-règlements (Loi 25, EU AI Act, AIDA, RGPD), normes (ISO/IEC 42001,
-27001, 27701), publications NIST, lignes directrices de l'AI Office,
-décisions EDPB, jurisprudence, articles académiques sur la gouvernance
-de l'IA et l'audit.
+règlements (Loi 25, EU AI Act, régulation fédérale canadienne en cours
+d'élaboration, RGPD), normes (ISO/IEC 42001, 27001, 27701), publications
+NIST, lignes directrices de l'AI Office et de l'ICO, décisions EDPB,
+jurisprudence (Zhang BC, etc.), guides CNIL et Singapore, articles
+académiques sur la gouvernance de l'IA et l'audit.
 
 Chaque concept doit :
 - Cibler une SEULE idée claire, mémorable, testable par des questions.
@@ -165,10 +166,10 @@ def _slugifier(texte: str) -> str:
 
 
 def _prochain_ordre(concepts_existants: dict) -> int:
-    """Retourne le prochain numéro d'ordre dans le module 5."""
+    """Retourne le prochain numéro d'ordre dans le module 99 (bucket d'ingestion)."""
     ordres = [
         v["ordre"] for v in concepts_existants.values()
-        if v.get("module") == 5
+        if v.get("module") == 99
     ]
     return max(ordres, default=0) + 1
 
@@ -219,10 +220,11 @@ def ingerer_fichier(filepath: Path, print_fn=print) -> list[str]:
             i += 1
 
         concepts_existants[cle] = {
-            "module": 5,
+            "module": 99,
             "ordre": _prochain_ordre(concepts_existants),
             "titre": cb["titre"],
             "prereqs": [],
+            "langue": "fr",
             "texte": cb["texte"],
             "source": filepath.name,
             "module_suggere": cb.get("module_suggere", "Document"),

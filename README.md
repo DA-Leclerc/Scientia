@@ -1,22 +1,56 @@
 # Scientia
 
-**Apprentissage espacé adaptatif pour lire la recherche scientifique.**
-Quiz générés et évalués par Claude · Algorithme FSRS-4.5 · Curriculum
-multi-domaines (statistiques, biologie, sciences politiques, histoire,
-informatique, gouvernance de l'IA, ...).
+**Spaced-repetition learning for AI governance practice.**
 
-L'application existe en deux saveurs :
+Scientia is the personal training and reference platform for **Dominic-André Leclerc** at [Nord Paradigm](https://nordparadigm.ca), a Quebec-based AI governance consultancy. It serves as the back-end knowledge spine for the firm's three offerings: **Brèche** (free AI risk diagnostic), **Brèche Pro** (RADAR governance assessment), and **Prisme** (ISO/IEC 42001 internal audit).
 
-| | Cible | Lance avec |
-|---|---|---|
-| **`streamlit_app.py`** *(recommandé)* | Bureau **et mobile** (web responsive) | `streamlit run streamlit_app.py` |
-| `scientia.py` *(legacy)* | Terminal | `python scientia.py` |
+The 13 modules cover all major AI governance frameworks relevant to Canadian and international practice, with a deliberate French/English split that follows the native language of each framework's source material.
+
+| Module | Title | Lang | Concepts |
+|---:|---|:---:|:---:|
+| 1 | Fondations de la gouvernance d'IA | 🇫🇷 | 5 |
+| 2 | Loi 25 et la CAI | 🇫🇷 | 7 |
+| 3 | Cadre fédéral canadien et provinces | 🇫🇷 | 6 |
+| 4 | EU AI Act | 🇬🇧 | 6 |
+| 5 | NIST AI Risk Management Framework | 🇬🇧 | 5 |
+| 6 | ISO/IEC 42001 — système de management de l'IA | 🇫🇷 | 3 |
+| 7 | CNIL — guide opérationnel | 🇫🇷 | 7 |
+| 8 | Singapore Model AI Governance Framework | 🇬🇧 | 4 |
+| 9 | UK ICO and Data (Use & Access) Act 2025 | 🇬🇧 | 3 |
+| 10 | Mise en œuvre pratique | 🇫🇷 | 4 |
+| 11 | Agentic AI Governance | 🇬🇧 | 4 |
+| 12 | AI Governance Profession (IAPP AIGP) | 🇬🇧 | 3 |
+| 13 | Synthèse stratégique pour PME québécoise | 🇫🇷 | 2 |
+| 99 | Documents ingérés (dynamique) | — | — |
+
+**Total: 59 concepts. Distribution: 34 FR / 25 EN.**
+
+The content covers Loi 25 (Quebec), CAI guidance including the principles on generative AI, the Canadian federal landscape (Directive on ADM, voluntary code, ISED National Sprint, provincial fragmentation, Zhang case), the EU AI Act including the 2026 GPAI Code of Practice and Omnibus trilogue status, NIST AI RMF including the GenAI profile and 2026 Critical Infrastructure / Agent Standards extensions, ISO/IEC 42001 with its 38 controls, CNIL's seven-stage operational guide, the Singapore Model Framework including the January 2026 agentic AI extension and AI Verify, the UK ICO and DUAA 2025, agentic AI governance with Microsoft tooling, the IAPP AIGP Body of Knowledge, and a synthesis for Quebec SMEs.
 
 ---
 
-## Démarrage rapide
+## Architecture
 
-### 1. Cloner et installer
+```
+Scientia/
+├── streamlit_app.py        # Web app (mobile + desktop)
+├── curriculum.py           # 13 modules, 59 concepts
+├── generator.py            # Question generation + lenient evaluator (Claude)
+├── ingestion.py            # PDF/MD/TXT → dynamic concepts (module 99)
+├── db.py                   # SQLite + FSRS-4.5 spaced repetition
+├── requirements.txt
+├── .streamlit/
+│   ├── config.toml
+│   └── secrets.toml.example
+├── docs/                   # Drop PDFs here for ingestion (gitignored)
+└── scientia.db             # Local SQLite (gitignored)
+```
+
+---
+
+## Quick start
+
+### 1. Install
 
 ```bash
 git clone https://github.com/DA-Leclerc/Scientia.git
@@ -24,159 +58,94 @@ cd Scientia
 pip install -r requirements.txt
 ```
 
-### 2. Configurer la clé API Anthropic
+### 2. Set the API key
 
-Récupère une clé sur https://console.anthropic.com/keys
+Get a key from https://console.anthropic.com/keys
 
-**Option A — Fichier `.env` (local)** :
+**Local `.env`** (recommended):
 ```
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-**Option B — Variable d'environnement (shell)** :
+**Or shell variable**:
 ```bash
-# macOS/Linux
-export ANTHROPIC_API_KEY="sk-ant-..."
-
 # Windows PowerShell
 $env:ANTHROPIC_API_KEY = "sk-ant-..."
+
+# macOS/Linux
+export ANTHROPIC_API_KEY="sk-ant-..."
 ```
 
-**Option C — `.streamlit/secrets.toml`** (recommandé pour Streamlit Cloud) :
+**Or `.streamlit/secrets.toml`** (for Streamlit Cloud):
 ```toml
 ANTHROPIC_API_KEY = "sk-ant-..."
 ```
-Voir [`.streamlit/secrets.toml.example`](.streamlit/secrets.toml.example).
 
-### 3. Lancer
+### 3. Run
 
 ```bash
 streamlit run streamlit_app.py
 ```
 
-L'application s'ouvre sur http://localhost:8501
+Opens at http://localhost:8501
 
 ---
 
-## Utilisation sur mobile
+## Mobile usage
 
-Trois chemins, du plus simple au plus robuste.
+### Streamlit Community Cloud (free, recommended)
 
-### Chemin A — Streamlit Community Cloud (gratuit, accessible partout)
-
-1. Pousse ton fork sur GitHub.
-2. Va sur https://share.streamlit.io/ et connecte ton compte GitHub.
-3. Sélectionne le repo `DA-Leclerc/Scientia` et `streamlit_app.py`
-   comme entry point.
-4. Dans **Settings → Secrets**, ajoute :
+1. Push your fork to GitHub.
+2. Go to https://share.streamlit.io/ and connect your GitHub.
+3. Select the repo and `streamlit_app.py` as entry point.
+4. In **Settings → Secrets**:
    ```toml
    ANTHROPIC_API_KEY = "sk-ant-..."
    ```
-5. Déploie. Tu obtiens une URL `https://...streamlit.app`
-   que tu ouvres sur ton iPhone/Android.
-6. Dans Safari/Chrome mobile, ajoute la page à l'écran d'accueil
-   (Partager → « Sur l'écran d'accueil ») — ça l'installe comme
-   une app native.
+5. Deploy. You get a `https://...streamlit.app` URL.
+6. On mobile (Safari/Chrome), add to home screen.
 
-### Chemin B — Réseau local (rapide, sans déploiement)
+### Local network
 
-Sur ton ordinateur :
 ```bash
 streamlit run streamlit_app.py --server.address=0.0.0.0 --server.port=8501
 ```
 
-Sur ton mobile, connecté au même WiFi, ouvre `http://<IP-ordi>:8501`.
-Pour trouver l'IP :
-```bash
-ipconfig            # Windows  → cherche IPv4 Address
-ifconfig            # macOS/Linux  → cherche inet 192.168.x.x
+Open `http://<computer-IP>:8501` on the mobile device on the same Wi-Fi.
+
+### Production (Railway, Render, Fly.io)
+
+Set environment variables:
+- `ANTHROPIC_API_KEY=sk-ant-...`
+- `DATA_DIR=/data` (and mount a volume on `/data` to persist `scientia.db`)
+
+Start command:
 ```
-
-### Chemin C — Railway / Render / Fly.io (production)
-
-1. Push sur GitHub.
-2. Sur Railway, **New project → Deploy from GitHub** → Scientia.
-3. Définis les variables :
-   - `ANTHROPIC_API_KEY=sk-ant-...`
-   - `DATA_DIR=/data` (et monte un Volume sur `/data` pour
-     persister `scientia.db`)
-4. **Start command** :
-   ```
-   streamlit run streamlit_app.py --server.port=$PORT --server.address=0.0.0.0
-   ```
-
----
-
-## Structure du projet
-
-```
-Scientia/
-├── streamlit_app.py        # Application web (mobile + bureau)
-├── scientia.py             # CLI terminal historique
-├── curriculum.py           # 22 modules · 100+ concepts statiques
-├── generator.py            # Génération de questions (Claude)
-├── ingestion.py            # Ingestion de PDF/MD/TXT en concepts
-├── db.py                   # Persistance SQLite + algo FSRS-4.5
-├── requirements.txt
-├── .streamlit/
-│   ├── config.toml         # Thème + serveur
-│   └── secrets.toml.example
-├── docs/                   # PDFs et notes à ingérer (gitignore)
-└── scientia.db             # Base SQLite locale (gitignore)
+streamlit run streamlit_app.py --server.port=$PORT --server.address=0.0.0.0
 ```
 
 ---
 
-## Modules du curriculum
+## Ingesting your own documents
 
-| # | Module | Domaine |
-|---:|---|---|
-| 1 | Fondations (statistiques) | Statistiques |
-| 2 | Inférence statistique | Statistiques |
-| 3 | Relations entre variables | Statistiques |
-| 4 | Psychométrie et génétique | Statistiques |
-| 5 | Documents personnels (ingestion) | — |
-| 6 | Biologie | Biologie |
-| 7 | Sciences politiques | Sciences politiques |
-| 8 | Informatique | Informatique |
-| 9 | Finances | Finances |
-| 10 | Histoire — Historionomie | Histoire |
-| 11 | Antiquité — Grèce & Rome | Histoire |
-| 12 | Apprentissage moteur | Apprentissage moteur |
-| 13 | Mécanique et leviers | Mécanique |
-| 14 | Historiographie de la Shoah | Histoire |
-| 15 | Architecture Railway | Informatique |
-| 16 | Bitcoin & Cryptomonnaies | Finances |
-| 17 | JSON pour non-programmeurs | Informatique |
-| 18 | Lire une erreur d'agent | Informatique |
-| 19 | Anatomie d'un workflow Claude | Informatique |
-| 20 | Concevoir un workflow multi-agents | Informatique |
-| 21 | Bash et terminal — l'essentiel | Informatique |
-| **22** | **Gouvernance de l'IA** *(nouveau)* | Gouvernance IA |
+Drop a PDF, Markdown, or TXT file into `docs/`, then in the app:
 
-### Module 22 — Gouvernance de l'IA (7 concepts)
+1. Open **Ingest a document**.
+2. Select the file — Claude extracts 1-5 atomic concepts.
+3. Concepts land in **Module 99 (Documents ingérés)** and become quiz-ready.
 
-1. Loi 25 — Québec (vie privée et IA)
-2. AIDA — Canada (projet de loi C-27)
-3. ISO/IEC 42001 — Management de l'IA
-4. NIST AI RMF — Cadre américain
-5. EU AI Act — Règlement européen
-6. Principes de l'OCDE sur l'IA
-7. Synthèse — Quel cadre pour quelle situation
+Sources to ingest in priority order: CAI decisions and guidance documents, EU AI Office publications, ICO guidance, CNIL lifecycle guides, NIST profiles, ISO standards (excerpts), and case law (e.g., the BC Zhang decision).
 
 ---
 
-## Algorithme FSRS-4.5
+## FSRS-4.5 spaced repetition
 
-Scientia planifie les révisions avec
-[FSRS-4.5](https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm)
-(Free Spaced Repetition Scheduler), entraîné sur des millions de
-révisions Anki/SuperMemo. Chaque carte conserve une `stabilité` (jours
-avant que la rétention tombe à 90%) et une `difficulté` (1-10). La
-date de prochaine révision est calculée pour cibler 90% de rétention.
+Scientia schedules reviews with [FSRS-4.5](https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm) (Free Spaced Repetition Scheduler), trained on millions of Anki/SuperMemo reviews. Each card carries a `stability` (days before retention drops to 90%) and a `difficulty` (1-10). Next review date targets 90% retention.
+
+The evaluator (in `generator.py`) is calibrated for **substance over form**: it rewards correct understanding even when the formulation differs from the reference answer. Penalizes only factual errors (wrong article cited, wrong threshold, wrong jurisdiction), missing core ideas, and concept confusion.
 
 ---
 
-## Licence
+## License
 
-Privé — Dominic Leclerc.
+Private — Dominic-André Leclerc / Nord Paradigm.

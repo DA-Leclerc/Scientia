@@ -27,12 +27,11 @@ POSTURE PÉDAGOGIQUE — Dominic est un PRATICIEN AVANCÉ, pas un débutant. Pos
 
 EXEMPLES — privilégie systématiquement :
 - Cas concrets d'organisations canadiennes (publiques, OBNL, PME, grandes entreprises) confrontées à des décisions de conformité.
-- Décisions documentées de la CAI (Québec), de l'AI Office (UE), et autres enforcement actions.
+- Décisions documentées de la CAI (Québec), de l'AI Office (UE), de la CNIL, de l'ICO, et autres enforcement actions.
 - Arbitrages d'audit ISO 42001 (Annexe A, Statement of Applicability, audits Stage 1/2, gestion des non-conformités).
-- Articulation Loi 25 ↔ RGPD ↔ EU AI Act ↔ NIST RMF dans des cas de chaîne de valeur internationale.
+- Articulation Loi 25 ↔ RGPD ↔ EU AI Act ↔ NIST RMF ↔ Directive fédérale ADM dans des cas de chaîne de valeur internationale.
 - Parallèles avec les systèmes qualité aérospatiaux (AF9000, AS9100, audits qualité de complexité critique) où c'est pédagogiquement éclairant.
-
-À ÉVITER ABSOLUMENT — exemples tirés du jiu-jitsu brésilien, du sport, de l'apprentissage moteur, de la psychométrie ou de la finance personnelle. Ces thèmes appartiennent à un autre apprenant et ne sont pas pertinents pour Nord Paradigm. Si un concept de stats est nécessaire, prends un exemple lié à l'audit ou à l'IA (ex : taux de faux positifs d'un système de détection de fraude, p-value d'un test A/B sur un modèle de scoring).
+- Pour les concepts en anglais (M4, M5, M8, M9, M11, M12) : pose la question en anglais, écris la réponse de référence et le critère en anglais. Pour les autres modules, français québécois.
 
 RÈGLES ABSOLUES :
 1. Une seule idée par question. Jamais deux concepts dans une seule question.
@@ -63,25 +62,47 @@ IMPORTANT sur le JSON : retourne UNIQUEMENT du JSON valide, sans markdown, sans 
 def generer_questions(concept: dict, n: int = 5) -> list[dict]:
     """
     Génère n questions pour un concept donné.
-    Retourne une liste de dicts avec : type, question, reponse_ref, critere, difficulte.
+    Retourne une liste de dicts avec : type, question, reponse_ref, critere, difficulte, langue.
     """
     types_choisis = list(TYPES_QUESTIONS.keys())[:n]
+    langue = concept.get("langue", "fr")
+
+    if langue == "en":
+        instructions_langue = (
+            "LANGUAGE — this concept is in English. Write the question, "
+            "reponse_ref, critere, and indice IN ENGLISH. Address Dominic "
+            "in second person (you). Keep the tone professional but "
+            "accessible (high-school-level English, not academic). "
+            "Use the technical regulatory terms (EU AI Act, Article 53, GPAI, "
+            "ISO/IEC 42001, etc.) — Dominic must learn them."
+        )
+    else:
+        instructions_langue = (
+            "LANGUE — ce concept est en français. Écris la question, "
+            "reponse_ref, critere et indice EN FRANÇAIS QUÉBÉCOIS QUOTIDIEN. "
+            "Tutoiement obligatoire. Phrases courtes, vocabulaire courant. "
+            "Garde les termes techniques nécessaires (Loi 25, EU AI Act, ISO 42001, "
+            "RPRP, EFVP, GPAI, etc.) mais simplifie le reste."
+        )
 
     prompt = f"""Concept à enseigner : {concept['titre']}
 
 Texte source :
 {concept['texte']}
 
+{instructions_langue}
+
 Génère exactement {n} questions de types variés pour ce concept.
 Utilise ces types dans cet ordre : {', '.join(types_choisis[:n])}
 
 Pour chaque question, fournis un objet JSON avec ces champs :
 - "type" : le type de question
-- "question" : la question posée à Dominic (tu/toi)
+- "question" : la question posée à Dominic (tu/toi en FR; you en EN)
 - "reponse_ref" : la réponse de référence complète
-- "critere" : CHAÎNE DE CARACTÈRES unique listant les 2-3 éléments ESSENTIELS que la réponse doit contenir, séparés par "; ". Pas de tableau JSON, juste une chaîne.
-- "indice" : CHAÎNE de 1 phrase max qui pointe vers la réponse sans la donner. Active le rappel actif (ex: « Pense à ce qui distingue X de Y… » ou « Quel article du règlement traite ce cas? »). PAS la réponse, PAS un mot-clé seul.
+- "critere" : CHAÎNE listant 1-2 éléments CENTRAUX (l'idée principale, pas une checklist exhaustive). Format chaîne, pas tableau JSON. Sert d'indice à l'évaluateur, pas de liste de cases à cocher.
+- "indice" : CHAÎNE de 1 phrase max qui pointe vers la réponse sans la donner. Active le rappel actif. PAS la réponse, PAS un mot-clé seul.
 - "difficulte" : 1 (facile), 2 (moyen), 3 (difficile)
+- "langue" : "{langue}"
 
 Retourne un tableau JSON de {n} objets. Rien d'autre. Pas de markdown. Juste le JSON."""
 
@@ -120,22 +141,50 @@ def evaluer_reponse(question: dict, reponse_utilisateur: str) -> dict:
     Retourne : score (0-4), feedback, correct (bool).
     Score : 0=blanc, 1=faux, 2=partiel, 3=bon, 4=excellent
     """
+    langue = question.get("langue", "fr")
+
     prompt = f"""Type de question : {question['type']}
 Question posée : {question['question']}
 Réponse de référence : {question['reponse_ref']}
-Critères essentiels : {question['critere']}
+Indices d'évaluation : {question['critere']}
+Langue : {langue}
 
 Réponse de Dominic : {reponse_utilisateur}
 
-Évalue cette réponse et retourne un objet JSON avec :
+Évalue cette réponse et retourne un objet JSON.
+
+GRILLE DE SCORE (0 à 4) :
+0 = blanc, hors sujet, ou complètement faux
+1 = la personne tente une réponse mais a mal compris
+2 = comprend l'essentiel mais formulation imprécise OU manque un point secondaire important
+3 = saisit l'idée centrale et la formule clairement (peut omettre une nuance accessoire ou utiliser une formulation différente de la réponse de référence)
+4 = idée centrale + nuance + précision factuelle (article, seuil, exemple, ou rattachement à un autre cadre)
+
+"correct" : true si score >= 3, false sinon
+
+RÈGLE DE TOLÉRANCE — TRÈS IMPORTANT :
+Dominic apprend la gouvernance d'IA pour sa pratique. Tu dois ÊTRE INDULGENT sur la forme, EXIGEANT sur le fond. Concrètement :
+
+NE PÉNALISE PAS :
+- une formulation différente de la réponse de référence si le sens est juste;
+- l'omission d'un détail accessoire (un exemple, une date secondaire) si l'idée principale est claire;
+- un vocabulaire moins technique qu'attendu (il a un secondaire 5);
+- un ordre de présentation différent;
+- l'absence d'une référence d'article précis SI le concept est correctement décrit;
+- une réponse courte (1-3 phrases) qui capte l'essentiel.
+
+PÉNALISE UNIQUEMENT :
+- l'erreur factuelle nette (mauvais article cité, mauvais seuil, mauvais cadre, mauvaise juridiction);
+- l'absence totale de l'idée centrale;
+- la confusion entre deux concepts (ex : confondre Loi 25 art 8.1 et art 12.1, ou EU AI Act haut risque vs GPAI);
+- une réponse qui contredit la réponse de référence sur un point central.
+
+EN CAS DE DOUTE entre score 2 et 3 : donne 3 si l'idée centrale est là, même imparfaitement formulée.
+
+CHAMPS À RETOURNER :
 - "score" : entier de 0 à 4
-  0 = aucune réponse ou complètement faux
-  1 = faux avec une légère compréhension
-  2 = partiellement correct, manque des éléments essentiels
-  3 = correct, tous les éléments essentiels présents
-  4 = excellent, complet et précis
 - "correct" : true si score >= 3, false sinon
-- "feedback" : 2-3 phrases maximum, en FRANÇAIS QUÉBÉCOIS QUOTIDIEN, phrases COURTES, vocabulaire COURANT (Dominic a un secondaire 5, pas un doctorat). Pas de jargon académique. Si incorrect/partiel : explique simplement CE QUI MANQUE et donne la bonne réponse. Si correct : confirme et ajoute une nuance utile en termes simples.
+- "feedback" : 2-3 phrases maximum, dans la MÊME LANGUE que la question (FR ou EN selon le champ « Langue » ci-dessus). Phrases COURTES, vocabulaire COURANT (pas de jargon académique). Si correct : confirme l'idée principale et ajoute UNE nuance utile (pas un cours magistral). Si incorrect/partiel : dis simplement ce qui manque ou ce qui est faux, et donne la formulation juste. JAMAIS de ton condescendant.
 - "element_manquant" : null si correct, sinon le concept clé qui manque (exprimé en mots simples)
 
 Retourne UNIQUEMENT le JSON. Pas de markdown."""
@@ -191,17 +240,27 @@ def repondre_socratique(concept: dict, historique: list[dict]) -> str:
     Génère la prochaine relance socratique de Claude.
 
     Args:
-        concept: dict avec 'titre' et 'texte'.
+        concept: dict avec 'titre', 'texte', et optionnellement 'langue'.
         historique: liste de messages {"role": "user"|"assistant", "content": str}.
                     Si vide, Claude pose la question d'ouverture.
 
     Returns:
         La prochaine réplique du tuteur, en texte brut.
     """
+    langue = concept.get("langue", "fr")
+    indication_langue = (
+        "DIALOGUE LANGUAGE — this concept is in English. Conduct the Socratic "
+        "dialogue with Dominic IN ENGLISH. Address him in second person (you). "
+        "Keep tone professional but accessible."
+        if langue == "en"
+        else "LANGUE DU DIALOGUE — ce concept est en français. Mène le dialogue en français québécois, avec tutoiement."
+    )
     contexte = f"""Concept étudié : {concept['titre']}
 
 Texte de référence (à NE PAS recopier à Dominic, c'est ta seule source de vérité) :
 {concept['texte']}
+
+{indication_langue}
 
 Tu vas mener un dialogue socratique avec Dominic sur ce concept, dans le contexte de sa pratique de conseil en gouvernance d'IA chez Nord Paradigm.
 """
@@ -266,16 +325,23 @@ def aide_socratique_question(concept: dict, question: dict,
     Génère la prochaine relance d'un mini-tuteur SUR UNE QUESTION SPÉCIFIQUE.
 
     Différent de repondre_socratique() — ici Claude aide Dominic à COMPRENDRE
-    la question (pas à explorer le concept), sans jamais révéler la réponse.
+    la question (pas à y répondre), sans jamais révéler la réponse.
 
     Args:
-        concept: dict avec 'titre' et 'texte'.
+        concept: dict avec 'titre', 'texte' et optionnellement 'langue'.
         question: dict avec 'question', 'reponse_ref', 'critere'.
         historique: liste {role, content} des échanges précédents sur cette question.
 
     Returns:
         La prochaine réplique du tuteur, en texte brut.
     """
+    langue = question.get("langue") or concept.get("langue", "fr")
+    indication_langue = (
+        "DIALOGUE LANGUAGE — this concept and question are in English. "
+        "Help Dominic in ENGLISH, second person."
+        if langue == "en"
+        else "LANGUE DU DIALOGUE — ce concept et cette question sont en français. Aide Dominic en français québécois, tutoiement."
+    )
     contexte = f"""Concept étudié : {concept['titre']}
 
 Texte de référence du concept :
@@ -289,6 +355,8 @@ Réponse de référence (CONFIDENTIELLE — ne PAS révéler le contenu, c'est t
 
 Critère d'évaluation (essentiels que la réponse devrait contenir) :
 {question.get('critere', '')}
+
+{indication_langue}
 
 Tu vas aider Dominic à COMPRENDRE cette question, pas à y répondre.
 """
@@ -321,12 +389,14 @@ def resumer_socratique(concept: dict, historique: list[dict]) -> dict:
 
     Returns: {score, points_forts, a_approfondir, synthese}
     """
+    langue = concept.get("langue", "fr")
     transcript = "\n".join(
         f"{'DOMINIC' if m['role'] == 'user' else 'TUTEUR'} : {m['content']}"
         for m in historique
     )
 
     prompt = f"""Concept étudié : {concept['titre']}
+Langue du concept : {langue}
 
 Texte de référence :
 {concept['texte']}
@@ -341,6 +411,8 @@ Retourne UNIQUEMENT un objet JSON (pas de markdown) avec :
 - "points_forts" : 1-3 phrases simples sur ce que Dominic a bien compris
 - "a_approfondir" : 1-3 phrases simples sur ce qui reste flou. Si pertinent, glisse un cas concret ou une référence (article, décision, norme) à aller voir
 - "synthese" : 2-4 phrases qui résument l'essentiel du concept en mots simples, réutilisables dans un livrable Nord Paradigm (Brèche Pro, Prisme, note client)
+
+LANGUE DE SORTIE : si « Langue du concept » = en, écris points_forts, a_approfondir, synthese EN ANGLAIS. Sinon en français québécois quotidien.
 """
 
     message = client.messages.create(
