@@ -1,9 +1,10 @@
 [theme]
-primaryColor = "#1f77b4"
-backgroundColor = "#ffffff"
-secondaryBackgroundColor = "#f4f6f8"
-textColor = "#1a1a1a"
-font = "sans serif"
+# Nord Paradigm — palette deep-space + accents or/sarcelle
+primaryColor              = "#d4a853"   # gold (CTA primary)
+backgroundColor           = "#0a0f1e"   # abyss
+secondaryBackgroundColor  = "#112240"   # navy (cartes, sidebar)
+textColor                 = "#eaf2f8"   # white
+font                      = "sans serif"
 
 [server]
 headless = true

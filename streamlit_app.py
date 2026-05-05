@@ -21,14 +21,26 @@ import streamlit as st
 # ── Configuration globale (DOIT être le premier appel Streamlit) ──────────────
 
 st.set_page_config(
-    page_title="Scientia",
+    page_title="Scientia · Nord Paradigm",
     page_icon="📘",
     layout="centered",
     initial_sidebar_state="auto",
     menu_items={
-        "About": "Scientia — apprentissage espacé pour la gouvernance d'IA.",
+        "About": "Scientia — Nord Paradigm | AI Governance Training. v0.4",
     },
 )
+
+# ── Branding global Nord Paradigm ─────────────────────────────────────────────
+
+from brand import (
+    global_css,
+    hero_html,
+    resume_card_html,
+    reco_card_html,
+    sidebar_brand_html,
+    footer_html,
+)
+st.markdown(global_css(), unsafe_allow_html=True)
 
 # ── Récupération de la clé API : .env → st.secrets → env ─────────────────────
 
@@ -259,10 +271,8 @@ tenter_reprise_si_demande()
 # ── Sidebar : navigation + statistiques rapides ───────────────────────────────
 
 with st.sidebar:
-    st.markdown("# 📘 Scientia")
-    st.caption("Gouvernance de l'IA · Quiz · FSRS")
+    st.markdown(sidebar_brand_html(), unsafe_allow_html=True)
 
-    st.markdown("---")
     if st.button("🏠 Accueil", use_container_width=True):
         aller_a("accueil")
         st.rerun()
@@ -300,10 +310,19 @@ with st.sidebar:
 # ── Page : ACCUEIL ────────────────────────────────────────────────────────────
 
 def page_accueil():
-    st.title("📘 Scientia")
+    # Hero brandé Nord Paradigm
     st.markdown(
-        "**Apprentissage espacé pour la pratique de gouvernance d'IA.** "
-        "Quiz adaptatifs, évaluation par Claude, planification FSRS-4.5."
+        hero_html(
+            title_main="Military-grade discipline.",
+            title_accent="AI governance that works.",
+            subtitle=(
+                "Apprentissage espacé pour la pratique de gouvernance d'IA. "
+                "Quiz adaptatifs, évaluation par Claude, planification FSRS-4.5. "
+                "13 modules · 59 concepts · français et anglais."
+            ),
+            tag_text="Scientia · Nord Paradigm",
+        ),
+        unsafe_allow_html=True,
     )
 
     progression = get_toute_progression()
@@ -317,7 +336,7 @@ def page_accueil():
     col3.metric("À réviser", nb_cartes_dues())
     col4.metric("🔥 Streak", f"{streak} j" if streak > 0 else "—")
 
-    st.markdown("---")
+    st.markdown("")
 
     # ── Bandeau de reprise ────────────────────────────────────────────────────
     derniere = get_derniere_activite()
@@ -325,64 +344,67 @@ def page_accueil():
         cle = derniere.get("concept_id")
         concept = CURRICULUM.get(cle) if cle else None
         if concept:
-            with st.container(border=True):
-                st.markdown("### ▶️ Reprendre où tu étais")
-                st.markdown(
-                    f"**{concept['titre']}** · "
-                    f"{nom_module_avec_drapeau(concept['module'])}"
+            action = derniere.get("derniere_action")
+            idx = derniere.get("index_question", 0) or 0
+            cartes = get_cartes_concept(cle)
+            total = len(cartes)
+            quand = temps_relatif(derniere.get("derniere_activite"))
+            if action == "quiz" and total:
+                meta = (
+                    f"Question {min(idx + 1, total)}/{total} · "
+                    f"{nom_module_avec_drapeau(concept['module'])} · {quand}"
                 )
+            elif action == "socratique":
+                meta = (
+                    f"Dialogue socratique · "
+                    f"{nom_module_avec_drapeau(concept['module'])} · {quand}"
+                )
+            else:
+                meta = f"{nom_module_avec_drapeau(concept['module'])} · {quand}"
 
-                action = derniere.get("derniere_action")
-                idx = derniere.get("index_question", 0) or 0
-                cartes = get_cartes_concept(cle)
-                total = len(cartes)
-                quand = temps_relatif(derniere.get("derniere_activite"))
-
-                if action == "quiz" and total:
-                    st.caption(
-                        f"Question {min(idx + 1, total)}/{total} · {quand}"
-                    )
-                elif action == "socratique":
-                    st.caption(f"Dialogue socratique · {quand}")
+            st.markdown(
+                resume_card_html(
+                    label="▶ Reprendre où tu étais",
+                    title=concept["titre"],
+                    meta=meta,
+                ),
+                unsafe_allow_html=True,
+            )
+            col_a, col_b = st.columns([3, 1])
+            if col_a.button("▶️ Reprendre",
+                            type="primary",
+                            use_container_width=True):
+                if action == "socratique":
+                    aller_a("socratique", soc_concept=cle)
                 else:
-                    st.caption(f"Lecture · {quand}")
-
-                col_a, col_b = st.columns([3, 1])
-                if col_a.button("▶️ Reprendre",
-                                type="primary",
-                                use_container_width=True):
-                    if action == "socratique":
-                        aller_a("socratique", soc_concept=cle)
-                    else:
-                        aller_a("etudier", concept_actuel=cle)
-                        # Le routeur restaurera la position via tenter_reprise.
-                        st.session_state.session_chargee_de_db = False
-                    st.rerun()
-
-                if col_b.button("✕", help="Abandonner cette session",
-                                use_container_width=True):
-                    effacer_derniere_activite()
-                    st.rerun()
-            st.markdown("")
+                    aller_a("etudier", concept_actuel=cle)
+                    st.session_state.session_chargee_de_db = False
+                st.rerun()
+            if col_b.button("✕ Abandonner",
+                            use_container_width=True):
+                effacer_derniere_activite()
+                st.rerun()
 
     # ── Recommandé pour toi ──────────────────────────────────────────────────
     reco = recommander_concept(progression)
     if reco:
         cle, raison = reco
         c = CURRICULUM[cle]
-        with st.container(border=True):
-            st.markdown(f"### 💡 Recommandé pour toi")
-            st.markdown(
-                f"**{c['titre']}** · {nom_module_avec_drapeau(c['module'])}"
-            )
-            st.caption(raison)
-            if st.button("Étudier ce concept →",
-                         key="reco_btn",
-                         type="primary", use_container_width=True):
-                aller_a("etudier", concept_actuel=cle)
-                reset_quiz()
-                st.session_state.session_chargee_de_db = False
-                st.rerun()
+        st.markdown(
+            reco_card_html(
+                label="💡 Recommandé pour toi",
+                title=c["titre"],
+                meta=f"{nom_module_avec_drapeau(c['module'])} · {raison}",
+            ),
+            unsafe_allow_html=True,
+        )
+        if st.button("Étudier ce concept →",
+                     key="reco_btn",
+                     type="primary", use_container_width=True):
+            aller_a("etudier", concept_actuel=cle)
+            reset_quiz()
+            st.session_state.session_chargee_de_db = False
+            st.rerun()
 
     # ── Cartes dues ──────────────────────────────────────────────────────────
     cartes_dues = get_cartes_dues()
@@ -456,8 +478,19 @@ def recommander_concept(progression: dict) -> tuple[str, str] | None:
 # ── Page : MODULES (vue compacte, filtre langue) ──────────────────────────────
 
 def page_modules():
-    st.title("📚 Modules")
-    st.caption("Choisis un module, puis un concept à étudier.")
+    st.markdown(
+        hero_html(
+            title_main="Choisis un module",
+            title_accent="apprends à ton rythme.",
+            subtitle=(
+                "13 modules de gouvernance d'IA · 59 concepts · français + anglais. "
+                "Filtre par langue, étudie au fil des prérequis, "
+                "ou laisse FSRS planifier tes révisions."
+            ),
+            tag_text="Curriculum · 13 modules",
+        ),
+        unsafe_allow_html=True,
+    )
 
     # Filtre langue
     col_f1, col_f2, col_f3 = st.columns(3)
@@ -937,10 +970,24 @@ def page_revision_rapide():
 # ── Page : PROGRESSION ───────────────────────────────────────────────────────
 
 def page_progression():
-    st.title("📈 Ma progression")
-
-    progression = get_toute_progression()
     streak = get_streak_jours()
+    progression = get_toute_progression()
+    nb_maitrises = sum(1 for p in progression.values()
+                        if p.get("statut") == "maitrise") if progression else 0
+    st.markdown(
+        hero_html(
+            title_main="Ta progression,",
+            title_accent="mois après mois.",
+            subtitle=(
+                f"Tu as étudié {len(progression)} concepts, "
+                f"maîtrisé {nb_maitrises}, et tiens un streak de {streak} jour"
+                f"{'s' if streak != 1 else ''}. "
+                "Exporte ta progression en CSV pour archive personnelle."
+            ),
+            tag_text=f"📈 Streak {streak} j" if streak else "📈 Progression",
+        ),
+        unsafe_allow_html=True,
+    )
 
     if not progression:
         st.info("Aucune session enregistrée pour l'instant. "
@@ -949,8 +996,6 @@ def page_progression():
 
     nb_total = len(CURRICULUM)
     nb_etudies = len(progression)
-    nb_maitrises = sum(1 for p in progression.values()
-                       if p.get("statut") == "maitrise")
 
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Concepts du curriculum", nb_total)
@@ -1305,8 +1350,4 @@ PAGES = {
 
 PAGES.get(st.session_state.page, page_accueil)()
 
-st.markdown("---")
-st.caption(
-    "Scientia · Apprentissage espacé FSRS-4.5 · "
-    "Évaluation Claude · v0.3 (Gouvernance IA)"
-)
+st.markdown(footer_html(), unsafe_allow_html=True)
