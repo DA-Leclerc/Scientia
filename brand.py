@@ -125,8 +125,8 @@ button[kind="primary"],
     font-weight: 600 !important;
     box-shadow: 0 4px 20px {c['gold']}30 !important;
 }}
-/* Override the global `p { color: cloud }` rule for every descendant
-   of a primary button — including <p>, <div>, <span>, icon SVGs. */
+/* Force the dark text color on every descendant of a primary button
+   (including p, div, span, icon SVGs) to override the global rule. */
 .stButton button[kind="primary"] *,
 .stButton button[data-testid="baseButton-primary"] *,
 button[kind="primary"] *,
