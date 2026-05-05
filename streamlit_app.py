@@ -96,6 +96,22 @@ from db import (
     get_streak_jours,
     reset_progression_concept,
     export_progression_csv,
+    # Alpha School #1
+    enregistrer_session,
+    get_etat_maitrise,
+    enregistrer_points_faibles,
+    get_points_faibles,
+    marquer_points_faibles_resolus,
+    # Alpha School #4
+    enregistrer_teach_back,
+    get_meilleur_teach_back,
+    est_pret_a_enseigner,
+    # Alpha School #5
+    sauvegarder_objectif,
+    get_objectifs_actifs,
+    calculer_velocite,
+    get_revisions_par_jour,
+    get_concepts_a_risque,
 )
 
 # ── Initialisation DB ─────────────────────────────────────────────────────────
@@ -122,7 +138,10 @@ if not API_PRESENTE:
 # donc on ne l'importe que si la clé est définie.
 from generator import (
     generer_questions,
+    generer_questions_ciblees,
+    generer_diagnostic,
     evaluer_reponse,
+    evaluer_teach_back,
     repondre_socratique,
     resumer_socratique,
     aide_socratique_question,
@@ -179,6 +198,12 @@ if "index_question" not in st.session_state:
     st.session_state.index_question = 0
 if "scores_session" not in st.session_state:
     st.session_state.scores_session = []
+if "ratees_session" not in st.session_state:
+    # Liste de dicts {critere, score} pour les questions ratées (Alpha #1)
+    st.session_state.ratees_session = []
+if "session_type" not in st.session_state:
+    # 'quiz' (normal) | 'targeted' (Alpha #1) | 'sprint' (Alpha #2) | 'diagnostic' (Alpha #3)
+    st.session_state.session_type = "quiz"
 if "evaluation_courante" not in st.session_state:
     st.session_state.evaluation_courante = None
 if "debut_question" not in st.session_state:
@@ -223,6 +248,8 @@ def reset_quiz():
     st.session_state.carte_ids = []
     st.session_state.index_question = 0
     st.session_state.scores_session = []
+    st.session_state.ratees_session = []
+    st.session_state.session_type = "quiz"
     st.session_state.evaluation_courante = None
 
 
@@ -303,8 +330,17 @@ with st.sidebar:
     if st.button(t("sidebar.quick_review"), use_container_width=True):
         aller_a("revision_rapide")
         st.rerun()
+    if st.button(t("sidebar.sprint"), use_container_width=True):
+        aller_a("sprint")
+        st.rerun()
     if st.button(t("sidebar.socratic"), use_container_width=True):
         aller_a("socratique")
+        st.rerun()
+    if st.button(t("teach.button"), use_container_width=True):
+        aller_a("teach_back")
+        st.rerun()
+    if st.button(t("sidebar.dashboard"), use_container_width=True):
+        aller_a("dashboard")
         st.rerun()
     if st.button(t("sidebar.progress"), use_container_width=True):
         aller_a("progression")
@@ -551,6 +587,15 @@ def page_modules():
     st.markdown(f"### {nom_module_avec_drapeau(nom_choisi)}")
     st.caption(t("modules.concepts_count", n=len(concepts)))
 
+    # Alpha #3 : bouton diagnostic si aucun concept du module n'a été étudié
+    deja_etudies = [k for k in concepts if k in progression]
+    if not deja_etudies and len(concepts) >= 3:
+        if st.button(t("diag.button", n=len(concepts)),
+                     use_container_width=True):
+            st.session_state.diag_module = nom_choisi
+            aller_a("diagnostic")
+            st.rerun()
+
     # Vue compacte : un bloc par concept, sans expander de texte par défaut.
     for cle in concepts:
         c = CURRICULUM[cle]
@@ -646,6 +691,8 @@ def page_etudier():
                 st.session_state.carte_ids = [q["id"] for q in cartes_existantes]
                 st.session_state.index_question = 0
                 st.session_state.scores_session = []
+                st.session_state.ratees_session = []
+                st.session_state.session_type = "quiz"
                 st.session_state.debut_question = time.time()
                 set_derniere_activite(
                     "quiz", cle, 0,
@@ -669,6 +716,8 @@ def page_etudier():
                     st.session_state.carte_ids = ids
                     st.session_state.index_question = 0
                     st.session_state.scores_session = []
+                    st.session_state.ratees_session = []
+                    st.session_state.session_type = "quiz"
                     st.session_state.debut_question = time.time()
                     set_derniere_activite(
                         "quiz", cle, 0,
@@ -731,7 +780,58 @@ def page_etudier():
         else:
             st.markdown(f"### {t('etudier.redo')}")
 
-        maj_progression(cle, scores)
+        # Alpha #1 — enregistrement de session + paliers de maîtrise
+        enregistrer_session(cle, st.session_state.session_type or "quiz", scores)
+        if st.session_state.ratees_session:
+            enregistrer_points_faibles(cle, st.session_state.ratees_session)
+
+        # Affichage du progrès vers la maîtrise
+        etat = get_etat_maitrise(cle)
+        st.markdown("---")
+        st.markdown(f"### {t('mastery.progress.title')}")
+        st.progress(
+            min(1.0, etat["sessions_passees"] / max(1, etat["sessions_requises"])),
+            text=t("mastery.progress.text",
+                   p=etat["sessions_passees"], r=etat["sessions_requises"]),
+        )
+        if etat["statut"] == "maitrise":
+            st.success(t("mastery.unlocked"))
+            marquer_points_faibles_resolus(cle)
+        elif etat["sessions_passees"] >= 1 and moyenne >= 3.0:
+            st.info(t("mastery.almost"))
+            st.caption(t("mastery.gap_hint"))
+
+        # Re-test ciblé si on a raté au moins 2 questions
+        nb_ratees = len(st.session_state.ratees_session)
+        if nb_ratees >= 2:
+            st.warning(t("mastery.failed", n=nb_ratees))
+            if st.button(t("mastery.targeted_button"),
+                         use_container_width=True):
+                pf = get_points_faibles(cle, limit=5)
+                with st.spinner(t("etudier.generating")):
+                    try:
+                        qs = generer_questions_ciblees(concept, pf,
+                                                        n=min(5, max(3, nb_ratees)))
+                        ids = sauvegarder_cartes(cle, qs,
+                                                  langue=concept.get("langue", "fr"))
+                        st.session_state.questions = qs
+                        st.session_state.carte_ids = ids
+                        st.session_state.index_question = 0
+                        st.session_state.scores_session = []
+                        st.session_state.ratees_session = []
+                        st.session_state.session_type = "targeted"
+                        st.session_state.debut_question = time.time()
+                        st.session_state.evaluation_courante = None
+                        set_derniere_activite(
+                            "quiz", cle, 0,
+                            quiz_scores=[],
+                            quiz_carte_ids=ids,
+                            termine=False,
+                        )
+                        st.rerun()
+                    except Exception as e:
+                        st.error(t("etudier.gen_error", e=e))
+
         effacer_derniere_activite()
 
         col_a, col_b = st.columns(2)
@@ -749,6 +849,9 @@ def page_etudier():
     question = st.session_state.questions[i]
     progress = (i) / total
     st.progress(progress, text=t("etudier.progress", i=i+1, total=total))
+
+    if st.session_state.session_type == "targeted":
+        st.caption(f"🎯 {t('mastery.targeted_label')}")
 
     if st.session_state.session_chargee_de_db and i > 0:
         st.info(t("etudier.resume_at", n=i+1))
@@ -863,6 +966,12 @@ def page_etudier():
 
             score = int(evaluation.get("score", 0))
             st.session_state.scores_session.append(score)
+            # Alpha #1 : capture du critère raté pour re-test ciblé
+            if score < 3:
+                st.session_state.ratees_session.append({
+                    "critere": question.get("critere", "") or "",
+                    "score": score,
+                })
 
             carte_id = st.session_state.carte_ids[i]
             sauvegarder_revision(
@@ -1328,6 +1437,711 @@ def _demarrer_dialogue(cle: str, force_nouveau: bool = False) -> None:
     st.rerun()
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ALPHA SCHOOL #2 — Sprint de maîtrise (entrelacement)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def page_sprint():
+    st.markdown(
+        hero_html(
+            title_main=t("sprint.hero.title_main"),
+            title_accent=t("sprint.hero.title_accent"),
+            subtitle=t("sprint.hero.subtitle"),
+            tag_text=t("sprint.hero.tag"),
+        ),
+        unsafe_allow_html=True,
+    )
+
+    if "sprint_concepts" not in st.session_state:
+        st.session_state.sprint_concepts = []
+    if "sprint_questions" not in st.session_state:
+        st.session_state.sprint_questions = []
+    if "sprint_carte_ids" not in st.session_state:
+        st.session_state.sprint_carte_ids = []
+    if "sprint_index" not in st.session_state:
+        st.session_state.sprint_index = 0
+    if "sprint_resultats" not in st.session_state:
+        # liste de {concept_id, concept_titre, score, langue}
+        st.session_state.sprint_resultats = []
+    if "sprint_eval_courante" not in st.session_state:
+        st.session_state.sprint_eval_courante = None
+
+    # ── Étape 1 : pas encore démarré → sélection des concepts ────────────────
+    if not st.session_state.sprint_questions:
+        st.subheader(t("sprint.choose"))
+
+        # Liste des concepts ayant au moins 1 carte sauvegardée
+        from db import conn as _conn
+        with _conn() as c:
+            rows = c.execute(
+                "SELECT DISTINCT concept_id FROM cartes"
+            ).fetchall()
+        eligibles_set = {r["concept_id"] for r in rows}
+        eligibles = [(k, CURRICULUM[k]) for k in eligibles_set
+                      if k in CURRICULUM]
+        if not eligibles:
+            st.info(t("sprint.need_cards"))
+            return
+
+        # Tri par module puis ordre
+        eligibles.sort(key=lambda kv: (kv[1].get("module", 99),
+                                        kv[1].get("ordre", 0)))
+
+        choix = st.multiselect(
+            t("sprint.choose"),
+            options=[k for k, _ in eligibles],
+            format_func=lambda k: (
+                f"[{ 'FR' if CURRICULUM[k].get('langue','fr') == 'fr' else 'EN' }] "
+                f"M{CURRICULUM[k]['module']:02d} — {CURRICULUM[k]['titre']}"
+            ),
+            key="sprint_select",
+        )
+
+        if len(choix) < 3:
+            st.warning(t("sprint.need_more"))
+            return
+
+        if st.button(t("sprint.start"),
+                     type="primary", use_container_width=True):
+            # Tirer 1 question aléatoire de chaque concept choisi
+            import random
+            qs = []
+            ids = []
+            ordres = []
+            for cle in choix:
+                cartes = get_cartes_concept(cle)
+                if not cartes:
+                    continue
+                c_choisie = random.choice(cartes)
+                qs.append({
+                    "type": c_choisie["type"],
+                    "question": c_choisie["enonce"],
+                    "reponse_ref": c_choisie["reponse_ref"],
+                    "critere": c_choisie["critere"],
+                    "indice": c_choisie.get("indice", "") or "",
+                    "difficulte": c_choisie["niveau"],
+                    "langue": c_choisie.get("langue") or
+                              CURRICULUM[cle].get("langue", "fr"),
+                    "concept_id": cle,
+                    "concept_titre": CURRICULUM[cle]["titre"],
+                })
+                ids.append(c_choisie["id"])
+            # Mélanger
+            indices = list(range(len(qs)))
+            random.shuffle(indices)
+            st.session_state.sprint_concepts = choix
+            st.session_state.sprint_questions = [qs[i] for i in indices]
+            st.session_state.sprint_carte_ids = [ids[i] for i in indices]
+            st.session_state.sprint_index = 0
+            st.session_state.sprint_resultats = []
+            st.session_state.sprint_eval_courante = None
+            st.rerun()
+        return
+
+    i = st.session_state.sprint_index
+    total = len(st.session_state.sprint_questions)
+
+    # ── Étape 3 : résultats ──────────────────────────────────────────────────
+    if i >= total:
+        st.subheader(t("sprint.results"))
+        moyenne = (
+            sum(r["score"] for r in st.session_state.sprint_resultats) /
+            max(1, len(st.session_state.sprint_resultats))
+        )
+        col1, col2 = st.columns(2)
+        col1.metric(t("etudier.questions"), total)
+        col2.metric(t("etudier.avg_score"), f"{moyenne:.2f}/4")
+
+        st.markdown(f"### {t('sprint.score_per_concept')}")
+        # Regrouper par concept (1 question par concept dans ce sprint)
+        for r in st.session_state.sprint_resultats:
+            score = r["score"]
+            emoji = "🟢" if score >= 3 else ("🟡" if score >= 2 else "🔴")
+            st.markdown(f"{emoji} **{r['concept_titre']}** — {score}/4")
+
+        st.info(t("sprint.transfer_tip"))
+
+        # Enregistrer une session 'sprint' par concept (avec 1 score chacun)
+        for r in st.session_state.sprint_resultats:
+            enregistrer_session(r["concept_id"], "sprint", [r["score"]])
+            if r["score"] < 3:
+                enregistrer_points_faibles(r["concept_id"], [{
+                    "critere": r.get("critere", ""),
+                    "score": r["score"],
+                }])
+
+        if st.button(t("sprint.restart"),
+                     type="primary", use_container_width=True):
+            st.session_state.sprint_concepts = []
+            st.session_state.sprint_questions = []
+            st.session_state.sprint_carte_ids = []
+            st.session_state.sprint_index = 0
+            st.session_state.sprint_resultats = []
+            st.session_state.sprint_eval_courante = None
+            st.rerun()
+        return
+
+    # ── Étape 2 : question courante ──────────────────────────────────────────
+    question = st.session_state.sprint_questions[i]
+    st.progress(i / total,
+                text=t("sprint.q_of", i=i+1, total=total))
+    st.caption(t("sprint.concept_hidden"))
+
+    type_q = question.get("type", "?").replace("_", " ").title()
+    st.caption(t("etudier.q_type", t=type_q))
+    st.markdown(f"### {question['question']}")
+
+    cle_zone = f"sprint_reponse_{i}"
+    if st.session_state.sprint_eval_courante is None:
+        reponse = st.text_area(
+            t("etudier.your_answer"),
+            key=cle_zone, height=150,
+            placeholder=t("etudier.placeholder"),
+        )
+        col_a, col_b = st.columns([1, 1])
+        if col_a.button(t("etudier.submit"),
+                        key=f"sprint_submit_{i}",
+                        type="primary", use_container_width=True,
+                        disabled=not reponse.strip()):
+            with st.spinner(t("etudier.evaluating")):
+                try:
+                    evaluation = evaluer_reponse(question, reponse)
+                except Exception as e:
+                    st.error(t("etudier.eval_error", e=e))
+                    return
+            score = int(evaluation.get("score", 0))
+            sauvegarder_revision(
+                carte_id=st.session_state.sprint_carte_ids[i],
+                score=score,
+                feedback=evaluation.get("feedback", ""),
+                duree_sec=0,
+            )
+            st.session_state.sprint_resultats.append({
+                "concept_id": question["concept_id"],
+                "concept_titre": question["concept_titre"],
+                "score": score,
+                "critere": question.get("critere", ""),
+                "langue": question.get("langue", "fr"),
+            })
+            st.session_state.sprint_eval_courante = evaluation
+            st.rerun()
+
+        if col_b.button(t("etudier.skip"),
+                        key=f"sprint_skip_{i}",
+                        use_container_width=True):
+            st.session_state.sprint_resultats.append({
+                "concept_id": question["concept_id"],
+                "concept_titre": question["concept_titre"],
+                "score": 0,
+                "critere": question.get("critere", ""),
+                "langue": question.get("langue", "fr"),
+            })
+            st.session_state.sprint_index += 1
+            st.rerun()
+        return
+
+    # Affichage évaluation courante
+    evaluation = st.session_state.sprint_eval_courante
+    score = int(evaluation.get("score", 0))
+    correct = bool(evaluation.get("correct", False))
+
+    if correct:
+        st.success(t("etudier.correct", s=score))
+    elif score >= 2:
+        st.warning(t("etudier.partial", s=score))
+    else:
+        st.error(t("etudier.review", s=score))
+
+    st.markdown(f"**{question['concept_titre']}**")
+    st.markdown(t("etudier.feedback", f=evaluation.get('feedback', '')))
+
+    if not correct:
+        with st.expander(t("etudier.see_ref")):
+            st.markdown(question.get("reponse_ref", ""))
+
+    if st.button(t("etudier.next"),
+                 key=f"sprint_next_{i}",
+                 type="primary", use_container_width=True):
+        st.session_state.sprint_index += 1
+        st.session_state.sprint_eval_courante = None
+        st.rerun()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ALPHA SCHOOL #3 — Diagnostic pré-module
+# ══════════════════════════════════════════════════════════════════════════════
+
+def page_diagnostic():
+    if not st.session_state.get("diag_module"):
+        st.warning("Aucun module sélectionné pour le diagnostic.")
+        if st.button(t("etudier.back"), use_container_width=True):
+            aller_a("modules")
+            st.rerun()
+        return
+
+    m = st.session_state.diag_module
+    nom = NOMS_MODULES.get(m, "?")
+    st.markdown(
+        hero_html(
+            title_main=f"M{m:02d}",
+            title_accent=nom,
+            subtitle=t("diag.intro"),
+            tag_text=t("diag.button", n=len(get_concepts_par_module(m))).split('(')[0],
+        ),
+        unsafe_allow_html=True,
+    )
+
+    if "diag_questions" not in st.session_state:
+        st.session_state.diag_questions = []
+    if "diag_carte_ids" not in st.session_state:
+        st.session_state.diag_carte_ids = []
+    if "diag_index" not in st.session_state:
+        st.session_state.diag_index = 0
+    if "diag_resultats" not in st.session_state:
+        st.session_state.diag_resultats = []
+    if "diag_eval_courante" not in st.session_state:
+        st.session_state.diag_eval_courante = None
+
+    # Étape 1 : générer le diagnostic
+    if not st.session_state.diag_questions:
+        with st.spinner(t("diag.generating")):
+            concepts_cles = get_concepts_par_module(m)
+            concepts_dicts = []
+            for cle in concepts_cles:
+                c = dict(CURRICULUM[cle])
+                c["id"] = cle
+                c["cle"] = cle
+                concepts_dicts.append(c)
+            try:
+                qs = generer_diagnostic(concepts_dicts)
+                # Sauvegarder en cartes pour persister, puis mémoriser ids
+                ids = []
+                for cle, q in zip([c["cle"] for c in concepts_dicts], qs):
+                    saved = sauvegarder_cartes(cle, [q],
+                                                langue=q.get("langue", "fr"))
+                    if saved:
+                        ids.append(saved[0])
+                    else:
+                        ids.append(None)
+                st.session_state.diag_questions = qs
+                st.session_state.diag_carte_ids = ids
+                st.session_state.diag_index = 0
+                st.session_state.diag_resultats = []
+                st.session_state.diag_eval_courante = None
+                st.rerun()
+            except Exception as e:
+                st.error(t("etudier.gen_error", e=e))
+                return
+        return
+
+    i = st.session_state.diag_index
+    total = len(st.session_state.diag_questions)
+
+    # Étape 3 : résultats
+    if i >= total:
+        st.subheader(t("diag.results"))
+        already = [r for r in st.session_state.diag_resultats if r["score"] >= 3]
+        to_study = [r for r in st.session_state.diag_resultats if r["score"] < 3]
+
+        col1, col2 = st.columns(2)
+        col1.metric(t("diag.already_mastered", n=len(already)).split('(')[0].strip(),
+                    len(already))
+        col2.metric(t("diag.to_study", n=len(to_study)).split('(')[0].strip(),
+                    len(to_study))
+
+        if already:
+            st.markdown(f"### {t('diag.already_mastered', n=len(already))}")
+            for r in already:
+                st.markdown(f"🟢 **{r['concept_titre']}** — {r['score']}/4")
+                # Crée 1 session « diagnostic » comptant comme 1 vers la maîtrise
+                enregistrer_session(r["concept_id"], "diagnostic",
+                                     [r["score"]])
+
+        if to_study:
+            st.markdown(f"### {t('diag.to_study', n=len(to_study))}")
+            for r in to_study:
+                st.markdown(f"🔴 **{r['concept_titre']}** — {r['score']}/4")
+                # Capture le critère raté pour quiz futur
+                enregistrer_points_faibles(r["concept_id"], [{
+                    "critere": r.get("critere", ""),
+                    "score": r["score"],
+                }])
+
+        if st.button(t("diag.continue"),
+                     type="primary", use_container_width=True):
+            st.session_state.diag_questions = []
+            st.session_state.diag_carte_ids = []
+            st.session_state.diag_index = 0
+            st.session_state.diag_resultats = []
+            st.session_state.diag_eval_courante = None
+            st.session_state.diag_module = None
+            aller_a("modules")
+            st.session_state.select_module = m
+            st.rerun()
+        return
+
+    question = st.session_state.diag_questions[i]
+    st.progress(i / total,
+                text=t("diag.q_progress", i=i+1, total=total))
+    st.markdown(f"**{question.get('concept_titre', '')}**")
+    st.caption(t("etudier.q_type",
+                 t=question.get("type", "?").replace("_", " ").title()))
+    st.markdown(f"### {question['question']}")
+
+    cle_zone = f"diag_rep_{i}"
+    if st.session_state.diag_eval_courante is None:
+        reponse = st.text_area(
+            t("etudier.your_answer"),
+            key=cle_zone, height=150,
+            placeholder=t("etudier.placeholder"),
+        )
+        col_a, col_b = st.columns([1, 1])
+        if col_a.button(t("etudier.submit"),
+                        key=f"diag_submit_{i}",
+                        type="primary", use_container_width=True,
+                        disabled=not reponse.strip()):
+            with st.spinner(t("etudier.evaluating")):
+                try:
+                    evaluation = evaluer_reponse(question, reponse)
+                except Exception as e:
+                    st.error(t("etudier.eval_error", e=e))
+                    return
+            score = int(evaluation.get("score", 0))
+            cid = st.session_state.diag_carte_ids[i]
+            if cid:
+                sauvegarder_revision(
+                    carte_id=cid, score=score,
+                    feedback=evaluation.get("feedback", ""),
+                    duree_sec=0,
+                )
+            st.session_state.diag_resultats.append({
+                "concept_id": question.get("concept_id", ""),
+                "concept_titre": question.get("concept_titre", ""),
+                "score": score,
+                "critere": question.get("critere", ""),
+            })
+            st.session_state.diag_eval_courante = evaluation
+            st.rerun()
+
+        if col_b.button(t("diag.skip_button"),
+                        key=f"diag_skip_{i}",
+                        use_container_width=True):
+            st.session_state.diag_resultats.append({
+                "concept_id": question.get("concept_id", ""),
+                "concept_titre": question.get("concept_titre", ""),
+                "score": 0,
+                "critere": question.get("critere", ""),
+            })
+            st.session_state.diag_index += 1
+            st.rerun()
+        return
+
+    evaluation = st.session_state.diag_eval_courante
+    score = int(evaluation.get("score", 0))
+    correct = bool(evaluation.get("correct", False))
+    if correct:
+        st.success(t("etudier.correct", s=score))
+    elif score >= 2:
+        st.warning(t("etudier.partial", s=score))
+    else:
+        st.error(t("etudier.review", s=score))
+
+    if st.button(t("etudier.next"),
+                 key=f"diag_next_{i}",
+                 type="primary", use_container_width=True):
+        st.session_state.diag_index += 1
+        st.session_state.diag_eval_courante = None
+        st.rerun()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ALPHA SCHOOL #4 — Teach-back
+# ══════════════════════════════════════════════════════════════════════════════
+
+def page_teach_back():
+    st.markdown(
+        hero_html(
+            title_main=t("teach.hero.title_main"),
+            title_accent=t("teach.hero.title_accent"),
+            subtitle=t("teach.hero.subtitle"),
+            tag_text=t("teach.hero.tag"),
+        ),
+        unsafe_allow_html=True,
+    )
+
+    # Sélection : seulement les concepts maîtrisés
+    progression = get_toute_progression()
+    maitrises = sorted(
+        [cid for cid, p in progression.items()
+         if p.get("statut") == "maitrise" and cid in CURRICULUM],
+        key=lambda k: (CURRICULUM[k]["module"], CURRICULUM[k]["ordre"])
+    )
+
+    if not maitrises:
+        st.info(t("teach.locked"))
+        return
+
+    if "teach_concept" not in st.session_state:
+        st.session_state.teach_concept = None
+    if "teach_resultat" not in st.session_state:
+        st.session_state.teach_resultat = None
+
+    cle = st.selectbox(
+        t("socratique.concept"),
+        options=maitrises,
+        format_func=lambda k: (
+            f"[{'FR' if CURRICULUM[k].get('langue','fr') == 'fr' else 'EN'}] "
+            f"M{CURRICULUM[k]['module']:02d} — {CURRICULUM[k]['titre']}"
+        ),
+        key="teach_concept_select",
+    )
+    concept = CURRICULUM[cle]
+
+    st.session_state.teach_concept = cle
+
+    # Meilleur score actuel
+    best = get_meilleur_teach_back(cle)
+    if best:
+        st.caption(t("teach.best", t=best["score_total"]))
+
+    st.markdown(f"### {concept['titre']}")
+    st.caption(t("teach.scenario"))
+
+    if st.session_state.teach_resultat is None:
+        explication = st.text_area(
+            t("teach.input_label"),
+            key=f"teach_input_{cle}", height=240,
+            placeholder=t("teach.input_placeholder"),
+        )
+        if st.button(t("teach.submit"),
+                     type="primary", use_container_width=True,
+                     disabled=not explication.strip()):
+            with st.spinner(t("teach.evaluating")):
+                try:
+                    res = evaluer_teach_back(concept, explication)
+                except Exception as e:
+                    st.error(t("teach.error", e=e))
+                    return
+            scores = {
+                "clarte": int(res.get("score_clarte", 0)),
+                "precision": int(res.get("score_precision", 0)),
+                "exemple": int(res.get("score_exemple", 0)),
+            }
+            feedback = res.get("feedback", "")
+            tb_id = enregistrer_teach_back(cle, explication, scores, feedback)
+            st.session_state.teach_resultat = {
+                **scores,
+                "feedback": feedback,
+                "tb_id": tb_id,
+            }
+            st.rerun()
+        return
+
+    # Affichage du résultat
+    res = st.session_state.teach_resultat
+    total = res["clarte"] + res["precision"] + res["exemple"]
+    st.markdown(f"### {t('teach.results')}")
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric(t("teach.score_clarity"), f"{res['clarte']}/4")
+    col2.metric(t("teach.score_precision"), f"{res['precision']}/4")
+    col3.metric(t("teach.score_example"), f"{res['exemple']}/4")
+
+    st.progress(total / 12, text=t("teach.score_total", t=total))
+
+    if total >= 9:
+        st.success(t("teach.ready"))
+    else:
+        st.warning(t("teach.not_ready"))
+
+    st.markdown(t("teach.feedback", f=res["feedback"]))
+
+    col_a, col_b = st.columns(2)
+    if col_a.button(t("teach.retry"), use_container_width=True):
+        st.session_state.teach_resultat = None
+        st.rerun()
+    if col_b.button(t("etudier.other"),
+                    type="primary", use_container_width=True):
+        st.session_state.teach_concept = None
+        st.session_state.teach_resultat = None
+        st.rerun()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ALPHA SCHOOL #5 — Tableau de bord + Objectifs
+# ══════════════════════════════════════════════════════════════════════════════
+
+def page_dashboard():
+    st.markdown(
+        hero_html(
+            title_main=t("dash.hero.title_main"),
+            title_accent=t("dash.hero.title_accent"),
+            subtitle=t("dash.hero.subtitle"),
+            tag_text=t("dash.hero.tag"),
+        ),
+        unsafe_allow_html=True,
+    )
+
+    # ── Section objectif ────────────────────────────────────────────────────
+    st.markdown(f"### {t('dash.goal_section')}")
+    objectifs = get_objectifs_actifs()
+    obj = objectifs[0] if objectifs else None
+
+    if obj and obj.get("type") == "module_target":
+        m_cible = obj["cible_module"]
+        deadline = obj["deadline"]
+        nom_m = NOMS_MODULES.get(m_cible, f"M{m_cible:02d}")
+        st.markdown(t("dash.goal_active", nom=nom_m, deadline=deadline))
+
+        # Progrès
+        progression = get_toute_progression()
+        concepts_module = get_concepts_par_module(m_cible)
+        nb_total = len(concepts_module)
+        nb_mait = sum(
+            1 for k in concepts_module
+            if progression.get(k, {}).get("statut") == "maitrise"
+        )
+        st.progress(nb_mait / max(1, nb_total),
+                    text=t("dash.goal_progress", m=nb_mait, n=nb_total))
+
+        # Projection
+        velo = calculer_velocite(jours=7)
+        cps = velo["concepts_par_semaine"]
+        if cps > 0:
+            from datetime import datetime as _dt, timedelta as _td
+            restants = nb_total - nb_mait
+            if restants > 0:
+                semaines = restants / cps
+                expected = _dt.now() + _td(weeks=semaines)
+                expected_iso = expected.strftime("%Y-%m-%d")
+                st.caption(t("dash.goal_projection",
+                              c=cps, date=expected_iso))
+                # Comparaison à la deadline
+                try:
+                    dl = _dt.strptime(deadline, "%Y-%m-%d")
+                    delta_j = (expected - dl).days
+                    if delta_j <= 0:
+                        st.success(t("dash.goal_on_track"))
+                    else:
+                        st.warning(t("dash.goal_late", d=delta_j))
+                except Exception:
+                    pass
+        else:
+            st.caption(t("dash.goal_no_velocity"))
+
+        if st.button(t("dash.goal_clear"),
+                     use_container_width=False):
+            from db import conn as _conn
+            with _conn() as c:
+                c.execute(
+                    "UPDATE objectifs SET statut = 'abandonne' "
+                    "WHERE id = ?", (obj["id"],)
+                )
+            st.rerun()
+
+    else:
+        st.info(t("dash.no_goal"))
+        with st.expander(t("dash.goal_create"), expanded=True):
+            modules_choix = [m for m in ORDRE_AFFICHAGE_MODULES if m != 99]
+            m_cible = st.selectbox(
+                t("dash.goal_target_module"),
+                options=modules_choix,
+                format_func=nom_module_avec_drapeau,
+                key="goal_module_select",
+            )
+            from datetime import date as _date, timedelta as _td2
+            deadline = st.date_input(
+                t("dash.goal_deadline"),
+                value=_date.today() + _td2(days=30),
+                min_value=_date.today(),
+                key="goal_deadline_input",
+            )
+            if st.button(t("dash.goal_save"),
+                         type="primary", use_container_width=True):
+                sauvegarder_objectif(
+                    "module_target",
+                    cible_module=m_cible,
+                    deadline=deadline.isoformat(),
+                )
+                st.success(t("dash.goal_saved"))
+                st.rerun()
+
+    # ── Vélocité 7 jours ────────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown(f"### {t('dash.velocity')}")
+    velo = calculer_velocite(jours=7)
+    cv1, cv2, cv3, cv4 = st.columns(4)
+    cv1.metric(t("dash.metric.sessions"), velo["sessions_periode"])
+    cv2.metric(t("dash.metric.minutes"), velo["minutes_periode"])
+    cv3.metric(t("dash.metric.mastered"), velo["concepts_maitrises_periode"])
+    cv4.metric(t("dash.metric.per_week"),
+                f"{velo['concepts_par_semaine']:.1f}")
+
+    # ── Heatmap 90 jours ───────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown(f"### {t('dash.heatmap')}")
+    revs_par_jour = get_revisions_par_jour(jours=90)
+    if revs_par_jour:
+        from datetime import date as _d, timedelta as _td3
+        # Construit un dict complet pour les 90 jours
+        today = _d.today()
+        debut = today - _td3(days=89)
+        rows_chart = []
+        cur = debut
+        while cur <= today:
+            iso = cur.isoformat()
+            rows_chart.append({
+                "date": cur.isoformat(),
+                "weekday": cur.weekday(),
+                "week": (cur - debut).days // 7,
+                "n": revs_par_jour.get(iso, 0),
+            })
+            cur = cur + _td3(days=1)
+        try:
+            import altair as alt
+            import pandas as pd
+            df = pd.DataFrame(rows_chart)
+            chart = alt.Chart(df).mark_rect().encode(
+                x=alt.X("week:O", title=None,
+                        axis=alt.Axis(labels=False, ticks=False)),
+                y=alt.Y("weekday:O", title=None,
+                        sort=[0, 1, 2, 3, 4, 5, 6]),
+                color=alt.Color("n:Q",
+                                 scale=alt.Scale(scheme="goldgreen"),
+                                 legend=None),
+                tooltip=["date", "n"],
+            ).properties(height=180)
+            st.altair_chart(chart, use_container_width=True)
+        except Exception:
+            # Fallback sans altair : grille texte simple
+            for r in rows_chart[-21:]:
+                st.write(f"`{r['date']}` · {r['n']} révisions")
+
+    # ── Concepts à risque ──────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown(f"### {t('dash.at_risk')}")
+    risques = get_concepts_a_risque(seuil_stab=1.0, limit=10)
+    if risques:
+        for r in risques:
+            cle = r["concept_id"]
+            c = CURRICULUM.get(cle)
+            if not c:
+                continue
+            with st.container(border=True):
+                tag = "FR" if c.get("langue", "fr") == "fr" else "EN"
+                st.markdown(f"`[{tag}]` **{c['titre']}** — "
+                              f"stabilité {r['s_moy']:.2f} j")
+                if st.button(t("home.due.review_one"),
+                             key=f"risk_{cle}",
+                             use_container_width=True):
+                    aller_a("etudier", concept_actuel=cle)
+                    reset_quiz()
+                    st.session_state.session_chargee_de_db = False
+                    st.rerun()
+    else:
+        st.info(t("dash.no_risk"))
+
+
 # ── Routeur principal ─────────────────────────────────────────────────────────
 
 PAGES = {
@@ -1338,6 +2152,10 @@ PAGES = {
     "progression": page_progression,
     "documents": page_documents,
     "revision_rapide": page_revision_rapide,
+    "sprint": page_sprint,
+    "diagnostic": page_diagnostic,
+    "teach_back": page_teach_back,
+    "dashboard": page_dashboard,
 }
 
 PAGES.get(st.session_state.page, page_accueil)()

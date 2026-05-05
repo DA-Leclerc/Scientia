@@ -171,6 +171,180 @@ Retourne un tableau JSON de {n} objets. Rien d'autre. Pas de markdown. Juste le 
     return questions
 
 
+def generer_questions_ciblees(concept: dict, points_faibles: list[str],
+                               n: int = 5) -> list[dict]:
+    """
+    Alpha School #1 — re-test ciblé.
+    Génère `n` questions qui attaquent SPÉCIFIQUEMENT les critères ratés
+    précédemment, plutôt qu'un tirage aléatoire.
+    """
+    if not points_faibles:
+        return generer_questions(concept, n=n)
+
+    types_choisis = list(TYPES_QUESTIONS.keys())[:n]
+    langue = concept.get("langue", "fr")
+
+    if langue == "en":
+        instructions_langue = (
+            "LANGUAGE — write in English, second person."
+        )
+    else:
+        instructions_langue = (
+            "LANGUE — écris en français québécois quotidien, tutoiement."
+        )
+
+    pf_formated = "\n".join(f"  - {p}" for p in points_faibles)
+
+    prompt = f"""Concept à enseigner : {concept['titre']}
+
+Texte source :
+{concept['texte']}
+
+{instructions_langue}
+
+CIBLAGE — l'apprenant a déjà raté des questions sur les critères suivants :
+{pf_formated}
+
+Génère exactement {n} questions qui ATTAQUENT directement ces lacunes.
+Une question = une lacune (recyclage des critères dans l'ordre, et si
+plus de lacunes que de questions, choisis les plus représentatives).
+Privilégie les types qui forcent l'application réelle (application,
+contre_exemple, arbitrage, erreur_frequente).
+
+Pour chaque question, retourne un objet JSON :
+- "type" : un type parmi {', '.join(types_choisis[:n])}
+- "question" : la question
+- "reponse_ref" : la réponse de référence
+- "critere" : 1-2 éléments centraux séparés par "; "
+- "indice" : 1 phrase qui pointe sans révéler
+- "difficulte" : 2 ou 3 (jamais 1 — on cible les lacunes)
+- "langue" : "{langue}"
+
+Retourne un tableau JSON de {n} objets. Pas de markdown."""
+
+    contenu = _appel_claude(
+        model="claude-sonnet-4-6",
+        max_tokens=6000,
+        system=PROMPT_SYSTEME,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    contenu = re.sub(r"^```(?:json)?\n?", "", contenu)
+    contenu = re.sub(r"\n?```$", "", contenu)
+    try:
+        return json.loads(contenu)
+    except json.JSONDecodeError:
+        match = re.search(r"^(\[.*?\}),?\s*[^}]*$", contenu, re.DOTALL)
+        if match:
+            return json.loads(match.group(1) + "]")
+        raise
+
+
+def generer_diagnostic(concepts: list[dict]) -> list[dict]:
+    """
+    Alpha School #3 — diagnostic pré-module.
+    1 question par concept, mode rapide. Retourne une liste où chaque
+    élément a en plus 'concept_id'.
+    """
+    if not concepts:
+        return []
+
+    # On regroupe : 1 appel Claude par concept (questions courtes,
+    # parallélisable mais on reste simple en séquentiel).
+    diagnostic = []
+    for concept in concepts:
+        try:
+            qs = generer_questions(concept, n=1)
+            if qs:
+                q = qs[0]
+                q["concept_id"] = concept.get("id") or concept.get("cle") or ""
+                q["concept_titre"] = concept.get("titre", "")
+                q["langue"] = concept.get("langue", "fr")
+                diagnostic.append(q)
+        except Exception:
+            continue
+    return diagnostic
+
+
+PROMPT_TEACH_BACK = """Tu évalues un EXERCICE DE TEACH-BACK : Dominic doit expliquer un concept à un client fictif comme s'il l'enseignait. Tu attribues 3 scores indépendants sur 0-4.
+
+CRITÈRE 1 — CLARTÉ POUR UN NON-INITIÉ.
+Le client n'a pas le bagage technique. Dominic doit rendre le concept
+ACCESSIBLE : pas de jargon non expliqué, métaphores justes, structure
+qui suit l'intuition d'un débutant.
+0 = incompréhensible, jargon non expliqué.
+1 = quelques passages clairs mais le tout reste flou.
+2 = compréhensible avec effort de la part du client.
+3 = clair, naturel, le client suit sans effort.
+4 = brillant — le client se sent intelligent en l'écoutant.
+
+CRITÈRE 2 — PRÉCISION TECHNIQUE.
+Pas d'erreur factuelle, articles cités correctement, distinctions
+respectées (Loi 25 art 8.1 vs 12.1; haut risque vs GPAI; etc.).
+0 = erreurs factuelles graves, contredit la réponse de référence.
+1 = imprécisions notables, mélange des concepts proches.
+2 = correct dans l'ensemble, 1-2 imprécisions mineures.
+3 = exact sur tous les points centraux.
+4 = exact ET ajoute une nuance pertinente non triviale.
+
+CRITÈRE 3 — EXEMPLE CONCRET.
+Un teach-back excellent ancre la théorie dans un cas pratique. Dominic
+mentionne un cas réel (CAI, EU AI Office, Zhang BC) ou hypothétique
+plausible (« si une PME québécoise vend un outil RH en France… »).
+0 = aucun exemple, théorie pure.
+1 = exemple vague ou hors sujet.
+2 = exemple présent mais peu développé.
+3 = exemple concret bien développé.
+4 = 2+ exemples articulés, ou un cas tellement précis qu'on voit la
+    mission Brèche Pro qui en découle.
+
+PÉNALISE :
+- l'absence totale d'un des 3 dimensions (donne 0 sur celle-là)
+- les contradictions internes
+- la paraphrase de la réponse de référence sans valeur ajoutée
+
+VALORISE :
+- les structures pédagogiques (analogies, ordre logique)
+- les nuances québécoises (contexte CAI, terminologie locale)
+- les liens entre cadres (Loi 25 ↔ EU AI Act)
+
+Retourne UNIQUEMENT un objet JSON :
+{
+  "score_clarte": 0-4,
+  "score_precision": 0-4,
+  "score_exemple": 0-4,
+  "feedback": "2-4 phrases dans la même langue que la transcription, qui pointe la principale force et la principale faiblesse"
+}
+"""
+
+
+def evaluer_teach_back(concept: dict, transcription: str) -> dict:
+    """
+    Alpha School #4 — évalue un teach-back sur 3 critères.
+    Retourne {score_clarte, score_precision, score_exemple, feedback}.
+    """
+    langue = concept.get("langue", "fr")
+    prompt = f"""Concept enseigné : {concept['titre']}
+Langue du concept : {langue}
+
+Texte de référence (source de vérité, ne pas le révéler) :
+{concept['texte']}
+
+Teach-back de Dominic :
+{transcription}
+
+Évalue sur les 3 critères selon la grille."""
+
+    contenu = _appel_claude(
+        model="claude-sonnet-4-6",
+        max_tokens=600,
+        system=PROMPT_TEACH_BACK,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    contenu = re.sub(r"^```(?:json)?\n?", "", contenu)
+    contenu = re.sub(r"\n?```$", "", contenu)
+    return json.loads(contenu)
+
+
 def evaluer_reponse(question: dict, reponse_utilisateur: str) -> dict:
     """
     Évalue la réponse de l'utilisateur.

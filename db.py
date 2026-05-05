@@ -212,6 +212,64 @@ def init() -> None:
 
         CREATE INDEX IF NOT EXISTS idx_dialogues_concept
           ON dialogues_socratique(concept_id, statut);
+
+        -- Alpha #1 : sessions individuelles pour paliers de maîtrise.
+        -- Une « session » = un quiz complet sur un concept. Les paliers
+        -- exigent 2 sessions à >= 3/4 et >= 24h d'intervalle.
+        CREATE TABLE IF NOT EXISTS sessions (
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            concept_id     TEXT NOT NULL,
+            type           TEXT NOT NULL DEFAULT 'quiz',
+                           -- 'quiz' | 'sprint' | 'diagnostic' | 'teach_back' | 'socratique'
+            score_moyen    REAL NOT NULL,
+            nb_questions   INTEGER NOT NULL,
+            fini_le        TEXT DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_sessions_concept
+          ON sessions(concept_id, fini_le DESC);
+
+        -- Alpha #1 : points faibles détectés (criteres ratés).
+        -- Chaque ligne = 1 critère raté lors d'une revision.
+        -- Permet à Claude de re-générer des questions ciblées.
+        CREATE TABLE IF NOT EXISTS points_faibles (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            concept_id  TEXT NOT NULL,
+            critere     TEXT NOT NULL,
+            score       INTEGER NOT NULL,  -- score obtenu (0-2 typiquement)
+            cree_le     TEXT DEFAULT (datetime('now')),
+            resolu      INTEGER DEFAULT 0  -- 1 si la prochaine session sur ce
+                                            -- critère a réussi
+        );
+        CREATE INDEX IF NOT EXISTS idx_pf_concept
+          ON points_faibles(concept_id, resolu);
+
+        -- Alpha #5 : objectifs personnels.
+        CREATE TABLE IF NOT EXISTS objectifs (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            type            TEXT NOT NULL,
+                            -- 'module_target' | 'pace'
+            cible_module    INTEGER,        -- pour 'module_target'
+            deadline        TEXT,           -- date ISO 'YYYY-MM-DD'
+            daily_minutes   INTEGER,        -- pour 'pace'
+            daily_concepts  REAL,           -- pour 'pace' (peut être 0.5)
+            cree_le         TEXT DEFAULT (datetime('now')),
+            statut          TEXT DEFAULT 'actif'  -- 'actif' | 'atteint' | 'abandonne'
+        );
+
+        -- Alpha #4 : résultats de teach-back par concept.
+        CREATE TABLE IF NOT EXISTS teach_back (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            concept_id      TEXT NOT NULL,
+            transcription   TEXT NOT NULL,
+            score_clarte    INTEGER NOT NULL,
+            score_precision INTEGER NOT NULL,
+            score_exemple   INTEGER NOT NULL,
+            score_total     INTEGER NOT NULL,  -- 0-12
+            feedback        TEXT,
+            cree_le         TEXT DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_tb_concept
+          ON teach_back(concept_id, cree_le DESC);
         """)
 
         # Migration : ajouter les colonnes FSRS si elles n'existent pas encore
@@ -797,6 +855,323 @@ def reset_progression_concept(concept_id: str) -> None:
             "UPDATE session_state SET quiz_termine = 1, derniere_action = NULL "
             "WHERE id = 1 AND concept_id = ?", (concept_id,)
         )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ALPHA SCHOOL #1 — Paliers de maîtrise (sessions + points faibles)
+# ══════════════════════════════════════════════════════════════════════════════
+
+MASTERY_THRESHOLD = 3.0          # score moyen requis par session
+MASTERY_GAP_HOURS = 20.0         # délai minimum entre 2 sessions consécutives
+                                  # (~ une nuit, marge à 20h pour absorber les
+                                  # journées un peu plus courtes)
+
+
+def enregistrer_session(concept_id: str, type_: str,
+                         scores: list[int]) -> None:
+    """
+    Crée une entrée dans `sessions` pour cette session terminée.
+    Met à jour la table `progression` selon la règle des 2-sessions-consécutives.
+    """
+    if not scores:
+        return
+    moyenne = sum(scores) / len(scores)
+    with conn() as c:
+        c.execute(
+            """INSERT INTO sessions (concept_id, type, score_moyen, nb_questions)
+               VALUES (?, ?, ?, ?)""",
+            (concept_id, type_, moyenne, len(scores))
+        )
+
+    # Re-calcul du statut selon la règle Alpha
+    statut, _, _ = _evaluer_maitrise(concept_id)
+    with conn() as c:
+        # Calcul de la moyenne pondérée sur toutes les sessions du concept
+        rows = c.execute(
+            "SELECT AVG(score_moyen) AS m, COUNT(*) AS n FROM sessions "
+            "WHERE concept_id = ?", (concept_id,)
+        ).fetchone()
+        score_moyen_global = rows["m"] or 0.0
+        nb_sessions = rows["n"] or 0
+
+        c.execute(
+            """INSERT INTO progression (concept_id, nb_sessions, score_moyen,
+                derniere_rev, statut)
+               VALUES (?, ?, ?, datetime('now'), ?)
+               ON CONFLICT(concept_id) DO UPDATE SET
+                  nb_sessions  = excluded.nb_sessions,
+                  score_moyen  = excluded.score_moyen,
+                  derniere_rev = datetime('now'),
+                  statut       = excluded.statut""",
+            (concept_id, nb_sessions, score_moyen_global, statut)
+        )
+
+
+def _evaluer_maitrise(concept_id: str) -> tuple[str, int, int]:
+    """
+    Retourne (statut, nb_sessions_passees, nb_sessions_requises).
+
+    statut ∈ {'nouveau', 'en_cours', 'maitrise'}.
+    Pour 'maitrise' : il faut au moins 2 sessions consécutives à
+    score_moyen >= MASTERY_THRESHOLD, séparées d'au moins MASTERY_GAP_HOURS.
+    """
+    with conn() as c:
+        rows = c.execute(
+            """SELECT score_moyen, fini_le FROM sessions
+               WHERE concept_id = ?
+               ORDER BY fini_le DESC LIMIT 5""",
+            (concept_id,)
+        ).fetchall()
+    if not rows:
+        return ("nouveau", 0, 2)
+
+    # Combien de sessions consécutives (en partant de la plus récente)
+    # passent le seuil ?
+    sessions_passees = 0
+    derniere_dt = None
+    for r in rows:
+        score = r["score_moyen"] or 0
+        if score < MASTERY_THRESHOLD:
+            break
+        try:
+            dt = datetime.fromisoformat(r["fini_le"][:19])
+        except Exception:
+            dt = datetime.now()
+        if derniere_dt is not None:
+            gap_h = (derniere_dt - dt).total_seconds() / 3600
+            if gap_h < MASTERY_GAP_HOURS:
+                # Trop proche — ne compte pas comme « consolidée »
+                # On garde la session la plus récente, on tente la suivante
+                continue
+        sessions_passees += 1
+        derniere_dt = dt
+        if sessions_passees >= 2:
+            return ("maitrise", sessions_passees, 2)
+
+    return ("en_cours", sessions_passees, 2)
+
+
+def get_etat_maitrise(concept_id: str) -> dict:
+    """
+    Retourne un dict décrivant l'état courant de progression vers la maîtrise :
+    {
+      'statut': 'nouveau' | 'en_cours' | 'maitrise',
+      'sessions_passees': int,  # consécutives, à >= seuil
+      'sessions_requises': int,
+      'derniere_score': float | None,
+    }
+    """
+    statut, passes, requis = _evaluer_maitrise(concept_id)
+    with conn() as c:
+        last = c.execute(
+            """SELECT score_moyen FROM sessions
+               WHERE concept_id = ? ORDER BY fini_le DESC LIMIT 1""",
+            (concept_id,)
+        ).fetchone()
+    return {
+        "statut": statut,
+        "sessions_passees": passes,
+        "sessions_requises": requis,
+        "derniere_score": (last["score_moyen"] if last else None),
+    }
+
+
+def enregistrer_points_faibles(concept_id: str,
+                                 questions_ratees: list[dict]) -> None:
+    """
+    Pour chaque question ratée (score < 3), enregistre le critère comme
+    point faible.
+
+    questions_ratees : liste de dicts {critere: str, score: int}.
+    """
+    with conn() as c:
+        for q in questions_ratees:
+            critere = (q.get("critere") or "").strip()
+            score = int(q.get("score") or 0)
+            if not critere:
+                continue
+            c.execute(
+                """INSERT INTO points_faibles (concept_id, critere, score)
+                   VALUES (?, ?, ?)""",
+                (concept_id, critere, score)
+            )
+
+
+def get_points_faibles(concept_id: str, limit: int = 5) -> list[str]:
+    """
+    Retourne les critères les plus récents (non résolus) pour ce concept.
+    Limit max 5 pour ne pas surcharger Claude.
+    """
+    with conn() as c:
+        rows = c.execute(
+            """SELECT DISTINCT critere FROM points_faibles
+               WHERE concept_id = ? AND resolu = 0
+               ORDER BY cree_le DESC LIMIT ?""",
+            (concept_id, limit)
+        ).fetchall()
+    return [r["critere"] for r in rows if r["critere"]]
+
+
+def marquer_points_faibles_resolus(concept_id: str) -> None:
+    """Marque tous les points faibles non résolus de ce concept comme résolus.
+    À appeler quand l'apprenant atteint la maîtrise."""
+    with conn() as c:
+        c.execute(
+            "UPDATE points_faibles SET resolu = 1 WHERE concept_id = ?",
+            (concept_id,)
+        )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ALPHA SCHOOL #4 — Teach-back
+# ══════════════════════════════════════════════════════════════════════════════
+
+def enregistrer_teach_back(concept_id: str, transcription: str,
+                             scores: dict, feedback: str) -> int:
+    """
+    scores : {'clarte': 0-4, 'precision': 0-4, 'exemple': 0-4}
+    """
+    total = (scores.get("clarte", 0) + scores.get("precision", 0) +
+             scores.get("exemple", 0))
+    with conn() as c:
+        cur = c.execute(
+            """INSERT INTO teach_back
+               (concept_id, transcription,
+                score_clarte, score_precision, score_exemple,
+                score_total, feedback)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (concept_id, transcription,
+             scores.get("clarte", 0), scores.get("precision", 0),
+             scores.get("exemple", 0), total, feedback)
+        )
+        return cur.lastrowid
+
+
+def get_meilleur_teach_back(concept_id: str) -> dict | None:
+    """Retourne le meilleur teach-back jamais réalisé sur ce concept."""
+    with conn() as c:
+        row = c.execute(
+            """SELECT * FROM teach_back WHERE concept_id = ?
+               ORDER BY score_total DESC, cree_le DESC LIMIT 1""",
+            (concept_id,)
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def est_pret_a_enseigner(concept_id: str, seuil: int = 9) -> bool:
+    """Renvoie True si l'apprenant a un teach-back ≥ seuil/12 sur ce concept."""
+    tb = get_meilleur_teach_back(concept_id)
+    return bool(tb and tb["score_total"] >= seuil)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ALPHA SCHOOL #5 — Objectifs et vélocité
+# ══════════════════════════════════════════════════════════════════════════════
+
+def sauvegarder_objectif(type_: str, cible_module: int | None = None,
+                           deadline: str | None = None,
+                           daily_minutes: int | None = None,
+                           daily_concepts: float | None = None) -> int:
+    """Crée un nouvel objectif et désactive les précédents du même type."""
+    with conn() as c:
+        c.execute(
+            "UPDATE objectifs SET statut = 'abandonne' WHERE type = ? AND statut = 'actif'",
+            (type_,)
+        )
+        cur = c.execute(
+            """INSERT INTO objectifs
+               (type, cible_module, deadline, daily_minutes, daily_concepts)
+               VALUES (?, ?, ?, ?, ?)""",
+            (type_, cible_module, deadline, daily_minutes, daily_concepts)
+        )
+        return cur.lastrowid
+
+
+def get_objectifs_actifs() -> list[dict]:
+    with conn() as c:
+        rows = c.execute(
+            "SELECT * FROM objectifs WHERE statut = 'actif' ORDER BY cree_le DESC"
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def calculer_velocite(jours: int = 7) -> dict:
+    """
+    Calcule la vélocité d'apprentissage sur les `jours` derniers jours.
+    Retourne :
+      {
+        'sessions_periode': int,
+        'concepts_maitrises_periode': int,
+        'minutes_periode': int,
+        'sessions_par_jour': float,
+        'concepts_par_semaine': float,
+      }
+    """
+    with conn() as c:
+        ref_date = (datetime.now() - timedelta(days=jours)).isoformat()
+        rs = c.execute(
+            """SELECT COUNT(*) AS n,
+                       COALESCE(SUM(r.duree_sec), 0) AS dur
+               FROM revisions r
+               WHERE r.revise_le >= ?""",
+            (ref_date,)
+        ).fetchone()
+        nb_revisions = rs["n"] or 0
+        minutes = (rs["dur"] or 0) // 60
+
+        # Concepts maîtrisés sur la période :
+        cm = c.execute(
+            """SELECT COUNT(DISTINCT concept_id) AS n FROM sessions
+               WHERE fini_le >= ? AND score_moyen >= ?""",
+            (ref_date, MASTERY_THRESHOLD)
+        ).fetchone()
+        concepts_maitrises = cm["n"] or 0
+
+    return {
+        "sessions_periode": nb_revisions,
+        "concepts_maitrises_periode": concepts_maitrises,
+        "minutes_periode": int(minutes),
+        "sessions_par_jour": nb_revisions / max(1, jours),
+        "concepts_par_semaine": concepts_maitrises * (7.0 / max(1, jours)),
+    }
+
+
+def get_revisions_par_jour(jours: int = 90) -> dict[str, int]:
+    """
+    Retourne {date_iso: nb_revisions} pour les N derniers jours.
+    Utilisé pour le heatmap style GitHub.
+    """
+    with conn() as c:
+        ref_date = (datetime.now() - timedelta(days=jours)).strftime("%Y-%m-%d")
+        rows = c.execute(
+            """SELECT date(revise_le) AS j, COUNT(*) AS n
+               FROM revisions
+               WHERE date(revise_le) >= ?
+               GROUP BY date(revise_le)""",
+            (ref_date,)
+        ).fetchall()
+    return {r["j"]: r["n"] for r in rows}
+
+
+def get_concepts_a_risque(seuil_stab: float = 1.0,
+                            limit: int = 10) -> list[dict]:
+    """
+    Retourne les concepts dont la stabilité FSRS moyenne tombe sous un seuil.
+    Indicateur d'oubli imminent.
+    """
+    with conn() as c:
+        rows = c.execute(
+            """SELECT c.concept_id,
+                      AVG(c.stabilite) AS s_moy,
+                      COUNT(c.id) AS nb_cartes
+               FROM cartes c
+               WHERE c.nb_revisions > 0
+               GROUP BY c.concept_id
+               HAVING s_moy < ?
+               ORDER BY s_moy ASC LIMIT ?""",
+            (seuil_stab, limit)
+        ).fetchall()
+    return [dict(r) for r in rows]
 
 
 def export_progression_csv() -> str:

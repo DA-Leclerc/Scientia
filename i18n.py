@@ -253,6 +253,143 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     # ── Footer ────────────────────────────────────────────────────────────
     "footer.tagline":            {"fr": "Une discipline militaire. Une gouvernance d'IA qui marche.",
                                   "en": "Military-grade discipline. AI governance that works."},
+
+    # ══════════════════════════════════════════════════════════════════════
+    # ALPHA SCHOOL features
+    # ══════════════════════════════════════════════════════════════════════
+
+    # ── #1 Paliers de maîtrise ────────────────────────────────────────────
+    "mastery.progress.title":    {"fr": "🎯 Progrès vers la maîtrise",
+                                  "en": "🎯 Progress toward mastery"},
+    "mastery.progress.text":     {"fr": "Sessions consécutives à ≥3/4 : {p}/{r}",
+                                  "en": "Consecutive sessions at ≥3/4: {p}/{r}"},
+    "mastery.gap_hint":          {"fr": "Une 2e session ≥24h après la 1ère est requise pour confirmer la maîtrise.",
+                                  "en": "A 2nd session ≥24h after the 1st is required to confirm mastery."},
+    "mastery.failed":            {"fr": "📍 Tu as raté {n} question(s) — Claude peut générer des questions ciblées sur tes points faibles.",
+                                  "en": "📍 You missed {n} question(s) — Claude can generate questions targeting your weak points."},
+    "mastery.targeted_button":   {"fr": "🎯 Quiz ciblé sur mes points faibles",
+                                  "en": "🎯 Targeted quiz on my weak points"},
+    "mastery.targeted_label":    {"fr": "Mode ciblé · attaque tes points faibles",
+                                  "en": "Targeted mode · attacks your weak points"},
+    "mastery.unlocked":          {"fr": "🏆 Maîtrise confirmée. Le concept est solidement encodé.",
+                                  "en": "🏆 Mastery confirmed. The concept is solidly encoded."},
+    "mastery.almost":            {"fr": "Presque ! Refais une session après une nuit pour confirmer la maîtrise.",
+                                  "en": "Almost there! Run another session after a night to confirm mastery."},
+
+    # ── #2 Sprint de maîtrise ─────────────────────────────────────────────
+    "sidebar.sprint":            {"fr": "⚡ Sprint de maîtrise",       "en": "⚡ Mastery sprint"},
+    "sprint.hero.title_main":    {"fr": "Sprint de maîtrise.",         "en": "Mastery sprint."},
+    "sprint.hero.title_accent":  {"fr": "L'entrelacement qui transfère.","en": "Interleaving that transfers."},
+    "sprint.hero.subtitle":      {
+        "fr": "Choisis 3-5 concepts. Le sprint tire 1 question de chacun, en ordre aléatoire, "
+              "sans te dire de quel concept ça vient. C'est l'épreuve qui simule le mieux la pratique réelle.",
+        "en": "Pick 3-5 concepts. The sprint pulls 1 question from each, in random order, "
+              "without telling you which concept. It's the exercise that best mimics real practice."},
+    "sprint.hero.tag":           {"fr": "⚡ Mode entrelacé",            "en": "⚡ Interleaved mode"},
+    "sprint.choose":             {"fr": "Choisis 3-5 concepts pour le sprint",
+                                  "en": "Pick 3-5 concepts for the sprint"},
+    "sprint.need_more":          {"fr": "Sélectionne au moins 3 concepts.",
+                                  "en": "Pick at least 3 concepts."},
+    "sprint.need_cards":         {"fr": "Ces concepts n'ont pas de questions générées. Lance d'abord un quiz normal sur chacun.",
+                                  "en": "These concepts have no generated questions. Run a normal quiz on each first."},
+    "sprint.start":              {"fr": "⚡ Démarrer le sprint",        "en": "⚡ Start the sprint"},
+    "sprint.q_of":               {"fr": "Question {i} / {total}",       "en": "Question {i} / {total}"},
+    "sprint.concept_hidden":     {"fr": "Concept masqué — identifie-le par le contexte.",
+                                  "en": "Concept hidden — identify it from context."},
+    "sprint.results":            {"fr": "📊 Résultats du sprint",       "en": "📊 Sprint results"},
+    "sprint.score_per_concept":  {"fr": "Score par concept",             "en": "Score by concept"},
+    "sprint.transfer_tip":       {"fr": "Astuce : si tu as bien réussi, tu transfères. Si tu as buté, le concept est isolé — fais un quiz normal pour consolider.",
+                                  "en": "Hint: if you scored well, you're transferring. If you stumbled, the concept is isolated — run a normal quiz to consolidate."},
+    "sprint.restart":            {"fr": "🔁 Nouveau sprint",            "en": "🔁 New sprint"},
+
+    # ── #3 Diagnostic pré-module ──────────────────────────────────────────
+    "diag.button":               {"fr": "🎯 Diagnostic rapide ({n} concepts)",
+                                  "en": "🎯 Quick diagnostic ({n} concepts)"},
+    "diag.intro":                {"fr": "1 question par concept. Les concepts que tu réussis seront marqués comme déjà acquis. Les autres garderont la trace de ce que tu as raté.",
+                                  "en": "1 question per concept. Successful ones are marked as already learned. Failed ones keep track of what you missed."},
+    "diag.generating":           {"fr": "Génération du diagnostic…",   "en": "Generating diagnostic…"},
+    "diag.q_progress":           {"fr": "Diagnostic · {i} / {total}",   "en": "Diagnostic · {i} / {total}"},
+    "diag.skip_button":          {"fr": "❓ Je ne sais pas",            "en": "❓ I don't know"},
+    "diag.results":              {"fr": "📊 Résultats du diagnostic",   "en": "📊 Diagnostic results"},
+    "diag.already_mastered":     {"fr": "✓ Déjà acquis ({n})",          "en": "✓ Already learned ({n})"},
+    "diag.to_study":             {"fr": "📚 À étudier ({n})",            "en": "📚 To study ({n})"},
+    "diag.continue":             {"fr": "Continuer vers le module →",   "en": "Continue to module →"},
+
+    # ── #4 Teach-back ─────────────────────────────────────────────────────
+    "teach.button":              {"fr": "🎤 Mode Teach-back",            "en": "🎤 Teach-back mode"},
+    "teach.locked":              {"fr": "Disponible une fois le concept maîtrisé.",
+                                  "en": "Available once the concept is mastered."},
+    "teach.hero.title_main":     {"fr": "Si tu peux l'enseigner,",      "en": "If you can teach it,"},
+    "teach.hero.title_accent":   {"fr": "tu le maîtrises vraiment.",     "en": "you truly own it."},
+    "teach.hero.subtitle":       {
+        "fr": "Le client te demande d'expliquer ce concept. Réponds comme tu le ferais dans une rencontre de cadrage. "
+              "Claude évalue selon 3 critères : clarté pour un non-initié, précision technique, exemple concret.",
+        "en": "The client asks you to explain this concept. Reply as you would in a scoping meeting. "
+              "Claude scores on 3 criteria: clarity for a non-expert, technical precision, concrete example."},
+    "teach.hero.tag":             {"fr": "🎤 Apprendre en enseignant",   "en": "🎤 Learn by teaching"},
+    "teach.scenario":            {"fr": "Scénario : un client moyen ne connaît rien à la gouvernance d'IA. Explique-lui.",
+                                  "en": "Scenario: a typical client knows nothing about AI governance. Explain it to them."},
+    "teach.input_label":         {"fr": "Ton explication",              "en": "Your explanation"},
+    "teach.input_placeholder":   {"fr": "Comme si tu lui parlais en personne…",
+                                  "en": "As if speaking to them in person…"},
+    "teach.submit":              {"fr": "✓ Soumettre mon explication",  "en": "✓ Submit my explanation"},
+    "teach.evaluating":          {"fr": "Claude évalue ton enseignement…",
+                                  "en": "Claude is evaluating your teaching…"},
+    "teach.error":               {"fr": "Erreur d'évaluation : {e}",    "en": "Evaluation error: {e}"},
+    "teach.results":             {"fr": "📋 Évaluation",                 "en": "📋 Assessment"},
+    "teach.score_clarity":       {"fr": "Clarté",                        "en": "Clarity"},
+    "teach.score_precision":     {"fr": "Précision",                     "en": "Precision"},
+    "teach.score_example":       {"fr": "Exemple",                       "en": "Example"},
+    "teach.score_total":         {"fr": "Score total : {t}/12",          "en": "Total score: {t}/12"},
+    "teach.ready":               {"fr": "✓ Prêt à enseigner — score ≥ 9/12. Tu peux livrer ce concept en mission.",
+                                  "en": "✓ Ready to teach — score ≥ 9/12. You can deliver this concept in a mission."},
+    "teach.not_ready":           {"fr": "Pas encore. Vise une note ≥ 9/12 pour être prêt à livrer en mission.",
+                                  "en": "Not yet. Aim for ≥ 9/12 to be ready to deliver in a mission."},
+    "teach.feedback":            {"fr": "**Feedback de Claude** — {f}", "en": "**Claude's feedback** — {f}"},
+    "teach.retry":               {"fr": "🔁 Refaire un teach-back",     "en": "🔁 Retry teach-back"},
+    "teach.best":                {"fr": "🏆 Meilleur score : {t}/12",   "en": "🏆 Best score: {t}/12"},
+
+    # ── #5 Tableau de bord + objectifs ────────────────────────────────────
+    "sidebar.dashboard":         {"fr": "🎯 Mes objectifs",              "en": "🎯 My goals"},
+    "dash.hero.title_main":      {"fr": "Pilote ta progression.",         "en": "Pilot your progress."},
+    "dash.hero.title_accent":    {"fr": "Avec tes propres données.",      "en": "With your own data."},
+    "dash.hero.subtitle":        {
+        "fr": "Fixe une cible, suis ta vélocité, identifie les concepts à risque. "
+              "Comme à Alpha School, c'est toi qui pilotes — les données t'aident à voir clair.",
+        "en": "Set a target, track your velocity, spot at-risk concepts. "
+              "Like at Alpha School, you steer — the data helps you see."},
+    "dash.hero.tag":             {"fr": "🎯 Tableau de bord personnel",   "en": "🎯 Personal dashboard"},
+    "dash.goal_section":         {"fr": "Objectif courant",                "en": "Current goal"},
+    "dash.no_goal":              {"fr": "Aucun objectif fixé pour l'instant.",
+                                  "en": "No goal set yet."},
+    "dash.goal_create":          {"fr": "Définir un objectif",             "en": "Set a goal"},
+    "dash.goal_target_module":   {"fr": "Module à maîtriser",              "en": "Module to master"},
+    "dash.goal_deadline":        {"fr": "Échéance",                        "en": "Deadline"},
+    "dash.goal_save":             {"fr": "💾 Enregistrer l'objectif",     "en": "💾 Save goal"},
+    "dash.goal_saved":            {"fr": "Objectif enregistré.",           "en": "Goal saved."},
+    "dash.goal_active":           {"fr": "Objectif : maîtriser **{nom}** d'ici **{deadline}**.",
+                                  "en": "Goal: master **{nom}** by **{deadline}**."},
+    "dash.goal_progress":         {"fr": "Progrès : {m}/{n} concepts maîtrisés du module.",
+                                  "en": "Progress: {m}/{n} concepts of the module mastered."},
+    "dash.goal_projection":       {"fr": "Au rythme actuel ({c:.1f} concepts/sem), atteinte estimée le **{date}**.",
+                                  "en": "At current pace ({c:.1f} concepts/wk), expected completion **{date}**."},
+    "dash.goal_on_track":         {"fr": "✓ En avance sur l'échéance.",    "en": "✓ Ahead of schedule."},
+    "dash.goal_late":              {"fr": "⚠ {d} jour(s) de retard sur le plan.",
+                                  "en": "⚠ {d} day(s) behind schedule."},
+    "dash.goal_no_velocity":       {"fr": "Pas assez de données pour projeter — fais quelques sessions.",
+                                  "en": "Not enough data to project yet — run a few sessions."},
+    "dash.goal_clear":            {"fr": "🗑 Effacer l'objectif",          "en": "🗑 Clear goal"},
+    "dash.velocity":               {"fr": "Vélocité (7 derniers jours)",    "en": "Velocity (last 7 days)"},
+    "dash.metric.sessions":       {"fr": "Sessions",                       "en": "Sessions"},
+    "dash.metric.minutes":         {"fr": "Minutes",                       "en": "Minutes"},
+    "dash.metric.mastered":       {"fr": "Concepts maîtrisés",             "en": "Concepts mastered"},
+    "dash.metric.per_week":       {"fr": "Concepts/semaine",                "en": "Concepts/week"},
+    "dash.heatmap":                {"fr": "Carte de chaleur — 90 derniers jours",
+                                  "en": "Heatmap — last 90 days"},
+    "dash.at_risk":                {"fr": "Concepts à risque (oubli imminent)",
+                                  "en": "At-risk concepts (forgetting soon)"},
+    "dash.no_risk":                {"fr": "Aucun concept en zone d'oubli pour l'instant.",
+                                  "en": "No concepts in the forgetting zone yet."},
 }
 
 
