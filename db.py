@@ -153,6 +153,7 @@ def init() -> None:
             reponse_ref  TEXT NOT NULL,
             critere      TEXT NOT NULL,
             indice       TEXT,
+            langue       TEXT    DEFAULT 'fr',
             -- FSRS state
             stabilite    REAL    DEFAULT 0.0,
             difficulte   REAL    DEFAULT 5.0,
@@ -179,6 +180,38 @@ def init() -> None:
             derniere_rev  TEXT,
             statut        TEXT    DEFAULT 'nouveau'
         );
+
+        CREATE TABLE IF NOT EXISTS notes (
+            concept_id   TEXT PRIMARY KEY,
+            texte        TEXT NOT NULL DEFAULT '',
+            modifie_le   TEXT DEFAULT (datetime('now'))
+        );
+
+        -- Sprint A : reprise. Singleton qui mémorise la dernière activité.
+        CREATE TABLE IF NOT EXISTS session_state (
+            id                 INTEGER PRIMARY KEY CHECK (id = 1),
+            derniere_activite  TEXT NOT NULL DEFAULT (datetime('now')),
+            derniere_action    TEXT,           -- 'quiz' | 'socratique' | 'lecture'
+            concept_id         TEXT,
+            index_question     INTEGER DEFAULT 0,
+            quiz_scores_json   TEXT DEFAULT '[]',
+            quiz_carte_ids_json TEXT DEFAULT '[]',
+            quiz_termine       INTEGER DEFAULT 0
+        );
+
+        -- Sprint B : persistance des dialogues socratiques.
+        CREATE TABLE IF NOT EXISTS dialogues_socratique (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            concept_id    TEXT NOT NULL,
+            historique_json TEXT NOT NULL DEFAULT '[]',
+            statut        TEXT NOT NULL DEFAULT 'en_cours',  -- 'en_cours' | 'termine'
+            resume_json   TEXT,
+            cree_le       TEXT DEFAULT (datetime('now')),
+            modifie_le    TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_dialogues_concept
+          ON dialogues_socratique(concept_id, statut);
         """)
 
         # Migration : ajouter les colonnes FSRS si elles n'existent pas encore
@@ -190,6 +223,7 @@ def init() -> None:
             ("stabilite",    "REAL DEFAULT 0.0"),
             ("difficulte",   "REAL DEFAULT 5.0"),
             ("nb_revisions", "INTEGER DEFAULT 0"),
+            ("langue",       "TEXT DEFAULT 'fr'"),
         ]:
             if col not in colonnes_cartes:
                 c.execute(f"ALTER TABLE cartes ADD COLUMN {col} {defn}")
@@ -209,15 +243,6 @@ def init() -> None:
         }
         if "version" not in colonnes_contenu:
             c.execute("ALTER TABLE concepts_contenu ADD COLUMN version INTEGER DEFAULT 1")
-
-        # Migration : table notes
-        c.executescript("""
-        CREATE TABLE IF NOT EXISTS notes (
-            concept_id   TEXT PRIMARY KEY,
-            texte        TEXT NOT NULL DEFAULT '',
-            modifie_le   TEXT DEFAULT (datetime('now'))
-        );
-        """)
 
 
 # ── Contenu généré ────────────────────────────────────────────────────────────
@@ -522,7 +547,8 @@ def _coerce_str(v) -> str:
     return str(v)
 
 
-def sauvegarder_cartes(concept_id: str, questions: list[dict]) -> list[int]:
+def sauvegarder_cartes(concept_id: str, questions: list[dict],
+                        langue: str = "fr") -> list[int]:
     """
     Persiste une liste de questions générées par generator.py
     et retourne la liste des id des cartes créées.
@@ -530,26 +556,283 @@ def sauvegarder_cartes(concept_id: str, questions: list[dict]) -> list[int]:
     Convertit le format generator (question, difficulte) → format DB
     (enonce, niveau). Coerce les champs texte au cas où Claude renvoie
     une liste plutôt qu'une chaîne.
+
+    `langue` est mémorisée par carte pour ne plus dépendre du dict CURRICULUM
+    au moment de l'évaluation.
     """
     ids: list[int] = []
     with conn() as c:
         c.execute("DELETE FROM cartes WHERE concept_id = ?", (concept_id,))
         for i, q in enumerate(questions, start=1):
+            q_langue = q.get("langue") or langue
             cur = c.execute(
                 """INSERT INTO cartes
                    (concept_id, section_num, type, niveau,
-                    enonce, reponse_ref, critere, indice)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    enonce, reponse_ref, critere, indice, langue)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (concept_id, i,
                  _coerce_str(q.get("type", "")),
                  int(q.get("difficulte", q.get("niveau", 1)) or 1),
                  _coerce_str(q.get("question", q.get("enonce", ""))),
                  _coerce_str(q.get("reponse_ref", "")),
                  _coerce_str(q.get("critere", "")),
-                 _coerce_str(q.get("indice", "")))
+                 _coerce_str(q.get("indice", "")),
+                 _coerce_str(q_langue) or "fr")
             )
             ids.append(cur.lastrowid)
     return ids
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SPRINT A — Reprise de session (table session_state, singleton)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def set_derniere_activite(action: str | None,
+                           concept_id: str | None = None,
+                           index_question: int = 0,
+                           quiz_scores: list[int] | None = None,
+                           quiz_carte_ids: list[int] | None = None,
+                           termine: bool = False) -> None:
+    """
+    Mémorise la dernière activité de l'utilisateur.
+
+    action ∈ {'quiz', 'socratique', 'lecture', None}.
+    None efface l'activité (reprise impossible).
+    """
+    with conn() as c:
+        c.execute(
+            """INSERT INTO session_state
+               (id, derniere_activite, derniere_action, concept_id,
+                index_question, quiz_scores_json, quiz_carte_ids_json,
+                quiz_termine)
+               VALUES (1, datetime('now'), ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET
+                  derniere_activite    = datetime('now'),
+                  derniere_action      = excluded.derniere_action,
+                  concept_id           = excluded.concept_id,
+                  index_question       = excluded.index_question,
+                  quiz_scores_json     = excluded.quiz_scores_json,
+                  quiz_carte_ids_json  = excluded.quiz_carte_ids_json,
+                  quiz_termine         = excluded.quiz_termine""",
+            (action,
+             concept_id,
+             int(index_question or 0),
+             json.dumps(list(quiz_scores or [])),
+             json.dumps(list(quiz_carte_ids or [])),
+             1 if termine else 0)
+        )
+
+
+def get_derniere_activite() -> dict | None:
+    """
+    Retourne la dernière activité non terminée, ou None.
+
+    Si quiz_termine=1, on considère qu'il n'y a rien à reprendre.
+    """
+    with conn() as c:
+        row = c.execute(
+            "SELECT * FROM session_state WHERE id = 1"
+        ).fetchone()
+    if not row:
+        return None
+    d = dict(row)
+    if d.get("quiz_termine"):
+        return None
+    if not d.get("derniere_action"):
+        return None
+    try:
+        d["quiz_scores"] = json.loads(d.get("quiz_scores_json") or "[]")
+    except Exception:
+        d["quiz_scores"] = []
+    try:
+        d["quiz_carte_ids"] = json.loads(d.get("quiz_carte_ids_json") or "[]")
+    except Exception:
+        d["quiz_carte_ids"] = []
+    return d
+
+
+def effacer_derniere_activite() -> None:
+    """Marque la session comme terminée (rien à reprendre)."""
+    with conn() as c:
+        c.execute(
+            "UPDATE session_state SET quiz_termine = 1, derniere_action = NULL "
+            "WHERE id = 1"
+        )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SPRINT B — Persistance des dialogues socratiques
+# ══════════════════════════════════════════════════════════════════════════════
+
+def get_dialogue_socratique_actif(concept_id: str) -> dict | None:
+    """Retourne le dialogue 'en_cours' le plus récent pour ce concept, ou None."""
+    with conn() as c:
+        row = c.execute(
+            """SELECT * FROM dialogues_socratique
+               WHERE concept_id = ? AND statut = 'en_cours'
+               ORDER BY modifie_le DESC LIMIT 1""",
+            (concept_id,)
+        ).fetchone()
+    if not row:
+        return None
+    d = dict(row)
+    try:
+        d["historique"] = json.loads(d.get("historique_json") or "[]")
+    except Exception:
+        d["historique"] = []
+    return d
+
+
+def get_dialogue_socratique_par_id(dialogue_id: int) -> dict | None:
+    with conn() as c:
+        row = c.execute(
+            "SELECT * FROM dialogues_socratique WHERE id = ?", (dialogue_id,)
+        ).fetchone()
+    if not row:
+        return None
+    d = dict(row)
+    try:
+        d["historique"] = json.loads(d.get("historique_json") or "[]")
+    except Exception:
+        d["historique"] = []
+    if d.get("resume_json"):
+        try:
+            d["resume"] = json.loads(d["resume_json"])
+        except Exception:
+            d["resume"] = None
+    return d
+
+
+def sauvegarder_dialogue_socratique(concept_id: str,
+                                      historique: list[dict],
+                                      dialogue_id: int | None = None) -> int:
+    """
+    Sauvegarde un dialogue socratique en cours.
+    Si dialogue_id est fourni, met à jour. Sinon insère.
+    Retourne l'id du dialogue.
+    """
+    payload = json.dumps(historique, ensure_ascii=False)
+    with conn() as c:
+        if dialogue_id is None:
+            cur = c.execute(
+                """INSERT INTO dialogues_socratique
+                   (concept_id, historique_json, statut)
+                   VALUES (?, ?, 'en_cours')""",
+                (concept_id, payload)
+            )
+            return cur.lastrowid
+        else:
+            c.execute(
+                """UPDATE dialogues_socratique
+                   SET historique_json = ?, modifie_le = datetime('now')
+                   WHERE id = ?""",
+                (payload, dialogue_id)
+            )
+            return dialogue_id
+
+
+def terminer_dialogue_socratique(dialogue_id: int, resume: dict) -> None:
+    """Marque un dialogue comme terminé et y attache le résumé."""
+    with conn() as c:
+        c.execute(
+            """UPDATE dialogues_socratique
+               SET statut = 'termine',
+                   resume_json = ?,
+                   modifie_le = datetime('now')
+               WHERE id = ?""",
+            (json.dumps(resume, ensure_ascii=False), dialogue_id)
+        )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SPRINT D — Streak, recommandation, reset, export
+# ══════════════════════════════════════════════════════════════════════════════
+
+def get_streak_jours() -> int:
+    """
+    Calcule le streak (jours consécutifs avec au moins une révision)
+    en remontant à partir d'aujourd'hui.
+    """
+    jours = get_toutes_dates_revision()
+    if not jours:
+        return 0
+    aujourd = datetime.now().date()
+    # Convertir en set pour lookup O(1)
+    set_jours = set()
+    for j in jours:
+        try:
+            set_jours.add(datetime.strptime(j, "%Y-%m-%d").date())
+        except Exception:
+            continue
+    streak = 0
+    cursor = aujourd
+    # Tolère qu'aujourd'hui n'ait pas encore de révision : on compte à partir
+    # d'hier dans ce cas.
+    if aujourd not in set_jours:
+        cursor = aujourd - timedelta(days=1)
+    while cursor in set_jours:
+        streak += 1
+        cursor = cursor - timedelta(days=1)
+    return streak
+
+
+def reset_progression_concept(concept_id: str) -> None:
+    """Supprime cartes, révisions et progression pour un concept donné."""
+    with conn() as c:
+        # Récupérer les cartes pour effacer leurs révisions
+        carte_rows = c.execute(
+            "SELECT id FROM cartes WHERE concept_id = ?", (concept_id,)
+        ).fetchall()
+        carte_ids = [r["id"] for r in carte_rows]
+        if carte_ids:
+            placeholders = ",".join("?" * len(carte_ids))
+            c.execute(
+                f"DELETE FROM revisions WHERE carte_id IN ({placeholders})",
+                tuple(carte_ids)
+            )
+        c.execute("DELETE FROM cartes WHERE concept_id = ?", (concept_id,))
+        c.execute("DELETE FROM progression WHERE concept_id = ?", (concept_id,))
+        # Si la session courante portait sur ce concept, on la termine
+        c.execute(
+            "UPDATE session_state SET quiz_termine = 1, derniere_action = NULL "
+            "WHERE id = 1 AND concept_id = ?", (concept_id,)
+        )
+
+
+def export_progression_csv() -> str:
+    """
+    Retourne un CSV (avec en-tête) de la progression de tous les concepts
+    avec révisions. Format : concept_id, nb_sessions, score_moyen,
+    statut, derniere_rev, nb_cartes, nb_revisions.
+    """
+    import csv
+    from io import StringIO
+    buf = StringIO()
+    writer = csv.writer(buf)
+    writer.writerow([
+        "concept_id", "nb_sessions", "score_moyen", "statut",
+        "derniere_rev", "nb_cartes", "nb_revisions",
+    ])
+    with conn() as c:
+        rows = c.execute("""
+            SELECT p.concept_id, p.nb_sessions, p.score_moyen, p.statut,
+                   p.derniere_rev,
+                   (SELECT COUNT(*) FROM cartes WHERE concept_id = p.concept_id)
+                     AS nb_cartes,
+                   (SELECT COUNT(*) FROM revisions r
+                     JOIN cartes c2 ON c2.id = r.carte_id
+                     WHERE c2.concept_id = p.concept_id) AS nb_revisions
+            FROM progression p
+            ORDER BY p.concept_id
+        """).fetchall()
+    for r in rows:
+        writer.writerow([
+            r["concept_id"], r["nb_sessions"],
+            f"{(r['score_moyen'] or 0):.2f}",
+            r["statut"], r["derniere_rev"] or "",
+            r["nb_cartes"], r["nb_revisions"],
+        ])
+    return buf.getvalue()
 
 
 # ── Alias pour compatibilité avec l'ancien scientia.py ────────────────────────

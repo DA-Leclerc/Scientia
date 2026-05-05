@@ -66,3 +66,19 @@ Glisse un PDF, Markdown ou TXT dans `docs/`. Dans l'app, choisis « Ingérer un 
 ## Tuteur socratique
 
 Bouton « Discuter avec Claude » sous chaque question : aide à décortiquer la question sans révéler la réponse, ou à explorer le concept en dialogue.
+
+## Reprise automatique
+
+Quand tu reviens dans l'app, l'accueil affiche un bandeau **▶️ Reprendre** avec ton dernier concept et la position dans le quiz. Tu peux quitter mid-quiz, fermer l'onglet, revenir le lendemain : tout est sauvegardé. Le dialogue socratique est aussi persisté.
+
+## Révision rapide
+
+Bouton **🔁 Révision rapide** dans la sidebar : regroupe toutes les cartes dues (tous concepts confondus) pour vider la file en une session.
+
+## Streak et export
+
+Compteur **🔥 streak** sur l'accueil et la page Progression (jours consécutifs avec révision). Bouton **📥 Exporter ma progression (CSV)** pour archive personnelle.
+
+## Reset par concept
+
+Sur la page d'un concept, expander **⚠️ Réinitialiser** pour purger les cartes, révisions et progression FSRS — utile quand le texte source d'un concept change substantiellement.

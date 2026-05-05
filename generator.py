@@ -6,8 +6,46 @@ Prend un concept (texte + titre) et génère des questions de types variés.
 import anthropic
 import json
 import re
+import time
 
 client = anthropic.Anthropic()
+
+
+def _appel_claude(model: str, system: str | None, messages: list[dict],
+                   max_tokens: int = 1000) -> str:
+    """
+    Appel à l'API Anthropic avec retry exponentiel sur les erreurs transitoires
+    (529 overloaded, 503 unavailable, timeouts, rate limits).
+
+    Lève l'exception après 3 tentatives ratées.
+    """
+    delais = [0.0, 2.0, 5.0]  # 3 tentatives : immédiate, +2s, +5s
+    derniere = None
+    for d in delais:
+        if d > 0:
+            time.sleep(d)
+        try:
+            kwargs = {
+                "model": model,
+                "max_tokens": max_tokens,
+                "messages": messages,
+            }
+            if system is not None:
+                kwargs["system"] = system
+            msg = client.messages.create(**kwargs)
+            return msg.content[0].text.strip()
+        except anthropic.APIStatusError as e:
+            # Retry sur 5xx + 429 (rate limit)
+            if e.status_code in (429, 500, 502, 503, 504, 529):
+                derniere = e
+                continue
+            raise
+        except (anthropic.APIConnectionError, anthropic.APITimeoutError) as e:
+            derniere = e
+            continue
+    if derniere:
+        raise derniere
+    raise RuntimeError("Échec inattendu de l'appel Claude")
 
 TYPES_QUESTIONS = {
     "intuition": "Intuition — expliquer POURQUOI, pas seulement QUOI",
@@ -106,14 +144,12 @@ Pour chaque question, fournis un objet JSON avec ces champs :
 
 Retourne un tableau JSON de {n} objets. Rien d'autre. Pas de markdown. Juste le JSON."""
 
-    message = client.messages.create(
+    contenu = _appel_claude(
         model="claude-sonnet-4-6",
         max_tokens=6000,
         system=PROMPT_SYSTEME,
         messages=[{"role": "user", "content": prompt}],
     )
-
-    contenu = message.content[0].text.strip()
 
     # Nettoyer si markdown accidentel
     contenu = re.sub(r"^```(?:json)?\n?", "", contenu)
@@ -189,13 +225,12 @@ CHAMPS À RETOURNER :
 
 Retourne UNIQUEMENT le JSON. Pas de markdown."""
 
-    message = client.messages.create(
+    contenu = _appel_claude(
         model="claude-sonnet-4-6",
         max_tokens=500,
+        system=None,
         messages=[{"role": "user", "content": prompt}],
     )
-
-    contenu = message.content[0].text.strip()
     contenu = re.sub(r"^```(?:json)?\n?", "", contenu)
     contenu = re.sub(r"\n?```$", "", contenu)
 
@@ -281,14 +316,12 @@ Tu vas mener un dialogue socratique avec Dominic sur ce concept, dans le context
         # turns are previous tutor replies.
         messages.extend(historique)
 
-    message = client.messages.create(
+    return _appel_claude(
         model="claude-sonnet-4-6",
         max_tokens=400,
         system=PROMPT_SOCRATIQUE,
         messages=messages,
     )
-
-    return message.content[0].text.strip()
 
 
 PROMPT_SOCRATIQUE_QUESTION = """Tu es un tuteur SOCRATIQUE qui aide Dominic à COMPRENDRE une question de quiz, pas à y répondre.
@@ -373,14 +406,12 @@ Tu vas aider Dominic à COMPRENDRE cette question, pas à y répondre.
         messages = [{"role": "user", "content": contexte}]
         messages.extend(historique)
 
-    message = client.messages.create(
+    return _appel_claude(
         model="claude-sonnet-4-6",
         max_tokens=400,
         system=PROMPT_SOCRATIQUE_QUESTION,
         messages=messages,
     )
-
-    return message.content[0].text.strip()
 
 
 def resumer_socratique(concept: dict, historique: list[dict]) -> dict:
@@ -415,13 +446,12 @@ Retourne UNIQUEMENT un objet JSON (pas de markdown) avec :
 LANGUE DE SORTIE : si « Langue du concept » = en, écris points_forts, a_approfondir, synthese EN ANGLAIS. Sinon en français québécois quotidien.
 """
 
-    message = client.messages.create(
+    contenu = _appel_claude(
         model="claude-sonnet-4-6",
         max_tokens=600,
+        system=None,
         messages=[{"role": "user", "content": prompt}],
     )
-
-    contenu = message.content[0].text.strip()
     contenu = re.sub(r"^```(?:json)?\n?", "", contenu)
     contenu = re.sub(r"\n?```$", "", contenu)
     return json.loads(contenu)

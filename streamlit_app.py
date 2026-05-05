@@ -26,7 +26,7 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="auto",
     menu_items={
-        "About": "Scientia — apprentissage espacé pour la science.",
+        "About": "Scientia — apprentissage espacé pour la gouvernance d'IA.",
     },
 )
 
@@ -51,7 +51,9 @@ if not os.environ.get("ANTHROPIC_API_KEY"):
 from curriculum import (
     CURRICULUM,
     NOMS_MODULES,
+    LANGUE_MODULES,
     ORDRE_AFFICHAGE_MODULES,
+    PARCOURS_CONSEILLES,
     get_concepts_par_module,
 )
 from db import (
@@ -67,6 +69,19 @@ from db import (
     nb_cartes_dues,
     get_cartes_dues,
     get_planning_14j,
+    # Sprint A
+    set_derniere_activite,
+    get_derniere_activite,
+    effacer_derniere_activite,
+    # Sprint B
+    get_dialogue_socratique_actif,
+    get_dialogue_socratique_par_id,
+    sauvegarder_dialogue_socratique,
+    terminer_dialogue_socratique,
+    # Sprint D
+    get_streak_jours,
+    reset_progression_concept,
+    export_progression_csv,
 )
 
 # ── Initialisation DB ─────────────────────────────────────────────────────────
@@ -99,6 +114,41 @@ from generator import (
     aide_socratique_question,
 )
 
+# ── Utilitaires UI ────────────────────────────────────────────────────────────
+
+def langue_du_module(m: int) -> str:
+    """Retourne le drapeau du module."""
+    code = LANGUE_MODULES.get(m, "fr")
+    return "🇫🇷" if code == "fr" else ("🇬🇧" if code == "en" else "")
+
+
+def nom_module_avec_drapeau(m: int) -> str:
+    nom = NOMS_MODULES.get(m, "?")
+    drapeau = langue_du_module(m)
+    return f"{drapeau} M{m:02d} — {nom}".strip()
+
+
+def temps_relatif(iso_ts: str | None) -> str:
+    """Convertit un timestamp ISO en 'il y a X minutes/heures/jours'."""
+    if not iso_ts:
+        return ""
+    from datetime import datetime, timezone
+    try:
+        dt = datetime.fromisoformat(iso_ts[:19])
+    except Exception:
+        return iso_ts
+    delta = datetime.now() - dt
+    sec = int(delta.total_seconds())
+    if sec < 60:
+        return "à l'instant"
+    if sec < 3600:
+        return f"il y a {sec // 60} min"
+    if sec < 86400:
+        return f"il y a {sec // 3600} h"
+    j = sec // 86400
+    return f"il y a {j} jour" + ("s" if j > 1 else "")
+
+
 # ── État de session ───────────────────────────────────────────────────────────
 
 if "page" not in st.session_state:
@@ -121,23 +171,32 @@ if "indice_visible" not in st.session_state:
     st.session_state.indice_visible = {}
 if "soc_concept" not in st.session_state:
     st.session_state.soc_concept = None
+if "soc_dialogue_id" not in st.session_state:
+    st.session_state.soc_dialogue_id = None  # B : id en DB
 if "soc_historique" not in st.session_state:
     st.session_state.soc_historique = []
 if "soc_resume" not in st.session_state:
     st.session_state.soc_resume = None
 if "soc_pending_user" not in st.session_state:
     st.session_state.soc_pending_user = ""
-# Mini-tuteur socratique attaché à une question de quiz spécifique.
-# Clé = (concept_id, question_index). Valeur = liste de messages {role, content}.
 if "q_soc_dialogues" not in st.session_state:
     st.session_state.q_soc_dialogues = {}
-# Quelles questions ont leur expander socratique ouvert
 if "q_soc_ouverts" not in st.session_state:
     st.session_state.q_soc_ouverts = set()
+# Sprint C : filtre langue de modules (None = tous)
+if "filtre_langue" not in st.session_state:
+    st.session_state.filtre_langue = None
+# Sprint D : taille du quiz par défaut
+if "n_questions" not in st.session_state:
+    st.session_state.n_questions = 5
+# Drapeau pour bloquer la sauvegarde de dernière activité quand on consulte
+# une page sans étudier (ex. Progression).
+if "session_chargee_de_db" not in st.session_state:
+    st.session_state.session_chargee_de_db = False
 
 
 def aller_a(page: str, **kwargs):
-    """Navigation avec reset des états de quiz."""
+    """Navigation avec mise à jour des états."""
     st.session_state.page = page
     for k, v in kwargs.items():
         st.session_state[k] = v
@@ -151,18 +210,67 @@ def reset_quiz():
     st.session_state.evaluation_courante = None
 
 
+# ── Reprise au démarrage : charger l'état de quiz si disponible ───────────────
+
+def tenter_reprise_si_demande():
+    """
+    Si on est sur la page 'etudier' avec un concept choisi mais pas de
+    questions chargées en mémoire, et qu'il y a une session en cours en DB
+    pour ce même concept, on restaure les questions et l'index.
+    """
+    if (st.session_state.page == "etudier"
+            and st.session_state.concept_actuel
+            and not st.session_state.questions
+            and not st.session_state.session_chargee_de_db):
+        derniere = get_derniere_activite()
+        if (derniere
+                and derniere.get("derniere_action") == "quiz"
+                and derniere.get("concept_id") == st.session_state.concept_actuel):
+            cle = derniere["concept_id"]
+            cartes = get_cartes_concept(cle)
+            if cartes:
+                st.session_state.questions = [
+                    {
+                        "type": q["type"],
+                        "question": q["enonce"],
+                        "reponse_ref": q["reponse_ref"],
+                        "critere": q["critere"],
+                        "indice": q.get("indice", "") or "",
+                        "difficulte": q["niveau"],
+                        "langue": q.get("langue") or
+                                  CURRICULUM.get(cle, {}).get("langue", "fr"),
+                    }
+                    for q in cartes
+                ]
+                st.session_state.carte_ids = [q["id"] for q in cartes]
+                st.session_state.index_question = derniere.get(
+                    "index_question", 0
+                ) or 0
+                st.session_state.scores_session = list(
+                    derniere.get("quiz_scores") or []
+                )
+                st.session_state.debut_question = time.time()
+                st.session_state.session_chargee_de_db = True
+
+
+tenter_reprise_si_demande()
+
+
 # ── Sidebar : navigation + statistiques rapides ───────────────────────────────
 
 with st.sidebar:
     st.markdown("# 📘 Scientia")
-    st.caption("Apprentissage espacé · Quiz IA")
+    st.caption("Gouvernance de l'IA · Quiz · FSRS")
 
     st.markdown("---")
     if st.button("🏠 Accueil", use_container_width=True):
         aller_a("accueil")
         st.rerun()
-    if st.button("📚 Parcourir les modules", use_container_width=True):
+    if st.button("📚 Modules", use_container_width=True):
         aller_a("modules")
+        st.rerun()
+    if st.button("🔁 Révision rapide", use_container_width=True):
+        aller_a("revision_rapide")
         st.rerun()
     if st.button("🗣️ Dialogue socratique", use_container_width=True):
         aller_a("socratique")
@@ -176,12 +284,17 @@ with st.sidebar:
 
     st.markdown("---")
     cartes_dues = nb_cartes_dues()
-    if cartes_dues:
-        st.metric("📅 À réviser aujourd'hui", cartes_dues)
-    else:
-        st.success("✓ Aucune révision due")
+    streak = get_streak_jours()
 
-    st.caption(f"{len(CURRICULUM)} concepts au total")
+    col_a, col_b = st.columns(2)
+    if cartes_dues:
+        col_a.metric("📅 Dues", cartes_dues)
+    else:
+        col_a.success("✓ À jour")
+    if streak > 0:
+        col_b.metric("🔥 Streak", f"{streak} j")
+
+    st.caption(f"{len(CURRICULUM)} concepts · {len(ORDRE_AFFICHAGE_MODULES)} modules")
 
 
 # ── Page : ACCUEIL ────────────────────────────────────────────────────────────
@@ -189,31 +302,98 @@ with st.sidebar:
 def page_accueil():
     st.title("📘 Scientia")
     st.markdown(
-        "**Apprentissage espacé pour lire la recherche.** "
-        "Quiz adaptatifs, évaluation par Claude, planification FSRS."
+        "**Apprentissage espacé pour la pratique de gouvernance d'IA.** "
+        "Quiz adaptatifs, évaluation par Claude, planification FSRS-4.5."
     )
 
     progression = get_toute_progression()
     nb_concepts_etudies = len(progression)
     nb_maitrises = sum(1 for p in progression.values() if p.get("statut") == "maitrise")
+    streak = get_streak_jours()
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Concepts étudiés", nb_concepts_etudies)
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Étudiés", nb_concepts_etudies)
     col2.metric("Maîtrisés", nb_maitrises)
     col3.metric("À réviser", nb_cartes_dues())
+    col4.metric("🔥 Streak", f"{streak} j" if streak > 0 else "—")
 
     st.markdown("---")
-    st.subheader("Démarrer rapidement")
 
-    if st.button("📚 Choisir un concept à étudier",
-                 type="primary", use_container_width=True):
-        aller_a("modules")
-        st.rerun()
+    # ── Bandeau de reprise ────────────────────────────────────────────────────
+    derniere = get_derniere_activite()
+    if derniere and derniere.get("derniere_action"):
+        cle = derniere.get("concept_id")
+        concept = CURRICULUM.get(cle) if cle else None
+        if concept:
+            with st.container(border=True):
+                st.markdown("### ▶️ Reprendre où tu étais")
+                st.markdown(
+                    f"**{concept['titre']}** · "
+                    f"{nom_module_avec_drapeau(concept['module'])}"
+                )
 
+                action = derniere.get("derniere_action")
+                idx = derniere.get("index_question", 0) or 0
+                cartes = get_cartes_concept(cle)
+                total = len(cartes)
+                quand = temps_relatif(derniere.get("derniere_activite"))
+
+                if action == "quiz" and total:
+                    st.caption(
+                        f"Question {min(idx + 1, total)}/{total} · {quand}"
+                    )
+                elif action == "socratique":
+                    st.caption(f"Dialogue socratique · {quand}")
+                else:
+                    st.caption(f"Lecture · {quand}")
+
+                col_a, col_b = st.columns([3, 1])
+                if col_a.button("▶️ Reprendre",
+                                type="primary",
+                                use_container_width=True):
+                    if action == "socratique":
+                        aller_a("socratique", soc_concept=cle)
+                    else:
+                        aller_a("etudier", concept_actuel=cle)
+                        # Le routeur restaurera la position via tenter_reprise.
+                        st.session_state.session_chargee_de_db = False
+                    st.rerun()
+
+                if col_b.button("✕", help="Abandonner cette session",
+                                use_container_width=True):
+                    effacer_derniere_activite()
+                    st.rerun()
+            st.markdown("")
+
+    # ── Recommandé pour toi ──────────────────────────────────────────────────
+    reco = recommander_concept(progression)
+    if reco:
+        cle, raison = reco
+        c = CURRICULUM[cle]
+        with st.container(border=True):
+            st.markdown(f"### 💡 Recommandé pour toi")
+            st.markdown(
+                f"**{c['titre']}** · {nom_module_avec_drapeau(c['module'])}"
+            )
+            st.caption(raison)
+            if st.button("Étudier ce concept →",
+                         key="reco_btn",
+                         type="primary", use_container_width=True):
+                aller_a("etudier", concept_actuel=cle)
+                reset_quiz()
+                st.session_state.session_chargee_de_db = False
+                st.rerun()
+
+    # ── Cartes dues ──────────────────────────────────────────────────────────
     cartes_dues = get_cartes_dues()
     if cartes_dues:
         st.markdown("### 🔁 Révisions dues")
         st.caption("Cartes dont la prochaine révision est aujourd'hui ou passée.")
+        if len(cartes_dues) >= 3:
+            if st.button("⚡ Lancer une session de révision rapide",
+                         use_container_width=True):
+                aller_a("revision_rapide")
+                st.rerun()
         for c in cartes_dues[:5]:
             cle_cpt = c["concept_id"]
             titre_cpt = CURRICULUM.get(cle_cpt, {}).get("titre", cle_cpt)
@@ -224,9 +404,17 @@ def page_accueil():
                              use_container_width=True):
                     aller_a("etudier", concept_actuel=cle_cpt)
                     reset_quiz()
+                    st.session_state.session_chargee_de_db = False
                     st.rerun()
         if len(cartes_dues) > 5:
             st.caption(f"+ {len(cartes_dues) - 5} autres cartes dues")
+    else:
+        # Pas de révisions dues → bouton démarrer
+        st.markdown("### Démarrer rapidement")
+        if st.button("📚 Choisir un concept à étudier",
+                     type="primary", use_container_width=True):
+            aller_a("modules")
+            st.rerun()
 
     planning = get_planning_14j()
     if planning:
@@ -235,30 +423,88 @@ def page_accueil():
                 st.write(f"`{r['prochaine_rev']}` · {r['enonce'][:80]}")
 
 
-# ── Page : MODULES ────────────────────────────────────────────────────────────
+def recommander_concept(progression: dict) -> tuple[str, str] | None:
+    """
+    Logique de recommandation :
+      1. Concept en_cours (statut='en_cours' avec score < 3) → continuer.
+      2. Premier concept jamais étudié dans le module en cours.
+      3. Premier concept du curriculum jamais étudié.
+    Retourne (concept_id, raison) ou None.
+    """
+    # 1. Concept en cours non maîtrisé
+    en_cours = [
+        cid for cid, p in progression.items()
+        if p.get("statut") == "en_cours"
+        and (p.get("score_moyen") or 0) < 3.0
+        and cid in CURRICULUM
+    ]
+    if en_cours:
+        return en_cours[0], "Concept que tu as déjà commencé sans encore maîtriser."
+
+    # 2. Concept jamais étudié, en respectant l'ordre des modules
+    deja_vus = set(progression.keys())
+    for m in ORDRE_AFFICHAGE_MODULES:
+        if m == 99:
+            continue
+        for cle in get_concepts_par_module(m):
+            if cle in deja_vus:
+                continue
+            return cle, f"Premier concept non étudié du module M{m:02d}."
+    return None
+
+
+# ── Page : MODULES (vue compacte, filtre langue) ──────────────────────────────
 
 def page_modules():
     st.title("📚 Modules")
     st.caption("Choisis un module, puis un concept à étudier.")
 
+    # Filtre langue
+    col_f1, col_f2, col_f3 = st.columns(3)
+    if col_f1.button(
+            "🌐 Tous", use_container_width=True,
+            type="primary" if st.session_state.filtre_langue is None else "secondary"):
+        st.session_state.filtre_langue = None
+        st.rerun()
+    if col_f2.button(
+            "🇫🇷 Français", use_container_width=True,
+            type="primary" if st.session_state.filtre_langue == "fr" else "secondary"):
+        st.session_state.filtre_langue = "fr"
+        st.rerun()
+    if col_f3.button(
+            "🇬🇧 English", use_container_width=True,
+            type="primary" if st.session_state.filtre_langue == "en" else "secondary"):
+        st.session_state.filtre_langue = "en"
+        st.rerun()
+
+    # Construire la liste filtrée
     modules_avec_concepts = []
     for m in ORDRE_AFFICHAGE_MODULES:
+        if (st.session_state.filtre_langue
+                and LANGUE_MODULES.get(m) != st.session_state.filtre_langue):
+            continue
         concepts = get_concepts_par_module(m)
         if concepts:
             modules_avec_concepts.append((m, concepts))
 
+    if not modules_avec_concepts:
+        st.info("Aucun module ne correspond à ce filtre.")
+        return
+
     nom_choisi = st.selectbox(
         "Module",
         options=[m for m, _ in modules_avec_concepts],
-        format_func=lambda m: f"M{m:02d} — {NOMS_MODULES.get(m, '?')}",
+        format_func=nom_module_avec_drapeau,
+        key="select_module",
     )
 
     concepts = get_concepts_par_module(nom_choisi)
     progression = get_toute_progression()
 
-    st.markdown(f"### {NOMS_MODULES.get(nom_choisi, '?')}")
+    st.markdown(f"### {nom_module_avec_drapeau(nom_choisi)}")
     st.caption(f"{len(concepts)} concepts dans ce module")
 
+    # Vue compacte : un bloc par concept, sans expander de texte par défaut.
     for cle in concepts:
         c = CURRICULUM[cle]
         prog = progression.get(cle, {})
@@ -267,18 +513,24 @@ def page_modules():
 
         emoji = {"nouveau": "○", "en_cours": "🟡", "maitrise": "🟢"}.get(statut, "○")
         score_txt = f"  ·  {moyenne:.1f}/4" if moyenne else ""
+        col_a, col_b = st.columns([4, 1])
+        col_a.markdown(f"{emoji} **{c['titre']}**{score_txt}")
+        if col_b.button("Étudier",
+                        key=f"etu_{cle}",
+                        use_container_width=True,
+                        type="primary"):
+            aller_a("etudier", concept_actuel=cle)
+            reset_quiz()
+            st.session_state.session_chargee_de_db = False
+            st.rerun()
 
-        with st.container(border=True):
-            st.markdown(f"**{emoji} {c['titre']}**{score_txt}")
-            with st.expander("Voir le texte source"):
-                st.markdown(c["texte"])
-            if st.button("Étudier ce concept →",
-                         key=f"etu_{cle}",
-                         use_container_width=True,
-                         type="primary"):
-                aller_a("etudier", concept_actuel=cle)
-                reset_quiz()
-                st.rerun()
+    # Lien vers le module suivant si pertinent
+    parcours = PARCOURS_CONSEILLES.get(nom_choisi)
+    if parcours:
+        st.markdown("")
+        if st.button(parcours["label"], use_container_width=True):
+            st.session_state.select_module = parcours["module"]
+            st.rerun()
 
 
 # ── Page : ÉTUDIER UN CONCEPT ────────────────────────────────────────────────
@@ -293,11 +545,17 @@ def page_etudier():
         return
 
     concept = CURRICULUM[cle]
-    st.title(concept["titre"])
+    drapeau = "🇫🇷" if concept.get("langue", "fr") == "fr" else "🇬🇧"
+    st.title(f"{drapeau} {concept['titre']}")
     st.caption(
         f"Module {concept['module']} — "
         f"{NOMS_MODULES.get(concept['module'], '?')}"
     )
+
+    # Mémoriser l'activité 'lecture' pour la reprise
+    set_derniere_activite("lecture", cle, 0,
+                          quiz_scores=[], quiz_carte_ids=[],
+                          termine=False)
 
     if st.button("← Retour aux modules", use_container_width=False):
         aller_a("modules")
@@ -312,6 +570,14 @@ def page_etudier():
 
         cartes_existantes = get_cartes_concept(cle)
 
+        n_q = st.slider(
+            "Nombre de questions",
+            min_value=3, max_value=10,
+            value=st.session_state.n_questions,
+            key=f"n_q_{cle}",
+        )
+        st.session_state.n_questions = n_q
+
         col1, col2 = st.columns(2)
         if cartes_existantes:
             col1.metric("Questions sauvegardées", len(cartes_existantes))
@@ -325,6 +591,8 @@ def page_etudier():
                         "critere": q["critere"],
                         "indice": q.get("indice", "") or "",
                         "difficulte": q["niveau"],
+                        "langue": q.get("langue") or
+                                  concept.get("langue", "fr"),
                     }
                     for q in cartes_existantes
                 ]
@@ -332,25 +600,52 @@ def page_etudier():
                 st.session_state.index_question = 0
                 st.session_state.scores_session = []
                 st.session_state.debut_question = time.time()
+                set_derniere_activite(
+                    "quiz", cle, 0,
+                    quiz_scores=[],
+                    quiz_carte_ids=st.session_state.carte_ids,
+                    termine=False,
+                )
                 st.rerun()
 
         bouton_label = (
-            "🔄 Régénérer les questions" if cartes_existantes
-            else "✨ Générer 5 questions avec Claude"
+            f"🔄 Régénérer {n_q} questions" if cartes_existantes
+            else f"✨ Générer {n_q} questions avec Claude"
         )
         if col2.button(bouton_label, use_container_width=True):
             with st.spinner("Génération en cours…"):
                 try:
-                    qs = generer_questions(concept, n=5)
-                    ids = sauvegarder_cartes(cle, qs)
+                    qs = generer_questions(concept, n=n_q)
+                    ids = sauvegarder_cartes(cle, qs,
+                                              langue=concept.get("langue", "fr"))
                     st.session_state.questions = qs
                     st.session_state.carte_ids = ids
                     st.session_state.index_question = 0
                     st.session_state.scores_session = []
                     st.session_state.debut_question = time.time()
+                    set_derniere_activite(
+                        "quiz", cle, 0,
+                        quiz_scores=[],
+                        quiz_carte_ids=ids,
+                        termine=False,
+                    )
                     st.rerun()
                 except Exception as e:
                     st.error(f"Erreur de génération : {e}")
+
+        # Bouton reset progression (Sprint D)
+        st.markdown("---")
+        with st.expander("⚠️ Réinitialiser la progression de ce concept"):
+            st.caption(
+                "Supprime les cartes sauvegardées, les révisions et la "
+                "progression FSRS pour ce concept. Action irréversible."
+            )
+            if st.button("🗑 Reset complet",
+                         key=f"reset_{cle}",
+                         use_container_width=True):
+                reset_progression_concept(cle)
+                st.success("Progression réinitialisée.")
+                st.rerun()
 
         # Notes personnelles persistantes
         st.markdown("---")
@@ -392,6 +687,8 @@ def page_etudier():
             st.markdown("### 🔁 Concept à retravailler. Relis le texte source.")
 
         maj_progression(cle, scores)
+        # On marque la session comme terminée (rien à reprendre)
+        effacer_derniere_activite()
 
         col_a, col_b = st.columns(2)
         if col_a.button("🔁 Refaire un quiz", use_container_width=True):
@@ -408,6 +705,11 @@ def page_etudier():
     question = st.session_state.questions[i]
     progress = (i) / total
     st.progress(progress, text=f"Question {i + 1} / {total}")
+
+    if st.session_state.session_chargee_de_db and i > 0:
+        st.info(f"📖 Reprise — tu en étais à la question {i + 1}.")
+        # Réinitialiser le drapeau pour ne plus afficher le badge.
+        st.session_state.session_chargee_de_db = False
 
     # Texte source disponible pendant tout le quiz (livre ouvert)
     with st.expander("📖 Texte source (livre ouvert)", expanded=False):
@@ -437,7 +739,7 @@ def page_etudier():
             "Ta réponse",
             key=cle_zone,
             height=150,
-            placeholder="Réponds librement, en français…",
+            placeholder="Réponds librement…",
         )
 
         # ── Tuteur socratique sur la question (sous le champ de réponse) ──
@@ -447,7 +749,6 @@ def page_etudier():
                          key=f"open_soc_{cle}_{i}",
                          use_container_width=True):
                 st.session_state.q_soc_ouverts.add(cle_soc)
-                # Ouverture du dialogue : Claude pose la première question
                 if cle_soc not in st.session_state.q_soc_dialogues:
                     with st.spinner("Claude prépare une ouverture…"):
                         try:
@@ -468,8 +769,6 @@ def page_etudier():
 
                 dialogue = st.session_state.q_soc_dialogues.get(cle_soc, [])
 
-                # Zone à hauteur fixe (scroll interne, auto-scroll vers le bas
-                # sur nouveau message — pas besoin de scroller la page).
                 with st.container(height=400):
                     for m in dialogue:
                         if m["role"] == "assistant":
@@ -479,8 +778,6 @@ def page_etudier():
                             with st.chat_message("user", avatar="🧑"):
                                 st.markdown(m["content"])
 
-                # Le chat_input reste hors de la zone scrollable :
-                # il s'affiche toujours juste en dessous, visible.
                 user_msg = st.chat_input(
                     "Pose une question, partage ton intuition…",
                     key=f"soc_input_{cle}_{i}",
@@ -512,9 +809,6 @@ def page_etudier():
                         use_container_width=True,
                         disabled=not reponse.strip()):
             duree = int(time.time() - st.session_state.debut_question)
-            # Injecter la langue du concept si la question vient de la DB
-            # (les questions générées fraîches l'ont déjà; les chargées depuis
-            # SQLite n'ont pas le champ langue car la table cartes ne le stocke pas).
             question_for_eval = dict(question)
             if "langue" not in question_for_eval:
                 question_for_eval["langue"] = concept.get("langue", "fr")
@@ -536,6 +830,13 @@ def page_etudier():
                 duree_sec=duree,
             )
             st.session_state.evaluation_courante = evaluation
+            # Mémoriser l'activité au passage
+            set_derniere_activite(
+                "quiz", cle, i,
+                quiz_scores=st.session_state.scores_session,
+                quiz_carte_ids=st.session_state.carte_ids,
+                termine=False,
+            )
             st.rerun()
 
         if col_b.button("Passer", use_container_width=True):
@@ -546,6 +847,13 @@ def page_etudier():
             )
             st.session_state.index_question += 1
             st.session_state.debut_question = time.time()
+            set_derniere_activite(
+                "quiz", cle,
+                st.session_state.index_question,
+                quiz_scores=st.session_state.scores_session,
+                quiz_carte_ids=st.session_state.carte_ids,
+                termine=False,
+            )
             st.rerun()
         return
 
@@ -572,14 +880,67 @@ def page_etudier():
         st.session_state.index_question += 1
         st.session_state.evaluation_courante = None
         st.session_state.debut_question = time.time()
+        set_derniere_activite(
+            "quiz", cle,
+            st.session_state.index_question,
+            quiz_scores=st.session_state.scores_session,
+            quiz_carte_ids=st.session_state.carte_ids,
+            termine=False,
+        )
         st.rerun()
+
+
+# ── Page : RÉVISION RAPIDE (toutes cartes dues, multi-concepts) ──────────────
+
+def page_revision_rapide():
+    st.title("🔁 Révision rapide")
+    st.caption(
+        "Cartes dues triées du plus en retard au plus récent, "
+        "tous concepts confondus."
+    )
+    if st.button("← Accueil", use_container_width=False):
+        aller_a("accueil")
+        st.rerun()
+
+    cartes = get_cartes_dues()
+    if not cartes:
+        st.success("✓ Aucune carte due. Tu es à jour.")
+        return
+
+    st.metric("Cartes à réviser", len(cartes))
+
+    # Regrouper par concept pour offrir un click direct.
+    par_concept: dict = {}
+    for c in cartes:
+        par_concept.setdefault(c["concept_id"], []).append(c)
+
+    for cle, lot in par_concept.items():
+        c = CURRICULUM.get(cle)
+        if not c:
+            continue
+        with st.container(border=True):
+            drapeau = "🇫🇷" if c.get("langue", "fr") == "fr" else "🇬🇧"
+            st.markdown(f"{drapeau} **{c['titre']}** — {len(lot)} carte(s)")
+            st.caption(
+                f"Module {c['module']} — {NOMS_MODULES.get(c['module'], '?')}"
+            )
+            if st.button("Réviser ce concept →",
+                         key=f"rapid_{cle}",
+                         type="primary",
+                         use_container_width=True):
+                aller_a("etudier", concept_actuel=cle)
+                reset_quiz()
+                st.session_state.session_chargee_de_db = False
+                st.rerun()
 
 
 # ── Page : PROGRESSION ───────────────────────────────────────────────────────
 
 def page_progression():
     st.title("📈 Ma progression")
+
     progression = get_toute_progression()
+    streak = get_streak_jours()
 
     if not progression:
         st.info("Aucune session enregistrée pour l'instant. "
@@ -591,14 +952,27 @@ def page_progression():
     nb_maitrises = sum(1 for p in progression.values()
                        if p.get("statut") == "maitrise")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     col1.metric("Concepts du curriculum", nb_total)
-    col2.metric("Étudiés", nb_etudies, f"+{nb_etudies}")
+    col2.metric("Étudiés", nb_etudies)
     col3.metric("Maîtrisés", nb_maitrises)
+    col4.metric("🔥 Streak", f"{streak} j" if streak > 0 else "—")
 
     st.progress(
         nb_maitrises / nb_total if nb_total else 0,
         text=f"Maîtrise globale : {nb_maitrises}/{nb_total}",
+    )
+
+    st.markdown("---")
+
+    # Export CSV (Sprint D)
+    csv_data = export_progression_csv()
+    st.download_button(
+        "📥 Exporter ma progression (CSV)",
+        data=csv_data,
+        file_name="scientia_progression.csv",
+        mime="text/csv",
+        use_container_width=True,
     )
 
     st.markdown("---")
@@ -612,7 +986,7 @@ def page_progression():
         par_module.setdefault(c["module"], []).append((cid, p))
 
     for m in sorted(par_module.keys()):
-        with st.expander(f"M{m:02d} — {NOMS_MODULES.get(m, '?')}"):
+        with st.expander(nom_module_avec_drapeau(m)):
             for cid, p in par_module[m]:
                 titre = CURRICULUM.get(cid, {}).get("titre", cid)
                 statut = p.get("statut", "?")
@@ -631,8 +1005,8 @@ def page_progression():
 def page_documents():
     st.title("📥 Documents personnels")
     st.caption(
-        "Charge un PDF, MD ou TXT. Claude extrait 1 à 5 concepts pédagogiques "
-        "qui rejoignent ton curriculum (Module 5)."
+        "Charge un PDF, MD ou TXT. Claude extrait 1 à 5 concepts "
+        "qui rejoignent le bucket d'ingestion (M99)."
     )
 
     DOCS_DIR = Path(__file__).parent / "docs"
@@ -658,7 +1032,8 @@ def page_documents():
                     _charger_concepts_dynamiques()
                     st.success(
                         f"✓ {len(nouvelles_cles)} concept(s) ajouté(s) "
-                        "au Module 5. Va dans Modules pour les étudier."
+                        "au module 99 (Documents ingérés). Va dans Modules pour "
+                        "les étudier."
                     )
                 except Exception as e:
                     st.error(f"Erreur : {e}")
@@ -680,6 +1055,7 @@ def page_documents():
                                use_container_width=True):
                     aller_a("etudier", concept_actuel=cle)
                     reset_quiz()
+                    st.session_state.session_chargee_de_db = False
                     st.rerun()
                 if col2.button("🗑", key=f"sup_{cle}",
                                use_container_width=True):
@@ -702,16 +1078,33 @@ def page_socratique():
     if not st.session_state.soc_concept:
         st.subheader("Choisis un concept à explorer")
 
+        # Filtre langue
+        langue = st.radio(
+            "Langue",
+            options=["Toutes", "🇫🇷 Français", "🇬🇧 English"],
+            horizontal=True,
+            key="soc_filtre_langue",
+        )
+        filtre = "fr" if langue == "🇫🇷 Français" else (
+            "en" if langue == "🇬🇧 English" else None
+        )
+
         modules_avec_concepts = []
         for m in ORDRE_AFFICHAGE_MODULES:
+            if filtre and LANGUE_MODULES.get(m) != filtre:
+                continue
             cs = get_concepts_par_module(m)
             if cs:
                 modules_avec_concepts.append((m, cs))
 
+        if not modules_avec_concepts:
+            st.info("Aucun module ne correspond à ce filtre.")
+            return
+
         m_choisi = st.selectbox(
             "Module",
             options=[m for m, _ in modules_avec_concepts],
-            format_func=lambda m: f"M{m:02d} — {NOMS_MODULES.get(m, '?')}",
+            format_func=nom_module_avec_drapeau,
             key="soc_module_select",
         )
         concepts = get_concepts_par_module(m_choisi)
@@ -723,26 +1116,35 @@ def page_socratique():
             key="soc_concept_select",
         )
 
+        # Vérifier s'il existe un dialogue actif pour ce concept (Sprint B)
+        dialogue_actif = get_dialogue_socratique_actif(cle_choisie)
+        if dialogue_actif and dialogue_actif.get("historique"):
+            st.info(
+                f"📖 Tu as un dialogue en cours sur ce concept "
+                f"({len(dialogue_actif['historique'])} échanges)."
+            )
+            col_r1, col_r2 = st.columns(2)
+            if col_r1.button("▶️ Reprendre le dialogue",
+                              type="primary", use_container_width=True):
+                st.session_state.soc_concept = cle_choisie
+                st.session_state.soc_dialogue_id = dialogue_actif["id"]
+                st.session_state.soc_historique = dialogue_actif["historique"]
+                st.session_state.soc_resume = None
+                set_derniere_activite("socratique", cle_choisie)
+                st.rerun()
+            if col_r2.button("🆕 Nouveau dialogue",
+                              use_container_width=True):
+                # Marquer l'ancien comme terminé pour ne plus le proposer
+                terminer_dialogue_socratique(
+                    dialogue_actif["id"],
+                    {"score": 0, "synthese": "(dialogue abandonné)"}
+                )
+                _demarrer_dialogue(cle_choisie)
+            return
+
         if st.button("▶️ Démarrer le dialogue",
                      type="primary", use_container_width=True):
-            st.session_state.soc_concept = cle_choisie
-            st.session_state.soc_historique = []
-            st.session_state.soc_resume = None
-            st.session_state.soc_pending_user = ""
-            # Génère la question d'ouverture
-            with st.spinner("Claude prépare une question d'ouverture…"):
-                try:
-                    ouverture = repondre_socratique(
-                        CURRICULUM[cle_choisie], []
-                    )
-                    st.session_state.soc_historique.append(
-                        {"role": "assistant", "content": ouverture}
-                    )
-                except Exception as e:
-                    st.error(f"Erreur : {e}")
-                    st.session_state.soc_concept = None
-                    return
-            st.rerun()
+            _demarrer_dialogue(cle_choisie)
         return
 
     # Étape 2 : dialogue en cours
@@ -753,15 +1155,21 @@ def page_socratique():
         st.session_state.soc_concept = None
         return
 
-    st.markdown(f"**Concept : {concept['titre']}**")
+    drapeau = "🇫🇷" if concept.get("langue", "fr") == "fr" else "🇬🇧"
+    st.markdown(f"**Concept : {drapeau} {concept['titre']}**")
     st.caption(
         f"Module {concept['module']} — "
         f"{NOMS_MODULES.get(concept['module'], '?')}"
     )
 
+    set_derniere_activite("socratique", cle)
+
     col_a, col_b = st.columns([1, 1])
     if col_a.button("🔄 Nouveau concept", use_container_width=True):
+        # Sauvegarder l'état actuel comme dialogue 'en_cours' (déjà fait au fil
+        # de l'eau), puis basculer vers la sélection.
         st.session_state.soc_concept = None
+        st.session_state.soc_dialogue_id = None
         st.session_state.soc_historique = []
         st.session_state.soc_resume = None
         st.rerun()
@@ -780,8 +1188,12 @@ def page_socratique():
                     concept, st.session_state.soc_historique
                 )
                 st.session_state.soc_resume = resume
-                # Met à jour la progression avec le score du dialogue
                 maj_progression(cle, [int(resume.get("score", 0))])
+                if st.session_state.soc_dialogue_id:
+                    terminer_dialogue_socratique(
+                        st.session_state.soc_dialogue_id, resume
+                    )
+                effacer_derniere_activite()
             except Exception as e:
                 st.error(f"Erreur : {e}")
 
@@ -808,17 +1220,11 @@ def page_socratique():
         col_c, col_d = st.columns(2)
         if col_c.button("🔁 Relancer un dialogue sur ce concept",
                         use_container_width=True):
-            st.session_state.soc_historique = []
-            st.session_state.soc_resume = None
-            with st.spinner("Nouvelle ouverture…"):
-                ouverture = repondre_socratique(concept, [])
-                st.session_state.soc_historique.append(
-                    {"role": "assistant", "content": ouverture}
-                )
-            st.rerun()
+            _demarrer_dialogue(cle, force_nouveau=True)
         if col_d.button("📚 Autre concept",
                         type="primary", use_container_width=True):
             st.session_state.soc_concept = None
+            st.session_state.soc_dialogue_id = None
             st.session_state.soc_historique = []
             st.session_state.soc_resume = None
             st.rerun()
@@ -835,7 +1241,6 @@ def page_socratique():
                 with st.chat_message("user", avatar="🧑"):
                     st.markdown(m["content"])
 
-    # Zone de saisie en dehors de la zone scrollable, donc toujours visible.
     reponse = st.chat_input("Ta réponse à Claude…", key="soc_chat_input")
     if reponse:
         st.session_state.soc_historique.append(
@@ -851,7 +1256,39 @@ def page_socratique():
                 )
             except Exception as e:
                 st.error(f"Erreur : {e}")
+        # Persister en DB (Sprint B)
+        st.session_state.soc_dialogue_id = sauvegarder_dialogue_socratique(
+            cle, st.session_state.soc_historique,
+            dialogue_id=st.session_state.soc_dialogue_id,
+        )
+        set_derniere_activite("socratique", cle)
         st.rerun()
+
+
+def _demarrer_dialogue(cle: str, force_nouveau: bool = False) -> None:
+    """Lance un nouveau dialogue socratique sur le concept donné."""
+    concept = CURRICULUM.get(cle)
+    if not concept:
+        return
+    st.session_state.soc_concept = cle
+    st.session_state.soc_historique = []
+    st.session_state.soc_resume = None
+    st.session_state.soc_pending_user = ""
+    with st.spinner("Claude prépare une question d'ouverture…"):
+        try:
+            ouverture = repondre_socratique(concept, [])
+            st.session_state.soc_historique.append(
+                {"role": "assistant", "content": ouverture}
+            )
+            st.session_state.soc_dialogue_id = sauvegarder_dialogue_socratique(
+                cle, st.session_state.soc_historique
+            )
+            set_derniere_activite("socratique", cle)
+        except Exception as e:
+            st.error(f"Erreur : {e}")
+            st.session_state.soc_concept = None
+            return
+    st.rerun()
 
 
 # ── Routeur principal ─────────────────────────────────────────────────────────
@@ -863,6 +1300,7 @@ PAGES = {
     "socratique": page_socratique,
     "progression": page_progression,
     "documents": page_documents,
+    "revision_rapide": page_revision_rapide,
 }
 
 PAGES.get(st.session_state.page, page_accueil)()
@@ -870,5 +1308,5 @@ PAGES.get(st.session_state.page, page_accueil)()
 st.markdown("---")
 st.caption(
     "Scientia · Apprentissage espacé FSRS-4.5 · "
-    "Évaluation Claude · v0.2"
+    "Évaluation Claude · v0.3 (Gouvernance IA)"
 )

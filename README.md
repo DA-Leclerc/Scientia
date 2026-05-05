@@ -144,6 +144,16 @@ Scientia schedules reviews with [FSRS-4.5](https://github.com/open-spaced-repeti
 
 The evaluator (in `generator.py`) is calibrated for **substance over form**: it rewards correct understanding even when the formulation differs from the reference answer. Penalizes only factual errors (wrong article cited, wrong threshold, wrong jurisdiction), missing core ideas, and concept confusion.
 
+## Resume across sessions
+
+When you re-open the app, the home page shows a **▶️ Reprendre** banner pointing at exactly where you left off — concept, question index, time elapsed. Quiz state (current question, accumulated scores, card identifiers) and Socratic dialogue state are persisted in SQLite, so refreshing the page or closing the tab does not lose progress.
+
+A **🔁 Révision rapide** mode pulls all cards due across modules so you can clear your queue without scrolling through Modules. The **📈 Ma progression** page exports your full progression to CSV and shows a **🔥 streak** counter (consecutive days with at least one review).
+
+## Reliability
+
+All Claude API calls go through a central `_appel_claude` helper in `generator.py` that retries up to 3 times on transient errors (`429`, `5xx`, connection timeouts) with a 2s+5s backoff. Permanent errors propagate immediately.
+
 ---
 
 ## License
