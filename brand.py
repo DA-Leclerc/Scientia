@@ -683,6 +683,6 @@ def footer_html() -> str:
 <div class="np-footer">
   <span class="np-footer-brand">Nord Paradigm · Scientia</span><br/>
   Apprentissage espacé FSRS-4.5 · Évaluation Claude · v0.4
-  <br/><span style="opacity: 0.7;">© 2026 Dominic-André Leclerc — Engineered discipline. AI governance that works.</span>
+  <br/><span style="opacity: 0.7;">© 2026 Dominic-André Leclerc — Disciplined by design. AI governance that works.</span>
 </div>
 """

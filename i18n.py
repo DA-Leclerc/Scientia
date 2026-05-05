@@ -30,7 +30,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "sidebar.lang_label":        {"fr": "Langue de l'interface",     "en": "Interface language"},
 
     # ── Hero accueil ──────────────────────────────────────────────────────
-    "home.hero.title_main":      {"fr": "La discipline de l'ingénieur.", "en": "Engineered discipline."},
+    "home.hero.title_main":      {"fr": "Une discipline pensée.",         "en": "Disciplined by design."},
     "home.hero.title_accent":    {"fr": "Une gouvernance d'IA qui marche.", "en": "AI governance that works."},
     "home.hero.subtitle":        {
         "fr": "Apprentissage espacé pour la pratique de gouvernance d'IA. "
@@ -251,8 +251,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     "revision.review_concept":   {"fr": "Réviser ce concept →",        "en": "Review this concept →"},
 
     # ── Footer ────────────────────────────────────────────────────────────
-    "footer.tagline":            {"fr": "La discipline de l'ingénieur. Une gouvernance d'IA qui marche.",
-                                  "en": "Engineered discipline. AI governance that works."},
+    "footer.tagline":            {"fr": "Une discipline pensée. Une gouvernance d'IA qui marche.",
+                                  "en": "Disciplined by design. AI governance that works."},
 
     # ══════════════════════════════════════════════════════════════════════
     # ALPHA SCHOOL features
