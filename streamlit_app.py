@@ -129,15 +129,15 @@ from generator import (
 # ── Utilitaires UI ────────────────────────────────────────────────────────────
 
 def langue_du_module(m: int) -> str:
-    """Retourne le drapeau du module."""
+    """Retourne l'étiquette de langue (FR / EN) du module."""
     code = LANGUE_MODULES.get(m, "fr")
-    return "🇫🇷" if code == "fr" else ("🇬🇧" if code == "en" else "")
+    return "FR" if code == "fr" else ("EN" if code == "en" else "")
 
 
 def nom_module_avec_drapeau(m: int) -> str:
     nom = NOMS_MODULES.get(m, "?")
-    drapeau = langue_du_module(m)
-    return f"{drapeau} M{m:02d} — {nom}".strip()
+    tag = langue_du_module(m)
+    return f"[{tag}] M{m:02d} — {nom}".strip() if tag else f"M{m:02d} — {nom}"
 
 
 def temps_relatif(iso_ts: str | None) -> str:
@@ -500,12 +500,12 @@ def page_modules():
         st.session_state.filtre_langue = None
         st.rerun()
     if col_f2.button(
-            "🇫🇷 Français", use_container_width=True,
+            "FR · Français", use_container_width=True,
             type="primary" if st.session_state.filtre_langue == "fr" else "secondary"):
         st.session_state.filtre_langue = "fr"
         st.rerun()
     if col_f3.button(
-            "🇬🇧 English", use_container_width=True,
+            "EN · English", use_container_width=True,
             type="primary" if st.session_state.filtre_langue == "en" else "secondary"):
         st.session_state.filtre_langue = "en"
         st.rerun()
@@ -578,8 +578,8 @@ def page_etudier():
         return
 
     concept = CURRICULUM[cle]
-    drapeau = "🇫🇷" if concept.get("langue", "fr") == "fr" else "🇬🇧"
-    st.title(f"{drapeau} {concept['titre']}")
+    tag = "FR" if concept.get("langue", "fr") == "fr" else "EN"
+    st.title(f"[{tag}] {concept['titre']}")
     st.caption(
         f"Module {concept['module']} — "
         f"{NOMS_MODULES.get(concept['module'], '?')}"
@@ -952,8 +952,8 @@ def page_revision_rapide():
         if not c:
             continue
         with st.container(border=True):
-            drapeau = "🇫🇷" if c.get("langue", "fr") == "fr" else "🇬🇧"
-            st.markdown(f"{drapeau} **{c['titre']}** — {len(lot)} carte(s)")
+            tag = "FR" if c.get("langue", "fr") == "fr" else "EN"
+            st.markdown(f"`[{tag}]` **{c['titre']}** — {len(lot)} carte(s)")
             st.caption(
                 f"Module {c['module']} — {NOMS_MODULES.get(c['module'], '?')}"
             )
@@ -1126,12 +1126,12 @@ def page_socratique():
         # Filtre langue
         langue = st.radio(
             "Langue",
-            options=["Toutes", "🇫🇷 Français", "🇬🇧 English"],
+            options=["Toutes", "FR · Français", "EN · English"],
             horizontal=True,
             key="soc_filtre_langue",
         )
-        filtre = "fr" if langue == "🇫🇷 Français" else (
-            "en" if langue == "🇬🇧 English" else None
+        filtre = "fr" if langue == "FR · Français" else (
+            "en" if langue == "EN · English" else None
         )
 
         modules_avec_concepts = []
@@ -1200,8 +1200,8 @@ def page_socratique():
         st.session_state.soc_concept = None
         return
 
-    drapeau = "🇫🇷" if concept.get("langue", "fr") == "fr" else "🇬🇧"
-    st.markdown(f"**Concept : {drapeau} {concept['titre']}**")
+    tag = "FR" if concept.get("langue", "fr") == "fr" else "EN"
+    st.markdown(f"**Concept : `[{tag}]` {concept['titre']}**")
     st.caption(
         f"Module {concept['module']} — "
         f"{NOMS_MODULES.get(concept['module'], '?')}"

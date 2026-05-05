@@ -233,9 +233,17 @@ div[data-testid="stVerticalBlock"] > div[style*="border"] {{
     color: {c['white']} !important;
 }}
 [data-testid="stAlert"][kind="warning"] {{
-    background: {c['amber']}15 !important;
-    border-color: {c['amber']}40 !important;
-    color: {c['cloud']} !important;
+    background: {c['amber']} !important;
+    border-color: {c['gold']} !important;
+    color: {c['abyss']} !important;
+}}
+[data-testid="stAlert"][kind="warning"] *,
+[data-testid="stAlert"][kind="warning"] p,
+[data-testid="stAlert"][kind="warning"] div,
+[data-testid="stAlert"][kind="warning"] span,
+[data-testid="stAlert"][kind="warning"] svg {{
+    color: {c['abyss']} !important;
+    fill: {c['abyss']} !important;
 }}
 [data-testid="stAlert"][kind="error"] {{
     background: #f4433615 !important;
