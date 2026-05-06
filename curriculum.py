@@ -4650,6 +4650,215 @@ POUR DOMINIC ET NORD PARADIGM — la séquence Brèche → Brèche Pro → Prism
 })
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# MODULE 14 — IA RESPONSABLE ET ÉTHIQUE (cadre ISO)  (3 concepts, FR)
+#
+# Source : iso.org/artificial-intelligence/responsible-ai-ethics
+# « Building a responsible AI: How to manage the AI ethics debate »
+# ══════════════════════════════════════════════════════════════════════════════
+
+CURRICULUM.update({
+
+    "m14_c1_iso_sept_principes_ethiques": {
+        "module": 14, "ordre": 1, "langue": "fr",
+        "titre": "Les 7 principes ISO d'éthique de l'IA",
+        "prereqs": ["m1_c4_principes_ocde"],
+        "texte": """
+L'ISO publie un cadre de référence éthique pour l'IA, articulé en SEPT PRINCIPES qui résument les attentes d'une IA responsable. Ces principes ne sont pas un standard certifiable en eux-mêmes — ils constituent l'ESPRIT que les standards techniques ISO opérationnalisent (ISO/IEC 42001:2023, ISO/IEC TR 24368:2022, ISO/IEC 42005:2025).
+
+Référence : iso.org/artificial-intelligence/responsible-ai-ethics — « Building a responsible AI: How to manage the AI ethics debate ».
+
+LES SEPT PRINCIPES :
+
+PRINCIPE 1 — ÉQUITÉ (FAIRNESS).
+Les données d'entraînement et la conception du système doivent éviter la discrimination directe ou indirecte. Trois familles de biais à surveiller : biais de représentation (sous-représentation d'un groupe dans le dataset), biais de mesure (la variable observée ne mesure pas la même chose dans tous les groupes), biais d'agrégation (un seuil unique appliqué à des sous-populations différentes). Pour Dominic : c'est le principe le plus litigieux en pratique — il existe plusieurs définitions mathématiques d'équité (disparate impact, equality of odds, demographic parity) qui sont MUTUELLEMENT INCOMPATIBLES.
+
+PRINCIPE 2 — TRANSPARENCE.
+Les utilisateurs et les personnes affectées doivent pouvoir comprendre comment l'algorithme fonctionne, quelles données il utilise, et pourquoi il produit telle ou telle sortie. Pas de boîte noire opaque pour les décisions à enjeux. La transparence opère à plusieurs niveaux : transparence générale (le système EXISTE et fait X), transparence par décision (POURQUOI cette décision pour cette personne), transparence d'évaluation (un expert peut auditer le modèle).
+
+PRINCIPE 3 — NON-MALFAISANCE (NON-MALEFICENCE).
+Le système ne doit pas nuire aux individus, à la société ou à l'environnement. Inclut quatre dimensions : sûreté physique (véhicules autonomes, dispositifs médicaux), santé mentale (manipulation, addiction), intégrité informationnelle (désinformation, deepfakes), durabilité environnementale (consommation énergétique, eau de refroidissement). C'est l'extension du serment d'Hippocrate « primum non nocere » au design technique.
+
+PRINCIPE 4 — REDEVABILITÉ (ACCOUNTABILITY).
+Développeurs, organisations et décideurs doivent assumer la responsabilité du développement et de l'utilisation. Implique des rôles clairement définis (RACI), des registres et journaux, et la possibilité d'audit a posteriori. La redevabilité organisationnelle (qui répond) et la redevabilité informationnelle (qui peut prouver quoi) sont les deux faces de ce principe.
+
+PRINCIPE 5 — VIE PRIVÉE (PRIVACY).
+Le système doit protéger les renseignements personnels conformément au cadre juridique applicable (Loi 25, RGPD, PIPEDA). Implique minimisation des données, finalités légitimes et explicites, droits des personnes (accès, rectification, opposition, portabilité). Techniques de pointe : differential privacy, federated learning, anonymisation différentielle, secure multiparty computation.
+
+PRINCIPE 6 — ROBUSTESSE (ROBUSTNESS).
+Le système doit être sécuritaire face aux attaques (data poisoning, prompt injection, model evasion, model inversion) et résilient face aux conditions imprévues (distribution shift, données out-of-distribution). Couvre tests adversariaux, validation continue, monitoring de drift, kill switches, plan de continuité.
+
+PRINCIPE 7 — INCLUSIVITÉ (INCLUSIVENESS).
+Engager des perspectives diverses dans la conception, l'évaluation et la gouvernance — c'est le filtre minimal contre les angles morts d'une équipe homogène. Inclut consultation des personnes affectées, équipes de développement diversifiées, considération explicite des minorités et populations vulnérables, et processus participatifs documentés.
+
+INTERACTION ENTRE LES PRINCIPES — souvent en TENSION :
+- Maximiser la transparence peut compromettre la sécurité (révéler des vulnérabilités).
+- Maximiser l'équité statistique peut diminuer la précision globale du modèle.
+- Maximiser la robustesse peut alourdir le système au point de nuire à l'expérience utilisateur.
+- Maximiser la vie privée peut limiter la qualité des explications fournies aux personnes affectées.
+
+L'ISO ne donne pas de hiérarchie a priori — chaque organisation doit ARBITRER consciemment et DOCUMENTER ses choix dans son AIMS (AI Management System) sous ISO 42001.
+
+ARTICULATION AVEC LES AUTRES CADRES :
+A. Principes OCDE (M1 c4) — 5 principes plus généraux, parfaitement alignés.
+B. NIST AI RMF trustworthy characteristics (M5 c2) — 7 caractéristiques qui se cartographient finement sur les 7 ISO.
+C. UNESCO Recommandation (M1 c5) — 10 principes avec une orientation droits humains plus prononcée.
+D. EU AI Act — opérationnalise plusieurs principes (transparence Art. 13 et 50, robustesse Art. 15, équité via Art. 10 sur les biais, redevabilité via Art. 17 quality management).
+
+POSITIONNEMENT POUR NORD PARADIGM — ces 7 principes sont LE LEXIQUE COMMUN qui permet de parler d'éthique IA avec un client sans le perdre dans le détail technique. Pour un workshop Brèche Pro, présenter d'abord les 7 principes en 5 minutes, puis montrer COMMENT chaque principe se traduit en obligations concrètes (Loi 25 art 12.1 = transparence + redevabilité; EU AI Act Art 9 = robustesse; etc.). C'est la passerelle entre le « pourquoi » éthique et le « quoi » réglementaire.
+        """.strip(),
+    },
+
+    "m14_c2_operationnalisation_principes": {
+        "module": 14, "ordre": 2, "langue": "fr",
+        "titre": "Opérationnaliser les 7 principes — du discours à la pratique",
+        "prereqs": ["m14_c1_iso_sept_principes_ethiques"],
+        "texte": """
+Le piège classique des principes éthiques : devenir des slogans. « Notre IA est équitable et transparente » est un signal de greenwashing tant qu'il n'est pas adossé à des PRATIQUES VÉRIFIABLES. L'opérationnalisation transforme chaque principe en exigences techniques, organisationnelles et contractuelles.
+
+PRINCIPE 1 — ÉQUITÉ : COMMENT L'OPÉRATIONNALISER ?
+A. Choix EXPLICITE d'une définition d'équité (disparate impact à 80 %, equality of odds, etc.) — documenté et justifié.
+B. Tests par sous-groupe (genre, origine ethnique, âge, situation socio-économique) systématiques avant déploiement et en continu.
+C. Seuils de tolérance définis (ex : écart maximal de 5 % entre groupes A et B), avec déclencheur d'arrêt si dépassé.
+D. Diversité des données d'entraînement documentée par DATA SHEET (Gebru et al., 2018).
+E. Audit indépendant pour les systèmes à enjeux élevés.
+
+PRINCIPE 2 — TRANSPARENCE : COMMENT L'OPÉRATIONNALISER ?
+A. MODEL CARD publique pour chaque système (Mitchell et al., 2019) — capacités, limites, biais connus.
+B. EXPLICATION par décision : SHAP values, LIME, contrefactuels, ou divulgation des CATÉGORIES de variables.
+C. NOTIFICATION proactive aux personnes affectées (cf. Loi 25 art 8.1 et 12.1).
+D. RAPPORT DE TRANSPARENCE annuel pour les organisations à grande échelle (style rapports CSR).
+
+PRINCIPE 3 — NON-MALFAISANCE : COMMENT L'OPÉRATIONNALISER ?
+A. ÉTUDE D'IMPACT (EFVP / FRIA / AIA) systématique avant déploiement.
+B. RED TEAMING avant mise en production — mise en scène des usages malveillants probables.
+C. KILL SWITCH technique testé périodiquement.
+D. Protocole de NOTIFICATION D'INCIDENT (CAI 72 h, EU AI Office, NCMEC pour CSAM).
+E. SUIVI DE L'EMPREINTE ENVIRONNEMENTALE (consommation énergétique des entraînements et inférences).
+
+PRINCIPE 4 — REDEVABILITÉ : COMMENT L'OPÉRATIONNALISER ?
+A. RACI documentée et publiée pour chaque système d'IA.
+B. RPRP (Loi 25) ou DPO (RGPD) désigné, coordonnées publiques.
+C. REGISTRES : décisions, incidents, communications hors juridiction, modifications.
+D. JOURNAUX TECHNIQUES (Art. 12 EU AI Act) avec conservation 6 mois minimum.
+E. CONTRATS clairs avec les fournisseurs de modèles GPAI (Anthropic, OpenAI…) sur les responsabilités amont.
+
+PRINCIPE 5 — VIE PRIVÉE : COMMENT L'OPÉRATIONNALISER ?
+A. EFVP (Loi 25 art 3.3) avant chaque projet IA touchant des RP.
+B. Architecture PRIVACY-BY-DESIGN : minimisation des données collectées, pseudonymisation à l'entrée du pipeline.
+C. CONSENTEMENT spécifique pour usage en entraînement (distinct du consentement contractuel d'usage du service).
+D. Mécanismes opérationnels pour les DROITS DES PERSONNES (accès, rectification, désindexation, portabilité) — délai 30 jours.
+E. Considération des techniques avancées : differential privacy, federated learning, données synthétiques.
+
+PRINCIPE 6 — ROBUSTESSE : COMMENT L'OPÉRATIONNALISER ?
+A. TESTS DE PÉNÉTRATION et red teaming réguliers (au moins annuels pour systèmes à haut risque).
+B. MONITORING DE DRIFT continu — distribution des entrées, performance par sous-groupe.
+C. Conformité ISO 27001 + ISO 42001 sur la sécurité de l'information.
+D. Plan de continuité et de reprise après désastre.
+E. Veille sur les vulnérabilités (CVE, OWASP Top 10 for LLMs, MITRE ATLAS).
+
+PRINCIPE 7 — INCLUSIVITÉ : COMMENT L'OPÉRATIONNALISER ?
+A. CONSULTATION documentée des populations affectées au stade de la conception.
+B. PANELS DE REVUE éthique avec représentants externes pour systèmes à haut risque.
+C. ÉQUIPES de développement diversifiées (genre, origine, neurodiversité, handicap).
+D. CANAL DE FEEDBACK accessible pour les utilisateurs et les affectés.
+E. Considération des accommodements (interfaces accessibles, langues multiples — au Québec : FR + EN minimum).
+
+OUTILS PRATIQUES PAR PRINCIPE :
+- Équité : Aequitas, Fairlearn (Microsoft), AI Fairness 360 (IBM).
+- Transparence : SHAP, LIME, Captum, Hugging Face model cards.
+- Robustesse : ART (IBM Adversarial Robustness Toolbox), CleverHans, Microsoft Counterfit.
+- Vie privée : Opacus (PyTorch differential privacy), TensorFlow Federated.
+
+QUE FAIRE QUAND LES PRINCIPES SE CONTREDISENT ?
+A. PRIORISER selon le contexte : pour un système médical, sûreté > transparence dans le doute. Pour un outil de scoring de crédit, équité > précision.
+B. ARBITRER au niveau de l'équipe ou du comité IA, pas individuellement.
+C. DOCUMENTER l'arbitrage dans l'EFVP/FRIA — qui a tranché, sur quels critères, avec quelle évaluation des risques résiduels.
+D. RÉVISER l'arbitrage périodiquement — l'état de l'art évolue.
+
+POUR DOMINIC ET NORD PARADIGM — un livrable Brèche Pro mature présente une MATRICE 7×N : 7 principes en lignes, N pratiques organisationnelles en colonnes, avec 3 niveaux de maturité par cellule (absent / partiel / mature). Le client voit immédiatement où il est solide, où il a des trous, et où il est en greenwashing.
+        """.strip(),
+    },
+
+    "m14_c3_standards_iso_complementaires": {
+        "module": 14, "ordre": 3, "langue": "fr",
+        "titre": "Standards ISO complémentaires : 24368, 42001, 42005",
+        "prereqs": ["m14_c1_iso_sept_principes_ethiques", "m6_c1_iso42001_norme_certifiable"],
+        "texte": """
+Les 7 principes éthiques sont la BOUSSOLE. Les standards techniques ISO sont la CARTE — ils traduisent les principes en exigences vérifiables et auditables. Trois standards forment la trilogie « éthique opérationnelle » :
+
+STANDARD 1 — ISO/IEC TR 24368:2022 « Information technology — Artificial intelligence — Overview of ethical and societal concerns ».
+
+NATURE — RAPPORT TECHNIQUE (TR), donc INFORMATIF, non certifiable. Mais c'est le DOCUMENT FONDATEUR qui ancre les autres standards ISO IA dans une réflexion éthique structurée.
+
+CONTENU PRINCIPAL :
+A. Cartographie des préoccupations éthiques et sociétales associées à l'IA.
+B. Inventaire des cadres de référence existants (OCDE, UNESCO, IEEE 7000, principes industriels).
+C. Articulation entre éthique, droit et standards techniques.
+D. Bibliographie commentée pour qui veut creuser.
+
+UTILISATION PRATIQUE — pour Nord Paradigm, c'est une LECTURE DE FOND qui permet de cadrer les ateliers clients sur les enjeux éthiques. Pas de checklist directement, mais le vocabulaire et les références qui légitimisent une démarche.
+
+STANDARD 2 — ISO/IEC 42001:2023 « Information technology — Artificial intelligence — Management system ».
+
+NATURE — NORME DE MANAGEMENT certifiable (cf. M6). Première du genre pour l'IA.
+
+LIEN AVEC LES 7 PRINCIPES :
+- Équité → Annexe A.5 (Évaluation des impacts), A.7 (Données pour systèmes IA).
+- Transparence → Annexe A.8 (Information aux parties intéressées), A.6 (Documentation cycle de vie).
+- Non-malfaisance → Annexe A.5, A.6, A.9 (Utilisation responsable).
+- Redevabilité → Chapitre 5 (Leadership), Annexe A.3 (Rôles RACI).
+- Vie privée → Annexe A.7 (Gouvernance des données), articulation avec ISO 27701.
+- Robustesse → Annexe A.6 (Validation, vérification), articulation avec ISO 27001.
+- Inclusivité → Chapitre 4 (Contexte, parties prenantes), A.3 (Mécanismes de signalement).
+
+STRUCTURE PDCA (Plan-Do-Check-Act) qui industrialise les principes en processus organisationnels répétables et auditables.
+
+UTILISATION PRATIQUE — la certification ISO 42001 est ce qui transforme « notre éthique IA » d'engagement marketing en fait vérifié par tiers indépendant.
+
+STANDARD 3 — ISO/IEC 42005:2025 « Artificial intelligence — AI system impact assessment » — LE PLUS RÉCENT (publié 2025).
+
+NATURE — STANDARD INTERNATIONAL spécifique aux ÉVALUATIONS D'IMPACT des systèmes d'IA. Premier de son genre. Non certifiable directement, mais référencé par ISO 42001 (Annexe A.5) et bientôt par les régulateurs.
+
+PRINCIPES FONDATEURS DU STANDARD :
+A. ÉQUITÉ — l'évaluation doit examiner explicitement les impacts disparates.
+B. SÛRETÉ — les risques de préjudice physique, mental, social, environnemental sont cartographiés.
+C. CONCEPTION CENTRÉE SUR L'HUMAIN — l'évaluation engage les parties affectées.
+
+PRINCIPE TEMPOREL CRUCIAL — l'évaluation d'impact doit être MENÉE TOUT AU LONG DU CYCLE DE VIE :
+A. CONCEPTION — avant écriture du code, évaluer la nécessité et la proportionnalité.
+B. DÉVELOPPEMENT — itérer l'évaluation à chaque décision majeure (architecture, données, métriques).
+C. DÉPLOIEMENT — réévaluer avant mise en production avec données réelles.
+D. EXPLOITATION — surveillance continue, réévaluations périodiques (annuelles minimum pour systèmes à haut risque).
+E. DÉCOMMISSIONNEMENT — évaluation de la sortie de service contrôlée et de la conservation/destruction des données.
+
+ARTICULATION AVEC L'EFVP (Loi 25) ET LA FRIA (EU AI Act) — ISO 42005 fournit la structure méthodologique commune. Une organisation qui suit ISO 42005 produit naturellement un document qui satisfait simultanément l'EFVP québécoise et la FRIA européenne, à condition d'ajouter les sections spécifiques à chaque régime (ex : base légale Loi 25, déployeur public ou privé pour FRIA).
+
+STANDARDS COMPLÉMENTAIRES (pour mémoire) :
+A. ISO/IEC 23894:2023 — Gestion des risques en IA (technique, complémentaire à 42001 A.5).
+B. ISO/IEC 23053:2022 — Cadre de référence ML.
+C. ISO/IEC 22989:2022 — Concepts et terminologie.
+D. ISO/IEC 25059:2023 — Modèle de qualité pour systèmes IA.
+E. ISO/IEC TR 24028:2020 — Vue d'ensemble de la fiabilité de l'IA.
+
+STRATÉGIE D'INVESTISSEMENT POUR UNE PME :
+A. PRIORITÉ 1 — Lire ISO/IEC TR 24368:2022 (CHF 138, gratuit en consultation chez ISO) pour le vocabulaire.
+B. PRIORITÉ 2 — Implémenter ISO/IEC 42001:2023 sans nécessairement viser la certification immédiate. Les contrôles structurent le programme.
+C. PRIORITÉ 3 — Adopter la méthode ISO/IEC 42005:2025 pour les évaluations d'impact — directement opérationnel pour Brèche Pro.
+D. PRIORITÉ 4 — Si exposition européenne ou exigence B2B forte : viser certification ISO 42001 sur 12-18 mois.
+
+POUR DOMINIC ET NORD PARADIGM — Brèche Pro peut être positionné comme « Diagnostic ISO 42005 pré-certification ISO 42001 ». Le client comprend que ce n'est pas un audit ad hoc mais un investissement dans une trajectoire de certification reconnue. La grille d'évaluation Brèche Pro peut s'appuyer directement sur les sections d'ISO 42005 pour structurer ses constats et recommandations.
+
+VEILLE — ISO/IEC publie de nouveaux standards IA en continu (sous-comité JTC 1/SC 42 actif). Surveillance recommandée des annonces ISO et des ballots en cours, particulièrement sur :
+- ISO/IEC 42006 (audit AIMS — en développement)
+- Standards sectoriels santé / finance en cours
+- Standards spécifiques IA générative en cours
+        """.strip(),
+    },
+
+})
+
+
 def get_concepts_par_module(module: int) -> list[str]:
     return sorted(
         [k for k, v in CURRICULUM.items() if v["module"] == module],
@@ -4713,12 +4922,13 @@ NOMS_MODULES = {
     11: "Agentic AI Governance",
     12: "AI Governance Profession (IAPP AIGP)",
     13: "Synthèse stratégique pour PME québécoise",
+    14: "IA responsable et éthique (cadre ISO)",
     99: "Documents ingérés",
 }
 
 # Ordre d'affichage dans l'UI : suit l'ordre logique d'apprentissage,
 # le bucket d'ingestion (99) à la fin.
-ORDRE_AFFICHAGE_MODULES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 99]
+ORDRE_AFFICHAGE_MODULES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 99]
 
 # Langue principale du module : "fr" ou "en".
 LANGUE_MODULES = {
@@ -4735,6 +4945,7 @@ LANGUE_MODULES = {
     11: "en",
     12: "en",
     13: "fr",
+    14: "fr",
     99: "fr",
 }
 
@@ -4752,6 +4963,7 @@ DOMAINES_MODULES = {
     11: "gouvernance_ia",
     12: "gouvernance_ia",
     13: "gouvernance_ia",
+    14: "gouvernance_ia",
     99: "gouvernance_ia",
 }
 
@@ -4797,7 +5009,8 @@ PARCOURS_CONSEILLES: dict[int, dict] = {
     9:  {"module": 10, "label": "Continuer avec la mise en œuvre pratique →"},
     10: {"module": 11, "label": "Continuer avec Agentic AI Governance →"},
     11: {"module": 12, "label": "Continuer avec la profession AIGP →"},
-    12: {"module": 13, "label": "Conclure avec la synthèse stratégique PME →"},
+    12: {"module": 13, "label": "Continuer avec la synthèse stratégique PME →"},
+    13: {"module": 14, "label": "Conclure avec l'éthique IA responsable (ISO) →"},
 }
 
 

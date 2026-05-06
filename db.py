@@ -1661,6 +1661,8 @@ AIGP_DOMAINS: dict[int, dict] = {
             "m8_c4_singapore_stakeholder",
             "m9_c1_uk_duaa_2025",
             "m9_c2_uk_ico_strategy",
+            "m14_c1_iso_sept_principes_ethiques",
+            "m14_c3_standards_iso_complementaires",
         ],
     },
     3: {
@@ -1712,6 +1714,8 @@ AIGP_DOMAINS: dict[int, dict] = {
             "m8_c2_singapore_human_involvement",
             "m11_c3_agent_lifecycle_governance",
             "m12_c2_enforcement_shift_2026",
+            "m14_c1_iso_sept_principes_ethiques",
+            "m14_c2_operationnalisation_principes",
         ],
     },
     6: {
@@ -1733,6 +1737,8 @@ AIGP_DOMAINS: dict[int, dict] = {
             "m12_c3_ai_roi_measurement",
             "m13_c1_comparaison_transversale",
             "m13_c2_strategie_pme_quebecoise",
+            "m14_c2_operationnalisation_principes",
+            "m14_c3_standards_iso_complementaires",
         ],
     },
 }
