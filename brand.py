@@ -11,6 +11,24 @@ Source : brand-theme-kit.jsx du site Nord Paradigm.
 """
 from __future__ import annotations
 
+import html as _html
+
+
+# INVARIANT
+# ─────────
+# Every string passed into a *_html() function in this module is HTML-escaped
+# at the call site below. The functions return strings that callers will pass
+# to `st.markdown(..., unsafe_allow_html=True)`. The escape closes the
+# stored-XSS chain documented in the 2026-05-10 review:
+#   upload → ingestion → Claude → dynamic_concepts.json → CURRICULUM →
+#   resume_card_html(title=concept["titre"]) → unsafe_allow_html
+# A prompt-injection that coerces Claude to emit `<script>` as a concept
+# title now lands as escaped text, not as live DOM.
+def _esc(value: object) -> str:
+    if value is None:
+        return ""
+    return _html.escape(str(value), quote=True)
+
 
 COLORS = {
     # Backgrounds — du plus profond au plus élevé
@@ -613,23 +631,25 @@ def hero_html(title_main: str, title_accent: str, subtitle: str,
 
 
 def resume_card_html(label: str, title: str, meta: str) -> str:
-    """Bandeau de reprise."""
+    """Bandeau de reprise. Title may originate from Claude-ingested
+    dynamic_concepts.json — must be HTML-escaped, see invariant at top of file."""
     return f"""
 <div class="np-resume">
-  <div class="np-resume-label">{label}</div>
-  <div class="np-resume-title">{title}</div>
-  <div class="np-resume-meta">{meta}</div>
+  <div class="np-resume-label">{_esc(label)}</div>
+  <div class="np-resume-title">{_esc(title)}</div>
+  <div class="np-resume-meta">{_esc(meta)}</div>
 </div>
 """
 
 
 def reco_card_html(label: str, title: str, meta: str) -> str:
-    """Carte de recommandation."""
+    """Carte de recommandation. Title may originate from Claude-ingested
+    dynamic_concepts.json — must be HTML-escaped, see invariant at top of file."""
     return f"""
 <div class="np-reco">
-  <div class="np-reco-label">{label}</div>
-  <div class="np-reco-title">{title}</div>
-  <div class="np-reco-meta">{meta}</div>
+  <div class="np-reco-label">{_esc(label)}</div>
+  <div class="np-reco-title">{_esc(title)}</div>
+  <div class="np-reco-meta">{_esc(meta)}</div>
 </div>
 """
 
